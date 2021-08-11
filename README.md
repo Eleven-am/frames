@@ -105,9 +105,27 @@ Start the server
     * The left controls include the AirPlay/Cast button (if available). The volume controls
     * If not logged in as a guest user, there are two additional buttons the download button(not functional yet) and the Share button
       ![](art/15.png)
+      ![](art/18.png)
+      ![](art/17.png)
 
 * Frames has AirPlay and Chromecast functionality built in
   ![](art/16.png)
+  ![](art/19.png)
+    * Obviously frames controls the remote player based on local interactions
+    
+#### Miscellaneous 
+* By right clicking on media posters you can modify the information of the media. The images, TMDB ID
+  ![](art/20.png)
+  ![](art/27.png)
+
+* The up next UI when the present video is done playing
+  ![](art/21.png)
+
+## Upcoming features
+* Creating and sharing your playlists with others
+* Group watch
+* Ability to download a video if you have a valid auth key
+
 
 
 
