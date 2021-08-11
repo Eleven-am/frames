@@ -78,9 +78,36 @@ Start the server
    ![](art/trailer.gif)
    ![](art/5.png)
 
-
 #### The navigation bar
-* From the navigation bar. All the movies and tv shows available in the library are show in descending order from most recent or trending to less recent
+* All the movies and tv shows available in the library are show in descending order from most recent or trending to less recent
   ![](art/6.png)
   ![](art/7.png)
+
+* You can see all the genres for the medias available in your library. Your library can also be sorted by decades depending on when they were released or first aired.
+  ![](art/8.png)
+  ![](art/9.png)
+
+* #### The playlist feature is still in development
+
+* Here's how a media's metadata is displayed on frames
+  ![](art/12.png)
+  ![](art/13.png)
+  ![](art/10.png)
+  ![](art/11.png)
+
+* Media produced by a specific company can be seen by simply clicking on the company's name in the details pane
+  ![](art/14.png)
+    * Clicking on the company's logo begins playback of all the media produce by the company in the order they were made available by said company
+
+#### Frames(aka the video player)
+* Frames supports only mp4 files. These files are streamed securely to the user and your Google credentials are never made available to the client.
+  ![](art/player.gif)
+    * The left controls include the AirPlay/Cast button (if available). The volume controls
+    * If not logged in as a guest user, there are two additional buttons the download button(not functional yet) and the Share button
+      ![](art/15.png)
+
+* Frames has AirPlay and Chromecast functionality built in
+  ![](art/16.png)
+
+
 
