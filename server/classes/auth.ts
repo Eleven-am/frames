@@ -55,7 +55,12 @@ export class Session {
                 const view = prisma.view.deleteMany({where: {userId}});
                 const user = prisma.user.delete({where: {userId}});
 
-                await prisma.$transaction([identity, auth, session, frame, listItem, rating, seen, playlist, suggestion, view, user]);
+                try {
+                    prisma.$transaction([identity, auth, session, frame, listItem, rating, seen, playlist, suggestion, view, user]);
+                } catch (e) {
+                    console.log(e);
+                }
+
                 return {error: 'guest session has expired'}
             }
 
@@ -116,7 +121,11 @@ export class Session {
         if (state) {
             const identifier = prisma.userIdentifier.delete({where: {sessionId: session}});
             const preset = prisma.session.delete({where: {session}});
-            await prisma.$transaction([identifier, preset]);
+            try {
+                prisma.$transaction([identifier, preset]);
+            } catch (e) {
+                console.log(e)
+            }
         }
     }
 

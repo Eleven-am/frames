@@ -176,10 +176,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
             }
         }
 
-    } else if (body.process === 'generateAuthKey') {
+    } else if (body.process === 'generateAuthKey')
         response = await user.generateAuthKey(userId);
-
-    }
 
     res.status(200).json(response)
 }

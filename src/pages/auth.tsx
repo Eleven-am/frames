@@ -15,7 +15,7 @@ const metaTags = {
     poster: '/meta.png'
 }
 
-export default function Auth({images}: {images: string[]}) {
+export default function Auth({images, cypher}: {cypher: string, images: string[]}) {
     const {user} = useUser();
     const router = useRouter();
     const [address, setAddress] = useRecoilState(addressAtom);
@@ -33,7 +33,7 @@ export default function Auth({images}: {images: string[]}) {
         <>
             <Navbar/>
             <Header meta={metaTags}/>
-            <AuthImages response={images}/>
+            <AuthImages response={images} cypher={cypher}/>
             <LoginForm/>
         </>
     )
@@ -41,6 +41,7 @@ export default function Auth({images}: {images: string[]}) {
 
 export async function getServerSideProps() {
     const images = await import('../../next/SSR').then(mod => mod.getAuthImages());
-    return {props: {images}};
+    const cypher = await import('../../server/base/env').then(mod => mod.default.config.cypher);
+    return {props: {images, cypher}};
 }
 

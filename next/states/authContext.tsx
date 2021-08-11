@@ -38,6 +38,11 @@ export const AuthPicker = atom<boolean>({
     default: true
 })
 
+export const Authenticated = atom<boolean|null>({
+    key: 'AuthenticatedAtom',
+    default: null
+})
+
 export const AuthContextHandler = selector<{fade?: boolean, process?: Process, error?: string | null }>({
     key: 'AuthContextHandler',
     get: ({get}) => {
@@ -60,19 +65,20 @@ export const AuthContextHandler = selector<{fade?: boolean, process?: Process, e
             error: newError === '' ? error: newError
         }
     }, set: ({set, get}, newValue) => {
+        const auth = get(Authenticated);
         if (!(newValue instanceof DefaultValue)) {
             newValue.process && NProgress.start();
-            if (newValue.fade !== undefined) {
+            if (newValue.fade !== undefined && auth) {
                 set(AuthFade, newValue.fade);
                 NProgress.done();
             }
 
-            if (newValue.process && newValue.error) {
+            if (newValue.process && newValue.error && auth) {
                 set(AuthContextErrorAtom, newValue.error);
                 set(AuthContextProcessAtom, newValue.process);
             }
 
-            else if (newValue.process ) {
+            else if (newValue.process && auth) {
                 set(AuthContextErrorAtom, null);
                 set(AuthContextProcessAtom, newValue.process);
             }
@@ -141,8 +147,10 @@ export const useReset = () => {
     const fade = useResetRecoilState(AuthFade);
     const authKey = useResetRecoilState(AuthKeyAtom);
     const picker = useResetRecoilState(AuthPicker);
+    const auth = useResetRecoilState(Authenticated);
 
     return () => {
+        auth();
         error();
         process();
         email();

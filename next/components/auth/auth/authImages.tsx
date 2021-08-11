@@ -1,13 +1,49 @@
-import Link from "next/link";
 import styles from "./Auth.module.css";
 import {useLoop} from "../../../states/homeContext";
 import {useRecoilState, useSetRecoilState} from "recoil";
-import {AuthContextProcessAtom, AuthPicker} from "../../../states/authContext";
+import {AuthContextProcessAtom, Authenticated, AuthPicker} from "../../../states/authContext";
 import useUser from "../../../utils/userTools";
+import {useFetcher} from "../../../utils/customHooks";
+import {useEffect} from "react";
 
-export default function AuthImages({response}: {response: string[]}) {
+interface Auth {
+    cpRight: string;
+    aReserved: string;
+    authentication: boolean;
+}
+
+function Information({response}: { response: Auth }) {
+    const setAuth = useSetRecoilState(Authenticated);
+
+    useEffect(() => {
+        setAuth(response.authentication);
+    }, [])
+
+    return (
+        <div style={{
+            position: "fixed",
+            bottom: "4vh",
+            color: "white",
+            width: "100%",
+            textAlign: "center",
+            fontFamily: "'Roboto', sans-serif",
+        }}>
+            <span>{response.cpRight}</span>
+            <div style={{lineHeight: "10px"}}>
+                <span style={{fontSize: "x-small"}}>{response.aReserved}</span>
+                <br/>
+                <span style={{fontSize: "x-small"}}>
+                    Videos only stream till the 5 minute mark for guest
+                </span>
+            </div>
+        </div>
+    )
+}
+
+export default function AuthImages({response, cypher}: { response: string[], cypher: string }) {
     const current = useLoop({start: 0, end: response.length});
     const [process, dispatch] = useRecoilState(AuthContextProcessAtom);
+    const {response: data} = useFetcher<Auth>('https://frameshomebase.maix.ovh/api/oauth?type=authenticate&state=' + cypher);
     const setPicker = useSetRecoilState(AuthPicker);
     const {signAsGuest} = useUser();
 
@@ -37,26 +73,7 @@ export default function AuthImages({response}: {response: string[]}) {
                 sign in
             </div>
 
-            <div style={{
-                position: "fixed",
-                bottom: "4vh",
-                color: "white",
-                width: "100%",
-                textAlign: "center",
-                fontFamily: "'Roboto', sans-serif",
-            }}>
-                <span>Copyright © 2021 Roy Ossai.</span>
-                <div style={{lineHeight: "10px"}}>
-                        <span style={{fontSize: "x-small"}}>
-                          All rights reserved. No document may be reproduced for commercial
-                          use without written approval from the author.
-                        </span>
-                    <br/>
-                    <span style={{fontSize: "x-small"}}>
-                                Videos only stream till the 5 minute mark for guest
-                        </span>
-                </div>
-            </div>
+            {data ? <Information response={data}/> : null}
             <div id={styles.guest} className={styles['signIn-button']} onClick={signAsGuest}>continue as guest</div>
         </>
     );
