@@ -1,0 +1,193 @@
+.block {
+    position: fixed;
+    background: linear-gradient(to right, rgba(1, 16, 28, .3), rgba(1, 16, 28, 0)),
+    linear-gradient(to top, rgba(1, 16, 28, .3), rgba(1, 16, 28, 0)),
+    linear-gradient(45deg, rgba(1, 16, 28, .1), rgba(1, 16, 28, 0));
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 12;
+    visibility: hidden;
+}
+
+.container {
+    position: relative;
+    width: 70%;
+    height: 70%;
+    overflow: hidden;
+    border: 1px solid var(--nino-blue);
+    background: rgba(1, 16, 28, .9);
+    border-radius: 7px;
+    color: var(--nino-blue);
+    font-family: var(--text);
+    box-shadow: 2px 12px 12px -12px #000000;
+}
+
+.o {
+    animation: expand .3s ease-in-out forwards;
+}
+
+.c {
+    animation: expand .1s ease-in-out reverse forwards;
+}
+
+@keyframes expand {
+    0% {
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        visibility: hidden;
+    }
+    1% {
+        visibility: visible;
+    }
+    100% {
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        visibility: visible;
+    }
+}
+
+.bckImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .2;
+}
+
+.hold {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.head {
+    display: flex;
+    width: 100%;
+    height: 50px;
+    justify-content: center;
+    align-items: center;
+    font-size: large;
+    text-wrap: none;
+    text-overflow: ellipsis;
+    background: rgba(1, 16, 28, .8);
+    box-shadow: 2px 12px 12px -12px #000000;
+}
+
+.tail {
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    align-items: center;
+    justify-content: flex-end;
+    background: rgba(1, 16, 28, .8);
+    border-radius: 7px;
+}
+
+.body {
+    display: grid;
+    width: 100%;
+    height: calc(100% - 110px);
+    background: rgba(1, 16, 28, .6);
+    grid-template-columns: 1fr 4fr;
+}
+
+.tail button {
+    transform: scale(.7);
+}
+
+.tail button:hover {
+    transform: scale(.8);
+}
+
+.side {
+    margin: 0;
+    padding: 40px;
+    background: rgba(1, 16, 28, .6);
+    font-size: larger;
+    list-style: none;
+}
+
+.side li {
+    margin: 20px 0;
+    cursor: pointer;
+}
+
+.nSel{ color: #d9eeffa1;}
+
+.sel, .side li:hover {
+    color: var(--nino-blue);
+}
+
+.genInput input {
+    width: 95%;
+    height: 30px;
+    outline: 0;
+    background: rgba(1, 16, 28, 0.1);
+    border-radius: 10px;
+    border: 2px solid #fff;
+    color: #fff;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.list {
+    height: 140px;
+    overflow: scroll;
+    list-style: none;
+    padding: 0;
+}
+
+.list li {
+    padding: 10px;
+    font-size: larger;
+    color: #d9eeffa1;
+    transition: all .2s ease-in-out;
+}
+
+.list li:hover {
+    color: var(--nino-blue);
+    cursor: pointer;
+}
+
+.genInput label {
+    color: #d9eeffa1;
+}
+
+.genInput {
+    margin: 5px 0;
+    padding: 10px;
+    height: 390px;
+    overflow: scroll;
+}
+
+.images {
+    padding: 10px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    align-items: center;
+}
+
+.images img {
+    width: 160px;
+    height: 90px;
+    margin: 4px;
+    object-fit: contain;
+    transition: all .2s ease-in-out;
+    border-radius: 5px;
+    border: 1px solid rgba(0,0,0,0);
+}
+
+.images img:hover {
+    border: 1px solid var(--nino-blue);
+}

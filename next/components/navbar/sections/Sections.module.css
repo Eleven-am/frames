@@ -1,0 +1,16 @@
+.navSections {
+    font-family: var(--text);
+    color: rgba(217, 238, 255, .7);
+    margin: 0 20px;
+}
+
+.navSections span {
+    margin: 0 10px;
+    transition: all .2s ease-in-out;
+    font-size: large;
+    cursor: pointer;
+}
+
+.activeSection, .passiveSections:hover {
+    color: var(--nino-blue);
+}

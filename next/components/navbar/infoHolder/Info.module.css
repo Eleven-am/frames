@@ -1,0 +1,34 @@
+.holderContainer {
+    position: fixed;
+    top: 5.5vmax;
+    right: 10px;
+    font-family: 'Roboto', sans-serif;
+    font-size: smaller;
+    width: 140px;
+    padding: 4px;
+    border: 1px solid var(--nino-blue);
+    box-shadow: 2px 12px 12px -12px #000000;
+    border-radius: 5px;
+    background: rgba(1, 16, 28, .9);
+    z-index: 100;
+}
+
+.spacer {
+    height: 1px;
+    background: rgba(144, 197, 240, .4);
+}
+
+.text {
+    padding: 6px 4px;
+    cursor: pointer;
+    color: white;
+    transition: all .2s ease-in-out;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.text:hover {
+    color: var(--nino-blue);
+    background: rgba(144, 197, 240, .2);
+}

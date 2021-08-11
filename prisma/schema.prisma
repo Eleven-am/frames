@@ -1,0 +1,252 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["filterJson"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id       Int             @id @default(autoincrement())
+  session  String          @unique
+  valid    DateTime
+  created  DateTime        @default(now())
+  updated  DateTime        @updatedAt
+  userId   String
+  identity UserIdentifier?
+  user     User            @relation(fields: [userId], references: [userId])
+}
+
+model Auth {
+  id      Int      @id @default(autoincrement())
+  authKey String   @unique
+  access  Int
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  userId  String
+  user    User     @relation(fields: [userId], references: [userId])
+}
+
+model UserIdentifier {
+  id          Int      @id @default(autoincrement())
+  browserName String
+  osName      String
+  country     String
+  regionName  String
+  city        String
+  address     String
+  userId      String
+  sessionId   String   @unique
+  created     DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [userId])
+  Session     Session  @relation(fields: [sessionId], references: [session])
+}
+
+model Pick {
+  id       Int     @id @default(autoincrement())
+  mediaId  Int
+  active   Boolean @default(false)
+  category String
+  display  String
+  media    Media   @relation(fields: [mediaId], references: [id])
+}
+
+model Episode {
+  id       Int      @id @default(autoincrement())
+  seasonId Int
+  episode  Int
+  showId   Int
+  videoId  Int      @unique
+  created  DateTime @default(now())
+  updated  DateTime @updatedAt
+  media    Media    @relation(fields: [showId], references: [id])
+  video    Video    @relation(fields: [videoId], references: [id])
+  View     View[]
+
+  @@unique(fields: [seasonId, episode, showId], name: "episodeId")
+}
+
+model Folder {
+  id       Int    @id @default(autoincrement())
+  location String @unique
+  showId   Int    @unique
+  media    Media  @relation(fields: [showId], references: [id])
+}
+
+model Frame {
+  id       Int      @id @default(autoincrement())
+  cypher   String   @unique
+  position Int
+  userId   String
+  accessed Int      @default(0)
+  auth     String
+  created  DateTime @default(now())
+  updated  DateTime @updatedAt
+  view     View     @relation(fields: [auth], references: [auth])
+  user     User     @relation(fields: [userId], references: [userId])
+}
+
+model ListItem {
+  id      Int      @id @default(autoincrement())
+  mediaId Int
+  userId  String
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  media   Media    @relation(fields: [mediaId], references: [id])
+  user    User     @relation(fields: [userId], references: [userId])
+}
+
+model Rating {
+  id      Int    @id @default(autoincrement())
+  rate    Int
+  mediaId Int
+  userId  String
+  media   Media  @relation(fields: [mediaId], references: [id])
+  user    User   @relation(fields: [userId], references: [userId])
+}
+
+model Seen {
+  id      Int      @id @default(autoincrement())
+  rep     Int
+  mediaId Int
+  userId  String
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  media   Media    @relation(fields: [mediaId], references: [id])
+  user    User     @relation(fields: [userId], references: [userId])
+}
+
+model PlaylistVideos {
+  id         Int      @id @default(autoincrement())
+  videoId    Int
+  playlistId String
+  video      Video    @relation(fields: [videoId], references: [id])
+  playlist   Playlist @relation(fields: [playlistId], references: [identifier])
+}
+
+enum Generator {
+  FRAMES
+  USER
+}
+
+model Playlist {
+  id             Int              @id @default(autoincrement())
+  userId         String
+  name           String
+  generator      Generator        @default(FRAMES)
+  identifier     String           @unique
+  user           User             @relation(fields: [userId], references: [userId])
+  PlaylistVideos PlaylistVideos[]
+}
+
+model Sub {
+  id      Int   @id @default(autoincrement())
+  videoId Int   @unique
+  videos  Video @relation(fields: [videoId], references: [id])
+}
+
+model Suggestion {
+  id      Int      @id @default(autoincrement())
+  rep     Int
+  mediaId Int
+  userId  String
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  media   Media    @relation(fields: [mediaId], references: [id])
+  user    User     @relation(fields: [userId], references: [userId])
+}
+
+enum Role {
+  USER
+  ADMIN
+  OAUTH
+  GUEST
+}
+
+model User {
+  id          Int              @id @default(autoincrement())
+  email       String           @unique
+  password    String
+  userId      String           @unique
+  role        Role             @default(USER)
+  username    String?
+  auths       Auth[]
+  session     Session[]
+  frames      Frame[]
+  lists       ListItem[]
+  ratings     Rating[]
+  seen        Seen[]
+  playlist    Playlist[]
+  suggestions Suggestion[]
+  identifiers UserIdentifier[]
+  views       View[]
+}
+
+model Video {
+  id             Int              @id @default(autoincrement())
+  location       String           @unique
+  english        String?
+  french         String?
+  german         String?
+  mediaId        Int
+  media          Media            @relation(fields: [mediaId], references: [id])
+  episode        Episode?
+  subs           Sub?
+  views          View[]
+  playlistVideos PlaylistVideos[]
+}
+
+model View {
+  id        Int      @id @default(autoincrement())
+  auth      String   @unique
+  userId    String
+  videoId   Int
+  position  Int
+  finished  Int      @default(0)
+  created   DateTime @default(now())
+  updated   DateTime @updatedAt
+  episode   Episode? @relation(fields: [episodeId], references: [id])
+  user      User     @relation(fields: [userId], references: [userId])
+  video     Video    @relation(fields: [videoId], references: [id])
+  frame     Frame[]
+  episodeId Int?
+}
+
+enum MediaType {
+  MOVIE
+  SHOW
+}
+
+model Media {
+  id           Int          @id @default(autoincrement())
+  name         String
+  tmdbId       Int
+  poster       String       @db.VarChar(250)
+  backdrop     String       @db.VarChar(250)
+  background   String       @default("rgba(0, 0, 0, .5)")
+  genre        String
+  release      String
+  runtime      String
+  vote_average Float?
+  overview     String       @db.Text
+  rating       String?
+  logo         String       @db.VarChar(250)
+  trailer      String
+  collectionId Int?
+  production   Json
+  created      DateTime
+  updated      DateTime
+  editors      Pick[]
+  episodes     Episode[]
+  folder       Folder?
+  lists        ListItem[]
+  ratings      Rating[]
+  seen         Seen[]
+  type         MediaType    @default(MOVIE)
+  suggestions  Suggestion[]
+  videos       Video[]
+
+  @@unique([tmdbId, type])
+}

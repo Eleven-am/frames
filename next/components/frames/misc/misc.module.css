@@ -1,0 +1,119 @@
+.sc {
+    position: fixed;
+    bottom: 9vh;
+    left: 2vw;
+    width: 20vw;
+    padding: 2vmin 2vmax;
+    box-shadow: 0 3px 4px 0 rgba(1, 16, 28, 0.24), 0 1vh 4.5vh 0 rgba(1, 16, 28, 0.19);
+    background: rgba(1, 16, 28, 0.8);
+    border-radius: 10px;
+    border: 1px solid rgba(217, 238, 255, .9);
+    text-align: center;
+    transform: translateY(-20px);
+    transition: all .2s ease-in-out;
+    font-family: var(--text);
+    color: #fff;
+    text-shadow: 2px 2px 8px rgba(1, 16, 28, 0.3);
+    z-index: 20;
+}
+
+.sm {
+    padding: 15px 4px;
+    text-align: center;
+    border-bottom: 2px solid var(--nino-blue);
+}
+
+.so {
+    margin-top: 10px;
+    width: 90%;
+    height: 25px;
+    background: rgba(1, 16, 28, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    align-items: center;
+    border: 2px solid rgba(255, 255, 255, .2);
+    color: rgba(255, 255, 255, .2);
+}
+
+.sl{
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0;
+    margin: 5px 0 0 0;
+}
+
+.sl li{
+    width: 50%;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: all .2s ease-in-out;
+}
+
+.sl li:hover{
+    color: #d9eeff;
+    background: rgba(144, 197, 240, .3);
+    box-shadow: 0 3px 4px 0 rgba(1, 16, 28, 0.24), 0 1vh 4.5vh 0 rgba(1, 16, 28, 0.19);
+}
+
+.accept{
+    border-right: 1px solid rgba(217, 238, 255, .9);
+}
+
+.reject{
+    border-left: 1px solid rgba(217, 238, 255, .9);
+}
+
+.ch {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    font-family: var(--text);
+    color: #d9eeff;
+    background: rgba(1, 16, 28, .7);
+    transition: all 1s ease-in-out;
+    display: block;
+}
+
+.diffSvg {
+    stroke: rgba(144, 197, 240, .7);
+    fill: rgba(0,0,0,0);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    padding: 10px;
+    height: 20%;
+    width: auto;
+}
+
+.ch .cHold {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    bottom: 4vh;
+    height: 7vw;
+    margin: 2vw;
+    transition: all .4s ease-in-out;
+}
+
+.ch .cHold svg{
+    stroke: rgba(144, 197, 240, .7);
+    fill: rgba(0,0,0,0);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    padding: 10px;
+    height: 60%;
+    width: auto;
+}
+
+.ch .cHold ul{
+    list-style: none;
+    margin: 0 10px 0 0;
+    padding: 0;
+}

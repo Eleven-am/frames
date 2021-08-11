@@ -1,0 +1,21 @@
+.sectionsHolder {
+    position: absolute;
+    width: 100vw;
+    top: 80%;
+    z-index: 3;
+}
+
+.body::-webkit-scrollbar, .sectionsHolder::-webkit-scrollbar, .sectionScroll::-webkit-scrollbar, .info-holders::-webkit-scrollbar {
+    display: none;
+}
+
+.sectionScroll {
+    overflow: scroll;
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    padding: 0;
+    margin: 0;
+    left: 0;
+    top: 0;
+}
