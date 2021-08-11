@@ -56,7 +56,7 @@ Start the server
   npm run start
 ```
 
-#### How to arrange the files
+## How to arrange the files
 * For movies, it is imperative that only the movie file itself is placed directly in the movie folder like so ![](art/22.png)
 * For TV shows every Show should be placed in its folder like so ![](art/24.png)
 * When arranging the episodes you have two options
@@ -66,4 +66,21 @@ Start the server
         * S01 randomText E01
         * s01e01 | S01E01
           like so ![](art/23.png)
+
+## Images and Features
+* The boarding page includes social authentication methods as well as email. Every user registered must be provided an auth key 
+    ![](art/1.png)
+    ![](art/2.png)
+    ![](art/3.png)
+    ![](art/4.png)
+
+* The home page includes (ideally 7, may be less or 0) trending media that are available in your library. A synopsis of the media and trailer are also available directly from here
+   ![](art/trailer.gif)
+   ![](art/5.png)
+
+
+#### The navigation bar
+* From the navigation bar. All the movies and tv shows available in the library are show in descending order from most recent or trending to less recent
+  ![](art/6.png)
+  ![](art/7.png)
 
