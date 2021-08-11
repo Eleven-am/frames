@@ -125,6 +125,7 @@ Start the server
 * Creating and sharing your playlists with others
 * Group watch
 * Ability to download a video if you have a valid auth key
+* Seeing all media a specific actor / crew member contributed to
 
 
 
