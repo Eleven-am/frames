@@ -96,6 +96,9 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
             }
             res.status(200).json(response)
 
+        } else if (query.action === 'genKey' && await user.validateUser(userId)) {
+            response = await user.generateAuthKey(userId);
+            res.status(200).json(response)
         }
 
         return;

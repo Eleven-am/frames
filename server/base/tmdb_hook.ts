@@ -629,7 +629,7 @@ const getAllImages = async (type: MediaType, tmdbId: number, name: string): Prom
             return {
                 name,
                 language: e.iso_639_1,
-                likes: Math.floor(e.vote_count * e.vote_average) - 50,
+                likes: Math.floor(e.vote_count * e.vote_average) - 2000,
                 drift: 0, url: 'https://image.tmdb.org/t/p/original' + e.file_path
             }
         }));
@@ -683,14 +683,14 @@ const getAllImages = async (type: MediaType, tmdbId: number, name: string): Prom
         })).concat(temp2.map(e => {
             return {
                 language: e.lang,
-                likes: +(e.likes) - 25,
+                likes: +(e.likes) - 1000,
                 name: fanArt.name,
                 url: e.url, drift: 0
             }
         })).concat(poster.map(e => {
             return {
                 language: e.lang,
-                likes: +(e.likes) - 50,
+                likes: +(e.likes) - 2000,
                 name: fanArt.name,
                 url: e.url, drift: 0
             }

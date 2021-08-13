@@ -79,10 +79,10 @@ export default class Episode {
                 userId,
                 episode: {showId},
                 position: {gt: 0}
-            }, select: {position: true, episode: true, updated: true}
+            }, select: {position: true, episode: true, updated: true},
+            orderBy: [{updated: 'desc'}, {position: 'desc'}]
         })
 
-        result = result.sortKey('updated', false);
         episodes = episodes.sortKeys('seasonId', 'episode', true, true);
         let response = await getSeasonInfo({
             tmdbId: episodes[0].media.tmdbId,

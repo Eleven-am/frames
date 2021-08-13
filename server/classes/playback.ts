@@ -8,6 +8,7 @@ import {NextApiRequest, NextApiResponse} from "next";
 import got from "got";
 import {MediaSection} from "./media";
 import {SpringLoad} from "./springboard";
+import {Subtitles as SubClass} from "./update";
 
 export interface VideoPos {
     position: number;
@@ -150,6 +151,7 @@ export default class Playback {
      * @returns auth identifier uuid string
      */
     async generatePlayback(videoId: number, userId: string): Promise<{ frame: boolean, guest: boolean, inform: boolean, location: string, subs: { language: string, url: string }[], cdn: string } | null> {
+        const subtitle = new SubClass();
         let video: { [p: string]: any } | null = await prisma.video.findFirst({where: {id: videoId}});
         let user = await prisma.user.findFirst({where: {userId}});
         let episode = await prisma.episode.findFirst({where: {videoId}})
@@ -175,6 +177,9 @@ export default class Playback {
             }
 
             let info = await prisma.view.create({data: obj});
+            if (subs.length < 1)
+                await subtitle.getSub(videoId);
+
             return {
                 frame: false,
                 inform: true,
@@ -233,8 +238,9 @@ export default class Playback {
         const episodeClass = new Episode();
         const info = await episodeClass.getEpisode(episodeId);
         const episode = await prisma.episode.findFirst({where: {id: episodeId}, select: {media: true, video: true}});
-        let views = await prisma.view.findMany({where: {userId, episodeId}});
-        views = views.sortKey('updated', false).filter(e => e.position !== 0);
+        let views = await prisma.view.findMany({where: {userId, episodeId, position: {gt: 0}},
+            orderBy: [{updated: 'desc'}, {position: 'desc'}]
+        });
         if (episode && info) {
             const view = views.length ? views[0] : null;
             return {

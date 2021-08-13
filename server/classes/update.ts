@@ -125,7 +125,7 @@ export class Subtitles {
                     setTimeout(() => {
                         subs.shift();
                         resolve();
-                    }, 1000)
+                    }, 3000)
                 })
             }
 
@@ -138,48 +138,50 @@ export class Subtitles {
      * @param videoId
      */
     async getSub(videoId: number) {
-        const video = await prisma.video.findFirst({where: {id: videoId}, include: {media: true, episode: true}});
-        if (video) {
-            const file = await drive.getFile(video.location);
-            if (file) {
-                let obj: any = null;
-                if (video.episode) {
-                    const external = await getExternalId(video.media.tmdbId, MediaType.SHOW);
-                    if (external) {
-                        obj = {
-                            season: video.episode.seasonId,
-                            filesize: file.size,
-                            filename: file.name,
-                            episode: video.episode.episode,
-                            imdbid: external.imdb_id
-                        };
+        if (this.OpenSubtitles){
+            const video = await prisma.video.findFirst({where: {id: videoId}, include: {media: true, episode: true}});
+            if (video) {
+                const file = await drive.getFile(video.location);
+                if (file) {
+                    let obj: any = null;
+                    if (video.episode) {
+                        const external = await getExternalId(video.media.tmdbId, MediaType.SHOW);
+                        if (external) {
+                            obj = {
+                                season: video.episode.seasonId,
+                                filesize: file.size,
+                                filename: file.name,
+                                episode: video.episode.episode,
+                                imdbid: external.imdb_id
+                            };
+                        }
+                    } else {
+                        const external = await getExternalId(video.media.tmdbId, MediaType.MOVIE);
+                        if (external)
+                            obj = {filesize: file.size, filename: file.name, imdbid: external.imdb_id};
                     }
-                } else {
-                    const external = await getExternalId(video.media.tmdbId, MediaType.MOVIE);
-                    if (external)
-                        obj = {filesize: file.size, filename: file.name, imdbid: external.imdb_id};
-                }
 
-                if (obj) {
-                    obj.extensions = ['srt', 'vtt'];
-                    let keys = ['en', 'fr', 'de'];
-                    let lang = ['english', 'french', 'german'];
-                    const subs: { [p: string]: string } | null = await this.OpenSubtitles.search(obj)
-                        .then((temp: { [x: string]: { url: any; }; } | undefined) => {
-                            if (temp !== undefined) {
-                                let item: { [key: string]: string } = {};
-                                keys.forEach((value, pos) => {
-                                    item[lang[pos]] = temp[value] === undefined ? null : temp[value].url;
-                                });
-                                return item;
-                            } else return null;
-                        }).catch((error: any) => {
-                            console.log(error)
-                            return null;
-                        })
+                    if (obj) {
+                        obj.extensions = ['srt', 'vtt'];
+                        let keys = ['en', 'fr', 'de'];
+                        let lang = ['english', 'french', 'german'];
+                        const subs: { [p: string]: string } | null = await this.OpenSubtitles.search(obj)
+                            .then((temp: { [x: string]: { url: any; }; } | undefined) => {
+                                if (temp !== undefined) {
+                                    let item: { [key: string]: string } = {};
+                                    keys.forEach((value, pos) => {
+                                        item[lang[pos]] = temp[value] === undefined ? null : temp[value].url;
+                                    });
+                                    return item;
+                                } else return null;
+                            }).catch((error: any) => {
+                                console.log(error)
+                                return null;
+                            })
 
-                    if (subs) {
-                        await prisma.video.update({where: {id: videoId}, data: subs});
+                        if (subs) {
+                            await prisma.video.update({where: {id: videoId}, data: subs});
+                        }
                     }
                 }
             }

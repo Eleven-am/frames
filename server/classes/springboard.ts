@@ -577,7 +577,6 @@ export default class Springboard extends Media {
             }, include: {episode: true}
         })
 
-
         let videoIds: number[] = [];
         for (let item of mediaIds)
             videoIds = videoIds.concat(videos.filter(e => e.mediaId === item).map(e => {
