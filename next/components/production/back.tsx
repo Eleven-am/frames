@@ -1,14 +1,13 @@
-import {FramesCompany} from "../../../server/classes/media";
 import {useEffect, useState} from "react";
 import {useLoop} from "../../states/homeContext";
 import styles from "./back.module.css";
 
-export default function Background({response}: {response: FramesCompany}) {
+export default function Background({response}: {response: string[]}) {
     const [images, setImages] = useState<string[]>([]);
-    const current = useLoop({start: 0, end: response.images.length});
+    const current = useLoop({start: 0, end: response.length});
 
     useEffect(() =>{
-        setImages(response.images);
+        setImages(response);
     }, [response])
 
     return (

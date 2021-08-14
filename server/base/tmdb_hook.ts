@@ -117,6 +117,7 @@ export interface FramesPerson {
     name: string;
     poster: string;
     biography: string;
+    id: number;
     movie_cast: MediaSection[],
     movie_crew?: MediaSection[],
     tv_cast: MediaSection[],
@@ -245,13 +246,14 @@ const optimiseRating = (results: any[], locale: string) => {
     return {mpaa: mpaa, date: date};
 }
 
+
 /**
  * @desc gets relevant MPAA rating and release date of a movie from TMDB
  * @param tmdbId
  * @returns {Promise<{release: string, rating: (string|string)}>}
  */
 const getMovieRating = async (tmdbId: number) => {
-    let release = await get(base + "movie/" + tmdbId + "/release_dates?api_key=" + apiKey);
+    let release = await get<any>(base + "movie/" + tmdbId + "/release_dates?api_key=" + apiKey);
 
     const gnr = ["US", "GB", "FR"];
     let i = 0;
@@ -260,7 +262,7 @@ const getMovieRating = async (tmdbId: number) => {
     let date: string = "Not Found";
     if (release) {
         while (i < 3 && !found) {
-            let res = optimiseRating(release.results, gnr[i]);
+            let res = optimiseRating(release.results || [], gnr[i]);
             mpaa = res.mpaa;
             date = res.date;
             i++;
@@ -268,7 +270,7 @@ const getMovieRating = async (tmdbId: number) => {
         }
 
         if (mpaa === "") {
-            let res = optimiseRating(release.results, gnr[0]);
+            let res = optimiseRating(release.results || [], gnr[0]);
             mpaa = res.mpaa;
             date = res.date;
         }
@@ -284,7 +286,7 @@ const getMovieRating = async (tmdbId: number) => {
  * @returns {Promise<string>}
  */
 const getTvRating = async (tmdbId: number) => {
-    let rate = await get(base + "tv/" + tmdbId + "/content_ratings?api_key=" + apiKey);
+    let rate = await get<any>(base + "tv/" + tmdbId + "/content_ratings?api_key=" + apiKey);
 
     let rating = "Unknown";
     if (rate)
@@ -349,8 +351,8 @@ const pageTwo = async <S>(type: MediaType, id: number, database: S[], startInt: 
     let reaType = type;
     ignore = ignore || false;
     let string = type === MediaType.MOVIE ? 'movie/' : 'tv/';
-    let recommendations = await get(base + string + id + "/recommendations?api_key=" + apiKey + "&language=en-US&page=" + startInt);
-    let similar = await get(base + string + id + "/similar?api_key=" + apiKey + "&language=en-US&page=" + startInt);
+    let recommendations = await get<any>(base + string + id + "/recommendations?api_key=" + apiKey + "&language=en-US&page=" + startInt);
+    let similar = await get<any>(base + string + id + "/similar?api_key=" + apiKey + "&language=en-US&page=" + startInt);
     similar = similar ? similar.results : [];
     recommendations = recommendations ? recommendations.results : [];
     let merge = similar.concat(recommendations).uniqueID("id");
@@ -426,8 +428,8 @@ const trending = async (limit: number, dBase: any[], forDownload?: boolean): Pro
  * @returns {Promise<{movies: (*|*[]|{}), tv: (*|*[]|{})}>}
  */
 const slimTrending = async (): Promise<{ movies: (any | any[] | {}); tv: (any | any[] | {}); }> => {
-    let movies = await get(base + "trending/movie/week?api_key=" + apiKey);
-    let tv = await get(base + "trending/tv/week?api_key=" + apiKey);
+    let movies = await get<any>(base + "trending/movie/week?api_key=" + apiKey);
+    let tv = await get<any>(base + "trending/tv/week?api_key=" + apiKey);
     return {movies: movies.results, tv: tv.results};
 }
 
@@ -552,18 +554,18 @@ const getPersonInfo = async (id: number, dBase: MediaSection[]): Promise<any> =>
         name,
         biography,
         profile_path
-    } = await get(base + "person/" + id + "?api_key=" + apiKey + "&language=en-US");
-    let movie: { cast: tmdbPerson[], crew: tmdbPerson[] } = await get(base + "person/" + id + "/movie_credits?api_key=" + apiKey + "&language=en-US");
-    let tv = await get(base + "person/" + id + "/tv_credits?api_key=" + apiKey + "&language=en-US");
+    } = await get<any>(base + "person/" + id + "?api_key=" + apiKey + "&language=en-US");
+    let movie: { cast: tmdbPerson[], crew: tmdbPerson[] } | false = await get(base + "person/" + id + "/movie_credits?api_key=" + apiKey + "&language=en-US");
+    let tv = await get<any>(base + "person/" + id + "/tv_credits?api_key=" + apiKey + "&language=en-US");
 
     let obj: FramesPerson = {
-        name: name,
+        name: name, id,
         biography: biography,
         poster: 'https://image.tmdb.org/t/p/original' + profile_path,
         movie_cast: [], movie_crew: [], tv_cast: [], tv_crew: [], production: []
     }
 
-    if (dBase.length) {
+    if (dBase.length && movie) {
         obj.movie_cast = movie.cast.collapse(dBase, MediaType.MOVIE, 'character').uniqueID('tmdbId');
         obj.movie_crew = movie.crew.collapse(dBase, MediaType.MOVIE).uniqueID('tmdbId');
 
@@ -576,7 +578,7 @@ const getPersonInfo = async (id: number, dBase: MediaSection[]): Promise<any> =>
         return obj;
 
     } else {
-        const data: tmdbPerson[] = movie.cast.concat(movie.crew).concat(tv.cast).concat(tv.crew).sortKey('popularity', false).filter(item => item.backdrop_path !== null)
+        const data: tmdbPerson[] = (movie ? movie.cast : []).concat(movie ? movie.crew : []).concat(tv.cast).concat(tv.crew).sortKey('popularity', false).filter(item => item.backdrop_path !== null)
         const response: FrontSearch[] = [];
 
         for (let item of data)
@@ -606,7 +608,7 @@ const getAllImages = async (type: MediaType, tmdbId: number, name: string): Prom
     let imdbId = type === MediaType.MOVIE ? tmdbId : external ? external.tvdb_id : 1;
 
     string = (type === MediaType.MOVIE ? 'movies' : 'tv') + '/';
-    let fanArt: FanArtBulkImages = await get(fanBase + string + imdbId + '?api_key=' + api);
+    let fanArt: FanArtBulkImages | false = await get(fanBase + string + imdbId + '?api_key=' + api);
 
     if (tmdbData) {
         backdrops = tmdbData.backdrops.filter(e => e.iso_639_1 === null).map(e => {
@@ -653,7 +655,7 @@ const getAllImages = async (type: MediaType, tmdbId: number, name: string): Prom
             return {
                 language: e.lang,
                 likes: +(e.likes),
-                name: fanArt.name,
+                name: fanArt ? fanArt.name: '',
                 url: e.url, drift: 0
             }
         }) || []);
@@ -665,7 +667,7 @@ const getAllImages = async (type: MediaType, tmdbId: number, name: string): Prom
             return {
                 language: e.lang,
                 likes: +(e.likes),
-                name: fanArt.name,
+                name: fanArt ? fanArt.name: '',
                 url: e.url, drift: 0
             }
         }));
@@ -677,21 +679,21 @@ const getAllImages = async (type: MediaType, tmdbId: number, name: string): Prom
             return {
                 language: e.lang,
                 likes: +(e.likes),
-                name: fanArt.name,
+                name: fanArt ? fanArt.name: '',
                 url: e.url, drift: 0
             }
         })).concat(temp2.map(e => {
             return {
                 language: e.lang,
                 likes: +(e.likes) - 1000,
-                name: fanArt.name,
+                name: fanArt ? fanArt.name: '',
                 url: e.url, drift: 0
             }
         })).concat(poster.map(e => {
             return {
                 language: e.lang,
                 likes: +(e.likes) - 2000,
-                name: fanArt.name,
+                name: fanArt ? fanArt.name: '',
                 url: e.url, drift: 0
             }
         }));
@@ -734,7 +736,7 @@ const getAppleImages = async (type: MediaType, tmdbId: number, name: string): Pr
         url = (await aJax({method: "POST", url: url}, data)).url;
         const temp = url.split('search/incremental?');
         url = temp[0] + 'search/incremental?sf=' + storefront[int] + '&' + temp[1] + '&q=' + name;
-        let info = await get(url);
+        let info = await get<any>(url);
         info = info.data && info.data.canvas && info.data.canvas.shelves ? info.data.canvas.shelves : false;
         if (info) {
             let movies, shows;

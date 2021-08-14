@@ -10,7 +10,7 @@ export default function ProdCompany ({response, meta}: {response: FramesCompany,
 
     return (
         <HomeLayout meta={meta}>
-            <Background response={response}/>
+            <Background response={response.images}/>
             <Holder response={response}/>
         </HomeLayout>
     )

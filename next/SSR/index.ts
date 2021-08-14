@@ -2,9 +2,18 @@ import {MediaType} from '@prisma/client'
 import Springboard from "../../server/classes/springboard";
 import User from "../../server/classes/auth";
 import FramesCast from "../../server/classes/framesCast";
+import {get} from "../../server/base/baseFunctions";
+import env from "../../server/base/env";
+
 const spring = new Springboard();
 const user = new User();
 const frames = new FramesCast();
+
+export interface AuthCP {
+    cpRight: string;
+    aReserved: string;
+    authentication: boolean;
+}
 
 export const banner = async () => await spring.bannerTrending();
 export const segment = async () => await spring.getSegment();
@@ -13,6 +22,17 @@ export const getAuthImages = async () => await spring.authImages();
 export const getGuest = async () => await user.getGuest();
 export const createGuest = async (auth: string) => await user.createGuestUser(auth);
 export const confirmUser = async (auth: string) => await user.confirmUserId(auth);
+export const getAuthCpRight = async () => {
+    const response = await get<AuthCP>('https://frameshomebase.maix.ovh/api/oauth?type=authenticate&state=' + env.config.cypher);
+    if (response)
+        return response;
+
+    return {
+        cpRight: 'Copyright © 2021 Roy Ossai.',
+        aReserved: 'All rights reserved. No document may be reproduced for commercial use without written approval from the author.',
+        authentication: false
+    }
+}
 
 export const findMedia = async (request: string, type: MediaType) => await spring.findMedia(request, type);
 export const getInfo = async (userId: string, mediaId: number) => await spring.getInfo(mediaId, userId, false);
@@ -26,6 +46,9 @@ export const findFrame = async (frame: string, user_id: string) => await frames.
 
 export const getProd = async (companyId: string) => await spring.getCompanyDetails(companyId);
 export const findProd = async (name: string) => await spring.findCompanyByName(name);
+
+export const getPerson = async (id: number) => await spring.getPersonInfo(id);
+export const findPerson = async (name: string) => await spring.findByName(name);
 
 export const convertUrl = (mediaId: string) => {
     mediaId = mediaId.replace(/\+/g, ' ').replace(/\?.*clid[^"]+/, "");

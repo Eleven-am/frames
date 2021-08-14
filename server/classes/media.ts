@@ -1,5 +1,6 @@
 import {
-    castCrew, FramesPerson,
+    castCrew, findPerson,
+    FramesPerson,
     FrontSearch,
     getCollection,
     getDetails,
@@ -47,6 +48,7 @@ export interface MediaSection {
     poster?: string,
     position?: number;
     background?: string
+    tmdbId?: number;
 }
 
 /**
@@ -509,25 +511,54 @@ export default class Media extends Episode {
      * @param forDownload determines if this is to be shown in manage or to be shown in the info page
      */
     async getPersonInfo(id: number, forDownload = false): Promise<FrontSearch[] | FramesPerson> {
-        const media = await prisma.media.findMany();
-        const response: FrontSearch[] = await getPersonInfo(id, forDownload ? []: media);
+        const media = await prisma.media.findMany({
+            select: {
+                id: true,
+                name: true,
+                poster: true,
+                background: true,
+                type: true,
+                tmdbId: true
+            }
+        });
+        if (forDownload) {
+            const response: FrontSearch[] = await getPersonInfo(id, forDownload ? [] : media);
+            return response.map(e => {
+                const type = e.type === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
+                const temp = media.find(i => i.type === type && i.tmdbId === e.id)
+                e.present = temp !== undefined;
+                if (temp)
+                    e.libName = temp.name;
+                e.recom = true;
+                return e;
+            })
+        } else {
+            const response: FramesPerson = await getPersonInfo(id, forDownload ? [] : media);
 
-        return forDownload ? response.map(e => {
-            const type = e.type === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
-            const temp = media.find(i => i.type === type && i.tmdbId === e.id)
-            e.present = temp !== undefined;
-            if (temp)
-                e.libName = temp.name;
-            e.recom = true;
-            return e;
-        }) : response;
+            response.tv_cast = response.tv_cast.map(e => {
+                delete e.tmdbId;
+                return e;
+            });
+
+            response.movie_cast = response.movie_cast.map(e => {
+                delete e.tmdbId;
+                return e;
+            });
+
+            response.production = response.production.map(e => {
+                delete e.tmdbId;
+                return e;
+            })
+
+            return response;
+        }
     }
 
     /**
      * @desc returns details on production company including media that they have taken part in its production
      * @param companyId
      */
-    async getCompanyDetails(companyId: string): Promise<FramesCompany|null> {
+    async getCompanyDetails(companyId: string): Promise<FramesCompany | null> {
         const media: MediaSection[] = await prisma.media.findMany({
             where: {
                 production: {
@@ -546,7 +577,7 @@ export default class Media extends Episode {
         })
 
         const company = await getProdCompany(companyId);
-        if (company){
+        if (company) {
             const movies = media.filter(e => e.type === MediaType.MOVIE).sortKey('name', true);
             const shows = media.filter(e => e.type === MediaType.SHOW).sortKey('name', true);
             const images = media.map(e => e.poster || '');
@@ -573,13 +604,28 @@ export default class Media extends Episode {
                     array_contains: name
                 }
             }, select: {production: true}
-        }) as {production: {id: string, name: string}[]};
+        }) as { production: { id: string, name: string }[] };
 
         const prod = item.production.find(e => e.name === name);
         if (prod)
             return await this.getCompanyDetails(prod.id);
 
         else return null;
+    }
+
+    async findByName(name: string) {
+        const people = (await findPerson(name)).map(e => {
+            return {
+                id: e.id, type: 'person',
+                popularity: e.popularity, drift: e.diff, backdrop: e.image,
+                overview: e.known_for, name: e.name
+            }
+        }).sortKey('drift', true);
+
+        if (people.length)
+            return await this.getPersonInfo(people[0].id) as FramesPerson;
+
+        return null
     }
 
     /**

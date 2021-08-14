@@ -144,10 +144,10 @@ export class Session {
                 regionName = identity.regionName;
 
             } else {
-                const client: IP = await get('http://ip-api.com/json/' + address);
-                city = client.city;
-                country = client.country;
-                regionName = client.regionName;
+                const client: IP | false = await get('http://ip-api.com/json/' + address);
+                city = client === false? '': client.city;
+                country = client === false? '': client.country;
+                regionName = client === false? '': client.regionName;
             }
 
             const data = {osName: osName || '', userId, browserName, sessionId, address, regionName, country, city};

@@ -25,38 +25,38 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     else if (body.type === 'get') {
-        let media_id = +(body.id);
+        let mediaId = +(body.id);
         userId = userId === 'unknown' ? 'b4dd90c0-b611-433a-a141-141ab5705766': userId;
-        response = await spring.getInfo(media_id, userId, false);
+        response = await spring.getInfo(mediaId, userId, false);
     }
 
     else if (body.type === 'list'){
-        let media_id = +(body.id);
+        let mediaId = +(body.id);
         response = false;
         if (userId !== 'unknown')
-            response = await list.addToList(media_id, userId);
+            response = await list.addToList(mediaId, userId);
     }
 
     else if (body.type === 'seen') {
-        let media_id = +(body.id);
+        let mediaId = +(body.id);
         response = false;
         if (userId !== 'unknown')
-            response = await spring.markAsSeen(media_id, userId);
+            response = await spring.markAsSeen(mediaId, userId);
     }
 
     else if (body.type === 'rate') {
-        let media_id = +(body.id);
+        let mediaId = +(body.id);
         let rate = +(body.rate);
         response = false;
         if (userId !== 'unknown')
-            response = await list.rateThis(media_id, userId, rate);
+            response = await list.rateThis(mediaId, userId, rate);
     }
 
     else if (body.type === 'episodes') {
-        let media_id = +(body.id);
+        let mediaId = +(body.id);
         let season = +(body.season);
         if (userId !== 'unknown')
-            response = await spring.getEpisodes(media_id, season, userId);
+            response = await spring.getEpisodes(mediaId, season, userId);
     }
 
     else if (body.type === 'prodPlaylist') {
@@ -65,6 +65,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         response = null;
         if (userId !== 'unknown')
             response = await spring.createProdPlaylist(companyId, userId)
+    }
+
+    else if (body.type === 'personPlaylist') {
+        let personId = +(body.id);
+        response = null;
+        if (userId !== 'unknown')
+        response = await spring.createPersonPlaylist(personId, userId);
     }
 
     res.json(response)

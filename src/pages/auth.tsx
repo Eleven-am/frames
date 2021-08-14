@@ -1,5 +1,5 @@
 import {addressAtom, Header} from "../../next/states/navigation";
-import {useEffect, } from "react";
+import {useEffect} from "react";
 import {useRouter} from "next/router";
 import Navbar from "../../next/components/navbar/navbar";
 import AuthImages from "../../next/components/auth/auth/authImages";
@@ -7,6 +7,7 @@ import LoginForm from "../../next/components/auth/form";
 import useUser from "../../next/utils/userTools";
 import {useNavBar} from "../../next/utils/customHooks";
 import {useRecoilState} from "recoil";
+import {AuthCP} from '../../next/SSR';
 
 const metaTags = {
     overview: 'Frames is a streaming service that offers a wide variety of TV shows, movies, anime, documentaries, and more on thousands straight to your browser',
@@ -15,7 +16,7 @@ const metaTags = {
     poster: '/meta.png'
 }
 
-export default function Auth({images, cypher}: {cypher: string, images: string[]}) {
+export default function Auth({images, auth}: {auth: AuthCP, images: string[]}) {
     const {user} = useUser();
     const router = useRouter();
     const [address, setAddress] = useRecoilState(addressAtom);
@@ -33,7 +34,7 @@ export default function Auth({images, cypher}: {cypher: string, images: string[]
         <>
             <Navbar/>
             <Header meta={metaTags}/>
-            <AuthImages response={images} cypher={cypher}/>
+            <AuthImages response={images} auth={auth}/>
             <LoginForm/>
         </>
     )
@@ -41,7 +42,7 @@ export default function Auth({images, cypher}: {cypher: string, images: string[]
 
 export async function getServerSideProps() {
     const images = await import('../../next/SSR').then(mod => mod.getAuthImages());
-    const cypher = await import('../../server/base/env').then(mod => mod.default.config.cypher);
-    return {props: {images, cypher}};
+    const auth = await import('../../next/SSR').then(mod => mod.getAuthCpRight());
+    return {props: {images, auth}};
 }
 

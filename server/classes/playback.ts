@@ -53,25 +53,23 @@ export default class Playback {
     async getNextEpisode(mediaId: number, userId: string): Promise<VideoPos | null> {
         let media = await prisma.media.findFirst({
             where: {id: mediaId},
-            include: {episodes: {where: {showId: mediaId}}},
+            include: {episodes: true}
         });
 
         if (media && media.type === MediaType.SHOW) {
             let episodes = media.episodes;
+            episodes = episodes.sortKeys("seasonId", "episode", true, true);
             let result = await prisma.view.findMany({
                 where: {
                     userId,
                     episode: {showId: mediaId},
                     position: {gt: 0}
-                },
-                include: {episode: true}
-            });
-
-            result = result.sortKey('updated', false);
+                }, include: {episode: true},
+                orderBy: [{updated: 'desc'}, {position: 'desc'}]
+            })
 
             if (result.length) {
                 const seen = result.some(e => e.finished === 2);
-                episodes = episodes.sortKeys("seasonId", "episode", true, true);
 
                 if (seen) {
                     const sortSeen = result.map(e => {
@@ -116,8 +114,8 @@ export default class Playback {
                         found: true,
                     };
                 } else {
-                    let lastSeenIndex = episodes.findIndex(item => item.id === lastSeen.episodeId)
-                    let nextEpisode = lastSeenIndex > 0 && lastSeenIndex < episodes.length - 2 ? episodes[lastSeenIndex + 1] : null;
+                    let lastSeenIndex = episodes.findIndex(item => item.id === lastSeen.episodeId);
+                    let nextEpisode = lastSeenIndex >= 0 && lastSeenIndex < episodes.length - 2 ? episodes[lastSeenIndex + 1] : null;
                     if (nextEpisode && lastSeen.finished !== 2) {
                         let video = result.find(e => e.episodeId === nextEpisode!.id)
 
@@ -131,7 +129,6 @@ export default class Playback {
                 }
             }
 
-            episodes = episodes.sortKeys("seasonId", "episode", true, true);
             if (episodes.length)
                 return {
                     position: 0,
@@ -238,7 +235,8 @@ export default class Playback {
         const episodeClass = new Episode();
         const info = await episodeClass.getEpisode(episodeId);
         const episode = await prisma.episode.findFirst({where: {id: episodeId}, select: {media: true, video: true}});
-        let views = await prisma.view.findMany({where: {userId, episodeId, position: {gt: 0}},
+        let views = await prisma.view.findMany({
+            where: {userId, episodeId, position: {gt: 0}},
             orderBy: [{updated: 'desc'}, {position: 'desc'}]
         });
         if (episode && info) {

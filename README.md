@@ -99,6 +99,10 @@ Start the server
   ![](art/14.png)
     * Clicking on the company's logo begins playback of all the media produce by the company in the order they were made available by said company
 
+* Media a specific actor or director took part in creating are easily viewable by clicking on their name
+  ![](art/28.png)
+    * Clicking on the person's name begins playback of all the media they have taken part in.
+
 #### Frames(aka the video player)
 * Frames supports only mp4 files. These files are streamed securely to the user and your Google credentials are never made available to the client.
   ![](art/player.gif)
@@ -125,8 +129,3 @@ Start the server
 * Creating and sharing your playlists with others
 * Group watch
 * Ability to download a video if you have a valid auth key
-* Seeing all media a specific actor / crew member contributed to
-
-
-
-

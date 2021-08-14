@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useRef, useState} from "react";
 import styles from './FullDetails.module.css';
 import info from '../Info.module.css';
 import Link from 'next/link';
@@ -22,8 +22,9 @@ export default function Details({response}: { response: SpringMediaInfo }) {
                     {response.crew?.length ? <>
                         <div>Production Team:</div>
                         <ul>{response.crew.map((person, v) =>
-                            <li key={v}>{person.job}: <span className={styles.click}>{person.name}</span>
-                            </li>)}
+                            <Link href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
+                                <li key={v}>{person.job}: <span className={styles.click}>{person.name}</span></li>
+                            </Link>)}
                         </ul>
                     </> : null}
                     {response.production && response.production.length ?
@@ -42,9 +43,12 @@ export default function Details({response}: { response: SpringMediaInfo }) {
                 <div id={styles["item-cast"]}>
                     <div>Cast:</div>
                     <ul>{response.cast && response.cast.map((person, v) =>
-                        <li key={v}>
-                            <span className={styles.click}>{person.name}</span><br/>
-                        </li>
+                        <Link href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
+                            <li>
+                                <span className={styles.click}>{person.name}</span>
+                                <br/>
+                            </li>
+                        </Link>
                     )}</ul>
                 </div>
             </div>

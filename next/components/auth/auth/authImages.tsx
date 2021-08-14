@@ -3,21 +3,15 @@ import {useLoop} from "../../../states/homeContext";
 import {useRecoilState, useSetRecoilState} from "recoil";
 import {AuthContextProcessAtom, Authenticated, AuthPicker} from "../../../states/authContext";
 import useUser from "../../../utils/userTools";
-import {useFetcher} from "../../../utils/customHooks";
 import {useEffect} from "react";
+import {AuthCP} from "../../../SSR";
 
-interface Auth {
-    cpRight: string;
-    aReserved: string;
-    authentication: boolean;
-}
-
-function Information({response}: { response: Auth }) {
+function Information({response}: { response: AuthCP }) {
     const setAuth = useSetRecoilState(Authenticated);
 
     useEffect(() => {
         setAuth(response.authentication);
-    }, [])
+    }, [response])
 
     return (
         <div style={{
@@ -40,10 +34,9 @@ function Information({response}: { response: Auth }) {
     )
 }
 
-export default function AuthImages({response, cypher}: { response: string[], cypher: string }) {
+export default function AuthImages({response, auth}: { response: string[], auth: AuthCP }) {
     const current = useLoop({start: 0, end: response.length});
     const [process, dispatch] = useRecoilState(AuthContextProcessAtom);
-    const {response: data} = useFetcher<Auth>('https://frameshomebase.maix.ovh/api/oauth?type=authenticate&state=' + cypher);
     const setPicker = useSetRecoilState(AuthPicker);
     const {signAsGuest} = useUser();
 
@@ -73,7 +66,7 @@ export default function AuthImages({response, cypher}: { response: string[], cyp
                 sign in
             </div>
 
-            {data ? <Information response={data}/> : null}
+            <Information response={auth}/>
             <div id={styles.guest} className={styles['signIn-button']} onClick={signAsGuest}>continue as guest</div>
         </>
     );

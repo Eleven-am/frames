@@ -1,7 +1,7 @@
 import Media, {MediaInfo, MediaSection} from "./media";
 import {Media as Med, MediaType, Generator} from "@prisma/client";
 import {create_UUID, takeFive} from "../base/baseFunctions";
-import {slimTrending, trending} from "../base/tmdb_hook";
+import {FramesPerson, slimTrending, trending} from "../base/tmdb_hook";
 import Playback, {SectionInterface} from "./playback";
 import {prisma} from '../base/utils';
 import {Playlist} from "./listEditors";
@@ -589,6 +589,32 @@ export default class Springboard extends Media {
             }).sortKeys('seasonId', 'episodeId', true, true).map(e => e.id));
 
         const identifier = await playlist.createPlaylists(videoIds, companyId, userId, Generator.FRAMES);
+        const response = await playlist.findFirstVideo(identifier);
+        return response?.id || null;
+    }
+
+    async createPersonPlaylist(personId: number, userId: string) {
+        const person = await this.getPersonInfo(personId) as FramesPerson;
+        const mediaIds = person.production.concat(person.tv_cast).concat(person.movie_cast).sortKey('id', true).map(e => e.id);
+
+        const videos: any[] = await prisma.video.findMany({
+            where: {
+                mediaId: {in: mediaIds}
+            }, include: {episode: true}
+        })
+
+        let videoIds: number[] = [];
+        for (let item of mediaIds)
+            videoIds = videoIds.concat(videos.filter(e => e.mediaId === item).map(e => {
+                if (e.episode) {
+                    e.seasonId = e.episode.seasonId;
+                    e.episodeId = e.episode.episode;
+                }
+
+                return e;
+            }).sortKeys('seasonId', 'episodeId', true, true).map(e => e.id));
+
+        const identifier = await playlist.createPlaylists(videoIds, person.name, userId, Generator.FRAMES);
         const response = await playlist.findFirstVideo(identifier);
         return response?.id || null;
     }

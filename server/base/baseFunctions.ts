@@ -154,7 +154,7 @@ const generateKey = (length: number, segments: number): string => {
  * @param url
  * @returns the header on fail or on demand otherwise returns a json file
  */
-const get = async (url: string): Promise<false | any> => {
+const get = async<S>(url: string): Promise<false | S> => {
     return await axios.get(url)
         .then(response => {
             return response.data;

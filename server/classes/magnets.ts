@@ -80,7 +80,7 @@ export default class Magnet {
             let url = 'https://yts.mx/api/v2/list_movies.json?query_term=' + external.imdb_id;
             let prefix = 'magnet:?xt=urn:btih:';
             let trackers = '&tr=udp%3A%2F%2Fglotorrents.pw%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fp4p.arenabg.ch%3A1337&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337';
-            const yts: Yts = await get(url);
+            const yts: Yts | false = await get(url);
 
             if (yts && yts.data && yts.data.movies) {
                 let {title_long, torrents} = yts.data.movies[0];

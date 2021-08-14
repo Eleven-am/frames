@@ -33,6 +33,10 @@ module.exports = {
             destination: '/prod'
         },
         {
+            source: '/person=:person',
+            destination: '/person'
+        },
+        {
             source: '/show=:show',
             destination: '/info'
         }
