@@ -96,7 +96,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
             }
             res.status(200).json(response)
 
-        } else if (query.action === 'genKey' && await user.validateUser(userId)) {
+        } else if (query.action === 'genKey') {
             response = await user.generateAuthKey(userId);
             res.status(200).json(response)
         }
@@ -141,7 +141,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
         }
 
     } else if (body.process === 'create') {
-        const data = await user.register(body.user, body.pass, body.username, userId);
+        const data = await user.register(body.user, body.pass, body.username, body.authKey);
         if (data.payLoad)
             await writeCookie(res, data.payLoad, req);
 

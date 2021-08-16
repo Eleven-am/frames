@@ -534,6 +534,10 @@ export default class Springboard extends Media {
         return null;
     }
 
+    /**
+     * @desc returns the name and location of the file requested
+     * @param auth file identification
+     */
     async getName(auth: string): Promise<{ location: string, name: string }> {
         const view = await prisma.view.findFirst({
             where: {auth},
@@ -558,6 +562,11 @@ export default class Springboard extends Media {
         return {location: '', name: ''};
     }
 
+    /**
+     * @desc creates a TMDB playlist of the production company in the order at which each media was released
+     * @param companyId
+     * @param userId
+     */
     async createProdPlaylist(companyId: string, userId: string) {
         const media: any[] = await prisma.media.findMany({
             where: {
@@ -593,6 +602,11 @@ export default class Springboard extends Media {
         return response?.id || null;
     }
 
+    /**
+     * @desc creates a TMDB playlist of the TMDB personality in the order at which each media was added to frames
+     * @param personId
+     * @param userId
+     */
     async createPersonPlaylist(personId: number, userId: string) {
         const person = await this.getPersonInfo(personId) as FramesPerson;
         const mediaIds = person.production.concat(person.tv_cast).concat(person.movie_cast).sortKey('id', true).map(e => e.id);

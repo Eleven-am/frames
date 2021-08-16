@@ -1,7 +1,5 @@
 import axios from 'axios';
 import {MediaType} from '@prisma/client';
-import {createCanvas, loadImage} from "canvas";
-import path from "path";
 
 declare global {
     interface Array<T> {
@@ -171,7 +169,7 @@ const get = async<S>(url: string): Promise<false | S> => {
  */
 const aJax = async (obj: any, data: any): Promise<boolean| any> => {
     return new Promise((resolve, reject) => {
-        axios(obj, data)
+        axios({...obj, data: {...data}})
             .then(response => {
                 resolve(response.data);
             }).catch(reason => {
@@ -180,6 +178,10 @@ const aJax = async (obj: any, data: any): Promise<boolean| any> => {
     })
 }
 
+/**
+ * @desc converts strung to time if possible
+ * @param t
+ */
 const parseTime = (t: string) => {
     const segments = t.split(':');
     const ms = parseInt(segments[2].split(',')[1]);
@@ -187,59 +189,6 @@ const parseTime = (t: string) => {
     const m = parseInt(segments[1]);
     const s = parseInt(segments[2]);
     return h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 + ms;
-}
-
-function aspectRatio(width: number, height: number, url: string) {
-    const ext = path.extname(url)
-
-    let a = width;
-    let b = height;
-    while (a != b) {
-        if (a > b) a -= b; else b -= a;
-    }
-
-    return (width / a === 16) && (height / a === 9) && ext !== '.png';
-}
-
-async function getImage(externalUrl: string): Promise<string> {
-    return new Promise<string>(resolve => {
-        loadImage(externalUrl).then(image => {
-            const width = image.naturalWidth;
-            const height = image.naturalHeight;
-            if (aspectRatio(width, height, externalUrl))
-                resolve('rgba(1, 16, 28, .5)');
-
-            else {
-                const canvas = createCanvas(width, height)
-                const ctx = canvas.getContext('2d')
-                ctx.drawImage(image, 0, 0);
-                let imageData = ctx.getImageData(0, 0, width, height);
-                let data = imageData.data;
-                let r = 0;
-                let g = 0;
-                let b = 0;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    r += data[i];
-                    g += data[i + 1];
-                    b += data[i + 2];
-                }
-
-                r = Math.floor(r / (data.length / 4));
-                g = Math.floor(g / (data.length / 4));
-                b = Math.floor(b / (data.length / 4));
-
-                r = r > 192 ? r - 192 : r;
-                g = g > 192 ? g - 192 : g;
-                b = b > 192 ? b - 192 : b;
-
-                resolve('rgba(' + r + ', ' + g + ', ' + b + ', .5)');
-            }
-        }).catch(e => {
-            console.log(e);
-            resolve('rgba(0, 0, 0, .5)');
-        })
-    })
 }
 
 Array.prototype.collapse = function (array2: any[], type: MediaType, keepKey?: string): any[] {
@@ -423,44 +372,13 @@ const toBytes = (string: string): number => {
     return Math.floor(bytes)
 }
 
-let logger: boolean = false;
-
-/**
- * setter
- * @param value
- */
-const change = (value: boolean) => {
-    logger = value;
-}
-
-/**
- * getter
- * @returns {boolean}
- */
-const getLogger = (): boolean => logger;
-
-/**
- * custom console log function
- * @param line
- * @param file
- * @param info
- */
-const frameLog = (line: number, file: string, info: any) => {
-    if (logger)
-        console.log(line, file, info)
-}
-
 export {
-    getImage,
     parseTime,
     create_UUID,
     generateKey,
-    frameLog,
     takeFive,
-    change,
     get,
     toBytes,
     formatBytes,
-    getLogger,
     aJax
 };

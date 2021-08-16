@@ -246,7 +246,6 @@ const optimiseRating = (results: any[], locale: string) => {
     return {mpaa: mpaa, date: date};
 }
 
-
 /**
  * @desc gets relevant MPAA rating and release date of a movie from TMDB
  * @param tmdbId
@@ -536,6 +535,10 @@ const performSearch = async (name: string): Promise<FrontSearch[]> => {
     return people.concat(media).sortKeys('drift', 'popularity', true, false)
 }
 
+/**
+ * @desc gets the information of a production company from TMDB
+ * @param companyId
+ */
 const getProdCompany = async (companyId: string) => {
     const confirm = companyId.charAt(0) === "s";
     const id = companyId.replace(/[ms]/, '');
@@ -549,6 +552,11 @@ const getProdCompany = async (companyId: string) => {
     return null;
 }
 
+/**
+ * @desc gets the information of someone from TMDB
+ * @param id
+ * @param dBase
+ */
 const getPersonInfo = async (id: number, dBase: MediaSection[]): Promise<any> => {
     const {
         name,
@@ -595,6 +603,12 @@ const getPersonInfo = async (id: number, dBase: MediaSection[]): Promise<any> =>
     }
 }
 
+/**
+ * @desc Gets all the images available from Apple, FanArt and Tmdb for a specific media by their TMDB id from
+ * @param type
+ * @param tmdbId
+ * @param name
+ */
 const getAllImages = async (type: MediaType, tmdbId: number, name: string): Promise<FramesImages> => {
     let posters: FrontImage[] = [];
     let backdrops: FrontImage[] = [];
@@ -702,6 +716,12 @@ const getAllImages = async (type: MediaType, tmdbId: number, name: string): Prom
     return {logos, backdrops, posters}
 }
 
+/**
+ * @desc gets the image that matches the mostm useful for auto scan
+ * @param type
+ * @param tmdbId
+ * @param name
+ */
 const getFramesImage = async (type: MediaType, tmdbId: number, name: string): Promise<UpdateImages> => {
     const images = await getAllImages(type, tmdbId, name);
     let posters = images.posters.sortKey('likes', false);
@@ -724,7 +744,12 @@ const getFramesImage = async (type: MediaType, tmdbId: number, name: string): Pr
     }
 }
 
-const getAppleImages = async (type: MediaType, tmdbId: number, name: string): Promise<AppleIMages[]> => {
+/**
+ * @desc gets the images of specific media by name from Apple using Ben Dodson's API
+ * @param type
+ * @param name
+ */
+const getAppleImages = async (type: MediaType, name: string): Promise<AppleIMages[]> => {
     let int = -1;
     let apple: AppleIMages[] = [];
     let storefront = [143441, 143444, 143442, 143443];

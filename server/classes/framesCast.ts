@@ -1,9 +1,6 @@
 import {prisma} from "../base/utils";
-import {generateKey} from "../base/baseFunctions";
 import Springboard, {SpringPlay} from "./springboard";
-import Playback from "./playback";
 
-const play = new Playback();
 const spring = new Springboard();
 
 export default class FramesCast {
@@ -33,6 +30,11 @@ export default class FramesCast {
         return false;
     }
 
+    /**
+     * @desc decrypts the cypher of a specific frame to it's auth and position
+     * @param cypher
+     * @param userId
+     */
     async decryptCipher(cypher: string, userId: string): Promise<SpringPlay | null> {
         const user = await prisma.user.findUnique({where: {userId}});
         const frame = await prisma.frame.findUnique({

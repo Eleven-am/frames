@@ -241,6 +241,11 @@ function Pick() {
             submit();
     })
 
+    useEventListener('visibilitychange', event => {
+        if (!event.srcElement.hidden)
+            dispatch({fade: false});
+    })
+
     const handleClicks = async (type: string) => {
         dispatch({fade: true})
         setTimeout(() => {

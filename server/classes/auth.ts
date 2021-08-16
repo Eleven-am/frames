@@ -42,21 +42,8 @@ export class Session {
         let result = await prisma.session.findFirst({where: {session}, include: {user: true}});
         if (result) {
             if (result.user.role === Role.GUEST) {
-                const userId = result.userId;
-                const auth = prisma.auth.deleteMany({where: {userId}});
-                const identity = prisma.userIdentifier.deleteMany({where: {userId}});
-                const session = prisma.session.deleteMany({where: {userId}});
-                const frame = prisma.frame.deleteMany({where: {userId}});
-                const listItem = prisma.listItem.deleteMany({where: {userId}});
-                const rating = prisma.rating.deleteMany({where: {userId}});
-                const seen = prisma.seen.deleteMany({where: {userId}});
-                const playlist = prisma.playlist.deleteMany({where: {userId}});
-                const suggestion = prisma.suggestion.deleteMany({where: {userId}});
-                const view = prisma.view.deleteMany({where: {userId}});
-                const user = prisma.user.delete({where: {userId}});
-
                 try {
-                    prisma.$transaction([identity, auth, session, frame, listItem, rating, seen, playlist, suggestion, view, user]);
+                    await prisma.user.delete({where: {userId: result.userId}});
                 } catch (e) {
                     console.log(e);
                 }
@@ -119,16 +106,20 @@ export class Session {
     async clearSingleSession(session: string) {
         const state = await prisma.session.findUnique({where: {session}});
         if (state) {
-            const identifier = prisma.userIdentifier.delete({where: {sessionId: session}});
-            const preset = prisma.session.delete({where: {session}});
             try {
-                prisma.$transaction([identifier, preset]);
+                await prisma.session.delete({where: {session}});
             } catch (e) {
                 console.log(e)
             }
         }
     }
 
+    /**
+     * @desc saves the identity of a specific user's session
+     * @param userId
+     * @param sessionId
+     * @param req
+     */
     async saveIdentity(userId: string, sessionId: string, req: NextApiRequest) {
         const address = requestIp.getClientIp(req);
         const ua = parser(req.headers['user-agent']);
@@ -151,7 +142,8 @@ export class Session {
             }
 
             const data = {osName: osName || '', userId, browserName, sessionId, address, regionName, country, city};
-            await prisma.userIdentifier.upsert({
+            if (city && country && regionName)
+                await prisma.userIdentifier.upsert({
                 create: data,
                 update: data,
                 where: {sessionId}
@@ -382,11 +374,19 @@ export default class User extends Auth {
         return await this.register(email, password, username, 'homeBase', Role.GUEST);
     }
 
+    /**
+     * @desc checks if a user with this userId exists
+     * @param userId
+     */
     async confirmUserId(userId: string) {
         const user = await prisma.user.findUnique({where: {userId}});
         return !!user;
     }
 
+    /**
+     * @desc gets a user's details using frames' framework
+     * @param userId
+     */
     async getFramedUser(userId: string): Promise<AuthInterface> {
         const user = await prisma.user.findUnique({where: {userId}});
         if (user) {

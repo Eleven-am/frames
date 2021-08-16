@@ -13,7 +13,14 @@ const SearchRes = ({obj}: { obj: UpdateSearch }) => {
 
     return (
         <div className={ss.res} onClick={() => dispatch({
-            media: {id: obj.id, type: obj.type, backdrop: '' + obj.backdrop, name: obj.name, poster: obj.poster, logo: '' + obj.logo}
+            media: {
+                id: obj.id,
+                type: obj.type,
+                backdrop: '' + obj.backdrop,
+                name: obj.name,
+                poster: obj.poster,
+                logo: '' + obj.logo
+            }
         })}>
             <img src={obj.backdrop} alt={obj.name} className={ss.resImage}/>
             <div className={ss.resDiv}>
@@ -92,18 +99,20 @@ export default function Library() {
             </div>
             <div className={ss.butContainers}>
                 {search?.length || unScan.length ? search?.length ? <div className={ss.searchRes}>
-                    {search.map((e, v) => <SearchRes key={v} obj={e}/>)}
-                </div> : <div className={ss.searchRes}>
-                    {unScan.map((e, v) => <UnScanned key={v} obj={e}/>)}
-                </div> :
+                        {search.map((e, v) => <SearchRes key={v} obj={e}/>)}
+                    </div> : <div className={ss.searchRes}>
+                        {unScan.map((e, v) => <UnScanned key={v} obj={e}/>)}
+                    </div> :
                     <>
                         <div className={ss.buttons}>
-                            <Template id={2} type={'scan'} name={'perform library scan'} onClick={() => libraryScan(0)}/>
+                            <Template id={2} type={'scan'} name={'perform library scan'}
+                                      onClick={() => libraryScan(0)}/>
                             <Template id={1} type={'info'} name={'handle unScanned items'} onClick={unScanned}/>
                             <Template id={0} type={'scan'} name={'scan episodes'} onClick={() => libraryScan(1)}/>
-                            <Template id={2} type={'down'} name={'get missing subtitles'} onClick={() => libraryScan(2)}/>
+                            <Template id={2} type={'down'} name={'get missing subtitles'}
+                                      onClick={() => libraryScan(2)}/>
                         </div>
-                        {load? <Loading/>: null}
+                        {load ? <Loading/> : null}
                     </>
                 }
             </div>

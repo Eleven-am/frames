@@ -1,5 +1,6 @@
 import {
-    castCrew, findPerson,
+    castCrew,
+    findPerson,
     FramesPerson,
     FrontSearch,
     getCollection,
@@ -17,9 +18,9 @@ import {
 } from '../base/tmdb_hook';
 import {Media as Med, MediaType} from '@prisma/client';
 import Episode, {DetailedEpisode, EpisodeInterface} from "./episode";
-import {magnet, prisma} from '../base/utils';
+import {drive, magnet, prisma} from '../base/utils';
 import {FrontBit, UpdateInterface} from "./update";
-import {getImage} from "../base/baseFunctions";
+import {aJax} from "../base/baseFunctions";
 
 /**
  * Only for getInfo
@@ -375,9 +376,11 @@ export default class Media extends Episode {
         let res = null;
         const data = await getDetails(obj.type, obj.tmdbId);
         if (data) {
-            const video: { location: string, mediaId?: number, showId?: number } | null = obj.type === MediaType.MOVIE ? await prisma.video.findUnique({where: {location}}) : await prisma.folder.findUnique({where: {location}});
             const trailer = await getTrailer(obj.tmdbId, obj.type);
-            const background = await getImage(obj.poster);
+            const background: string = await aJax({
+                method: "POST",
+                url: 'https://frameshomebase.maix.ovh/api/out'
+            }, {process: 'averageColor', image: obj.poster});
 
             if (obj.type === MediaType.MOVIE) {
                 const {release, rating} = await getMovieRating(obj.tmdbId);
@@ -413,27 +416,40 @@ export default class Media extends Episode {
             }
 
             if (res) {
-                if (video) {
-                    const id = video.mediaId || video.showId;
-                    await prisma.media.update({data: {...res, background}, where: {id}});
-
-                } else {
-                    let data = await prisma.media.create({
-                        data: {
+                try {
+                    const media = await prisma.media.upsert({
+                        where: {tmdbId_type: {tmdbId: obj.tmdbId, type: obj.type}},
+                        create: {
                             ...res,
                             background,
                             created: new Date(),
                             updated: new Date()
-                        }
-                    })
+                        }, update: {...res, background}
+                    });
 
-                    if (data.type === MediaType.MOVIE) {
-                        let obj = {english: null, french: null, german: null, location, mediaId: data.id};
-                        let video = await prisma.video.create({data: {...obj}});
+                    const video = media.type ? await prisma.video.upsert({
+                        where: {location},
+                        create: {english: null, french: null, german: null, location, mediaId: media.id},
+                        update: {}
+                    }) : await prisma.folder.upsert({
+                        where: {location},
+                        create: {location, showId: media.id},
+                        update: {}
+                    });
+
+                    if (media.type === MediaType.MOVIE) {
                         await prisma.sub.create({data: {videoId: video.id}});
+                        const videos = await prisma.video.findMany({where: {AND: [{mediaId: media.id}, {NOT: {location}}]}});
+                        await prisma.video.deleteMany({where: {AND: [{mediaId: media.id}, {NOT: {location}}]}});
+
+                        for await (let item of videos)
+                            await drive.deleteFile(item.location);
 
                     } else
-                        await prisma.folder.create({data: {location, showId: data.id}});
+                        await prisma.folder.deleteMany({where: {AND: [{showId: media.id}, {NOT: {location}}]}});
+
+                } catch (e) {
+                    console.log(e);
                 }
             }
         }
@@ -613,6 +629,10 @@ export default class Media extends Episode {
         else return null;
     }
 
+    /**
+     * @desc finds a TMDB personality by their name
+     * @param name
+     */
     async findByName(name: string) {
         const people = (await findPerson(name)).map(e => {
             return {

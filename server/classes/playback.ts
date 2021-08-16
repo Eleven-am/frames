@@ -423,9 +423,10 @@ export default class Playback {
     async getContinue(userId: string): Promise<SectionInterface> {
         let info = await prisma.view.findMany({
             where: {userId, position: {gt: 0}},
-            include: {video: {include: {media: true}}}
+            include: {video: {include: {media: true}}},
+            orderBy: [{updated: 'desc'}]
         });
-        let data = info.sortKey('updated', false).map(e => {
+        let data = info.map(e => {
             return {
                 finished: e.finished,
                 backdrop: e.video.media.backdrop,

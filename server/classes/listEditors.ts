@@ -20,7 +20,15 @@ export interface PlayListResponse {
     playList: string;
 }
 
+export interface PicksList {
+    category: string;
+    display: string;
+    poster: string;
+    overview: string;
+}
+
 export class ListEditors {
+
     /**
      * @param userId user identifier
      * @returns media added by user to their list
@@ -106,6 +114,9 @@ export class ListEditors {
      * @param display the information diaplayed for the pick
      */
     async addPick(data: number[], category: string, display: string) {
+        display = display.toLowerCase();
+        category = category.toLowerCase();
+
         let res = data.map(e => {
             return {
                 mediaId: e, display, category,
@@ -133,6 +144,11 @@ export class ListEditors {
         return true;
     }
 
+    /**
+     * @desc adds two lists that already exists to the active [icks
+     * @param categoryOne
+     * @param categoryTwo
+     */
     async setActive(categoryOne: string, categoryTwo: string) {
         const one = await prisma.pick.findFirst({where: {category: categoryOne}});
         const two = await prisma.pick.findFirst({where: {category: categoryTwo}});
@@ -148,10 +164,37 @@ export class ListEditors {
             })
         }
     }
+
+    /**
+     * @desc gets a summary of all the picks available
+     */
+    async getPicks() {
+        const categories = await prisma.pick.findMany({select: {category: true}, distinct: ['category']});
+        const picks = await prisma.pick.findMany({include: {media: {select: {poster: true, name: true}}}});
+
+        const data: PicksList[] = [];
+        for (let item of categories) {
+            let temps = picks.filter(e => e.category === item.category);
+            const last = temps.pop();
+            let overview = temps.map(e => e.media.name).join(', ') + (last ? ' and ' + last.media.name: '');
+            overview = temps[0].display + ' includes ' + overview;
+            const poster = temps[0].media.poster;
+            data.push({...item, poster, overview, display: temps[0].display})
+        }
+
+        return data;
+    }
 }
 
 export class Playlist {
 
+    /**
+     * @desc creates a playlist in the order the videos where provided
+     * @param videos a number[] of the videoIds to be added to the playlist
+     * @param name user generic name provided for the playlist
+     * @param userId
+     * @param generator generated automatically by frames or by the user
+     */
     async createPlaylists(videos: number[], name: string, userId: string, generator: Generator): Promise<string> {
         const identifier = generateKey(5, 7);
         await prisma.playlist.create({
@@ -168,6 +211,10 @@ export class Playlist {
         return identifier;
     }
 
+    /**
+     * @desc gets the next video in the playlist cue based on the the identifier of the currently playing video
+     * @param id
+     */
     async retrieveNextVideo(id: number): Promise<PlayListResponse | null> {
         const video = await prisma.playlistVideos.findUnique({where: {id}});
         if (video) {
@@ -189,6 +236,11 @@ export class Playlist {
         return null;
     }
 
+    /**
+     * @desc generates a shuffled playlist of all the episode in a tv show media
+     * @param mediaId
+     * @param userId
+     */
     async shuffleMedia(mediaId: number, userId: string): Promise<PlayListResponse | null> {
         const media = await prisma.media.findFirst({where: {id: mediaId}, include: {videos: true}});
         if (media && media.type === 'SHOW') {
@@ -198,10 +250,7 @@ export class Playlist {
                 where: {userId, name: 'shuffle'},
                 select: {identifier: true}
             })).map(e => e.identifier);
-            const delPlay = prisma.playlist.deleteMany({where: {identifier: {in: identifiers}}});
-            const delVid = prisma.playlistVideos.deleteMany({where: {playlistId: {in: identifiers}}});
-
-            await prisma.$transaction([delVid, delPlay]);
+            await prisma.playlist.deleteMany({where: {identifier: {in: identifiers}}});
 
             const identifier = await this.createPlaylists(shuffle, 'shuffle', userId, Generator.FRAMES);
             const next = await prisma.playlistVideos.findFirst({where: {playlistId: identifier}});
@@ -212,6 +261,11 @@ export class Playlist {
         return null;
     }
 
+    /**
+     * @desc adds new videos to an existing playlist
+     * @param identifier
+     * @param videos
+     */
     async addToPlayList(identifier: string, videos: number | number[]) {
         const toAdd = Array.isArray(videos) ? videos : [videos];
         const data = toAdd.map(e => {
@@ -221,6 +275,10 @@ export class Playlist {
         await prisma.playlistVideos.createMany({data});
     }
 
+    /**
+     * @desc gets the first video in the playlist
+     * @param identifier
+     */
     async findFirstVideo(identifier: string): Promise<PlayListResponse | null> {
         const playList = await prisma.playlist.findUnique({where: {identifier}});
         const next = await prisma.playlistVideos.findFirst({where: {playlistId: identifier}});

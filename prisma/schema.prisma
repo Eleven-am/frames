@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["filterJson"]
+  previewFeatures = ["filterJson", "referentialActions"]
 }
 
 datasource db {
@@ -16,7 +16,7 @@ model Session {
   updated  DateTime        @updatedAt
   userId   String
   identity UserIdentifier?
-  user     User            @relation(fields: [userId], references: [userId])
+  user     User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 model Auth {
@@ -26,7 +26,7 @@ model Auth {
   created DateTime @default(now())
   updated DateTime @updatedAt
   userId  String
-  user    User     @relation(fields: [userId], references: [userId])
+  user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 model UserIdentifier {
@@ -40,8 +40,8 @@ model UserIdentifier {
   userId      String
   sessionId   String   @unique
   created     DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [userId])
-  Session     Session  @relation(fields: [sessionId], references: [session])
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  Session     Session  @relation(fields: [sessionId], references: [session], onDelete: Cascade)
 }
 
 model Pick {
@@ -50,7 +50,7 @@ model Pick {
   active   Boolean @default(false)
   category String
   display  String
-  media    Media   @relation(fields: [mediaId], references: [id])
+  media    Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 }
 
 model Episode {
@@ -61,8 +61,8 @@ model Episode {
   videoId  Int      @unique
   created  DateTime @default(now())
   updated  DateTime @updatedAt
-  media    Media    @relation(fields: [showId], references: [id])
-  video    Video    @relation(fields: [videoId], references: [id])
+  media    Media    @relation(fields: [showId], references: [id], onDelete: Cascade)
+  video    Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
   View     View[]
 
   @@unique(fields: [seasonId, episode, showId], name: "episodeId")
@@ -72,7 +72,7 @@ model Folder {
   id       Int    @id @default(autoincrement())
   location String @unique
   showId   Int    @unique
-  media    Media  @relation(fields: [showId], references: [id])
+  media    Media  @relation(fields: [showId], references: [id], onDelete: Cascade)
 }
 
 model Frame {
@@ -84,8 +84,8 @@ model Frame {
   auth     String
   created  DateTime @default(now())
   updated  DateTime @updatedAt
-  view     View     @relation(fields: [auth], references: [auth])
-  user     User     @relation(fields: [userId], references: [userId])
+  view     View     @relation(fields: [auth], references: [auth], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 model ListItem {
@@ -94,8 +94,8 @@ model ListItem {
   userId  String
   created DateTime @default(now())
   updated DateTime @updatedAt
-  media   Media    @relation(fields: [mediaId], references: [id])
-  user    User     @relation(fields: [userId], references: [userId])
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 model Rating {
@@ -103,8 +103,8 @@ model Rating {
   rate    Int
   mediaId Int
   userId  String
-  media   Media  @relation(fields: [mediaId], references: [id])
-  user    User   @relation(fields: [userId], references: [userId])
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 model Seen {
@@ -114,16 +114,16 @@ model Seen {
   userId  String
   created DateTime @default(now())
   updated DateTime @updatedAt
-  media   Media    @relation(fields: [mediaId], references: [id])
-  user    User     @relation(fields: [userId], references: [userId])
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 model PlaylistVideos {
   id         Int      @id @default(autoincrement())
   videoId    Int
   playlistId String
-  video      Video    @relation(fields: [videoId], references: [id])
-  playlist   Playlist @relation(fields: [playlistId], references: [identifier])
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  playlist   Playlist @relation(fields: [playlistId], references: [identifier], onDelete: Cascade)
 }
 
 enum Generator {
@@ -137,14 +137,14 @@ model Playlist {
   name           String
   generator      Generator        @default(FRAMES)
   identifier     String           @unique
-  user           User             @relation(fields: [userId], references: [userId])
+  user           User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
   PlaylistVideos PlaylistVideos[]
 }
 
 model Sub {
   id      Int   @id @default(autoincrement())
   videoId Int   @unique
-  videos  Video @relation(fields: [videoId], references: [id])
+  videos  Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
 }
 
 model Suggestion {
@@ -154,8 +154,8 @@ model Suggestion {
   userId  String
   created DateTime @default(now())
   updated DateTime @updatedAt
-  media   Media    @relation(fields: [mediaId], references: [id])
-  user    User     @relation(fields: [userId], references: [userId])
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 enum Role {
@@ -191,7 +191,7 @@ model Video {
   french         String?
   german         String?
   mediaId        Int
-  media          Media            @relation(fields: [mediaId], references: [id])
+  media          Media            @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   episode        Episode?
   subs           Sub?
   views          View[]
@@ -207,9 +207,9 @@ model View {
   finished  Int      @default(0)
   created   DateTime @default(now())
   updated   DateTime @updatedAt
-  episode   Episode? @relation(fields: [episodeId], references: [id])
-  user      User     @relation(fields: [userId], references: [userId])
-  video     Video    @relation(fields: [videoId], references: [id])
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
   frame     Frame[]
   episodeId Int?
 }

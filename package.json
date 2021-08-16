@@ -14,10 +14,9 @@
   "dependencies": {
     "@jc21/nzbget-jsonrpc-api": "^1.0.0",
     "@nestjs/config": "^0.6.3",
-    "@prisma/client": "^2.28.0",
+    "@prisma/client": "^2.29.1",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.1",
-    "canvas": "^2.8.0",
     "chomecast-sender": "^0.0.33",
     "cookie": "^0.4.1",
     "deluge-client": "^0.2.5",
@@ -32,7 +31,6 @@
     "rarbg-api": "^1.1.4",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-typing-animation": "^1.6.2",
     "recoil": "^0.3.1",
     "request-ip": "^2.1.3",
     "swr": "^0.5.6",
@@ -40,7 +38,7 @@
     "ua-parser-js": "^0.7.28"
   },
   "devDependencies": {
-    "@nestjs/common": "^6.11.11",
+    "@nestjs/common": "^8.0.6",
     "@types/bcrypt": "^5.0.0",
     "@types/cookie": "^0.4.1",
     "@types/jquery": "^3.5.5",
@@ -58,7 +56,7 @@
     "eslint-plugin-react": "^7.23.2",
     "eslint-plugin-react-hooks": "^4.2.0",
     "npm": "^7.20.2",
-    "prisma": "^2.28.0",
+    "prisma": "^2.29.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.6.7",
     "typescript": "^4.3.4"

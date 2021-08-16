@@ -45,6 +45,8 @@ export interface FrontTmDB {
 }
 
 export interface FrontBit {
+    available: boolean;
+    name?: string;
     file: drive_v3.Schema$File,
     res: { tmdbId: number, name: string, drift: number, popularity: number, backdrop: string | null, year: number }[]
     type: MediaType;
@@ -307,7 +309,7 @@ export class Update {
 
         if (data) {
             let name = data.title ? data.title : data.name || '';
-            const apple = await getAppleImages(type, tmdbId, name);
+            const apple = await getAppleImages(type, name);
             const {logos: logo, posters: poster, backdrops: backdrop} = await getAllImages(type, tmdbId, name);
 
             posters = poster;
@@ -376,7 +378,7 @@ export class Update {
 
         let name = data.title ? data.title : data.name || '';
         let release_date = data.release_date || data.first_air_date;
-        const apple = await getAppleImages(type, tmdbId, name);
+        const apple = await getAppleImages(type, name);
         const images = await getFramesImage(type, tmdbId, name);
 
         return {...{apple, images}, ...{name, year: new Date(release_date).getFullYear()}};
@@ -449,57 +451,61 @@ export class Update {
      */
     async scanForMedia(item: drive_v3.Schema$File, type: MediaType) {
         if (type === MediaType.MOVIE) {
-            let name: string, year: number;
-            let regex = /(?<name>^.*?)\.(?<year>\d{4})\.\d+p[^"]+/
-            let matches = item.name!.match(regex);
+            const ext = path.extname(item.name!)
+            if ((ext === '.mp4' || ext === '.m4v')){
+                let name: string, year: number;
+                let regex = /(?<name>^.*?)\.(?<year>\d{4})\.\d+p[^"]+/
+                let matches = item.name!.match(regex);
 
-            if (matches && matches.groups) {
-                name = matches.groups.name;
-                year = parseInt(matches.groups.year);
-                name = rename(name, dicDo);
+                if (matches && matches.groups) {
+                    name = matches.groups.name;
+                    year = parseInt(matches.groups.year);
+                    name = rename(name, dicDo);
 
-            } else {
-                let data = item.name!.match(/(?<name>^.*?)\d+p/);
-                name = data && data.groups && data.groups.name ? data.groups.name : item.name!;
-                name = rename(name, dicDo);
-                data = name.match(/\d{4}/g);
-                let temp = data && data.length ? data[data.length - 1] : new Date().getFullYear();
-                year = parseInt(`${temp}`);
-                name = name.replace(`${temp}`, '');
-            }
-
-            year = parseInt(`${year}`);
-            let backup: any[], results: any[];
-            let response = await search(MediaType.MOVIE, name);
-
-            results = response && response.results ? response.results.map(item => {
-                return {
-                    tmdbId: item.id,
-                    name: item.title,
-                    drift: item.title.Levenshtein(name),
-                    popularity: item.popularity,
-                    backdrop: item.backdrop_path,
-                    year: new Date(item.release_date).getFullYear()
+                } else {
+                    let data = item.name!.match(/(?<name>^.*?)\d+p/);
+                    name = data && data.groups && data.groups.name ? data.groups.name : item.name!;
+                    name = rename(name, dicDo);
+                    data = name.match(/\d{4}/g);
+                    let temp = data && data.length ? data[data.length - 1] : new Date().getFullYear();
+                    year = parseInt(`${temp}`);
+                    name = name.replace(`${temp}`, '');
                 }
-            }): []
 
-            backup = results.filter(item => (year - 1 <= item.year && item.year <= year + 1) && (name.strip(item.name) || item.drift < 5));
-            backup = backup.length > 1 ? backup.filter(item => item.year === year && item.drift < 3) : backup;
-            backup = backup.length > 1 ? backup.filter(item => item.drift < 2) : backup;
-            backup = backup.length > 1 ? backup.filter(item => item.drift < 1) : backup;
+                year = parseInt(`${year}`);
+                let backup: any[], results: any[];
+                let response = await search(MediaType.MOVIE, name);
 
-            if (backup.length < 1 && year === new Date().getFullYear()) {
-                backup = results.filter(item => item.backdrop !== null).sortKeys('drift', 'popularity', true, false);
-                backup = backup.length ? [backup[0]] : [];
+                results = response && response.results ? response.results.map(item => {
+                    return {
+                        tmdbId: item.id,
+                        name: item.title,
+                        drift: item.title.Levenshtein(name),
+                        popularity: item.popularity,
+                        backdrop: item.backdrop_path,
+                        year: new Date(item.release_date).getFullYear()
+                    }
+                }) : []
+
+                backup = results.filter(item => (year - 1 <= item.year && item.year <= year + 1) && (name.strip(item.name) || item.drift < 5));
+                backup = backup.length > 1 ? backup.filter(item => item.year === year && item.drift < 3) : backup;
+                backup = backup.length > 1 ? backup.filter(item => item.drift < 2) : backup;
+                backup = backup.length > 1 ? backup.filter(item => item.drift < 1) : backup;
+
+                if (backup.length < 1 && year === new Date().getFullYear()) {
+                    backup = results.filter(item => item.backdrop !== null).sortKeys('drift', 'popularity', true, false);
+                    backup = backup.length ? [backup[0]] : [];
+                }
+
+                if (backup.length > 1) {
+                    backup = backup.filter(item => item.backdrop !== null).sortKeys('drift', 'popularity', true, false);
+                    backup = backup.length ? [backup[0]] : [];
+                }
+
+                [backup, results] = [results, backup];
+                return {backup, results}
             }
-
-            if (backup.length > 1) {
-                backup = backup.filter(item => item.backdrop !== null).sortKeys('drift', 'popularity', true, false);
-                backup = backup.length ? [backup[0]] : [];
-            }
-
-            [backup, results] = [results, backup];
-            return {backup, results}
+            return {backup: [], results: []}
         } else {
             const response = await search(MediaType.SHOW, item.name || '');
             let results = response && response.results ? response.results : [];
@@ -527,9 +533,9 @@ export class Update {
      * @desc [BETA 2.0] Attempts to scan the libraries for new entries
      * @returns {Promise<void>}
      */
-    async autoScan() {
-        let films = await drive.readFolder(movies);
-        let shows = await drive.readFolder(tvShows);
+    async autoScan(moviesFolder = movies, showsFolder = tvShows) {
+        let films = moviesFolder === '' ? [] : await drive.readFolder(moviesFolder);
+        let shows = showsFolder === '' ? [] : await drive.readFolder(showsFolder);
         const episodes = await prisma.episode.findMany({include: {video: true}});
 
         const media = await prisma.media.findMany();
@@ -657,39 +663,50 @@ export class Update {
         return res;
     }
 
+    /**
+     * @desc gets the all the drive items that hasnt' bveen added to frames yet
+     */
     async getUnScanned(): Promise<FrontTmDB> {
         let films = await drive.readFolder(movies);
         let shows = await drive.readFolder(tvShows);
+        const media = await prisma.media.findMany();
 
         films = (await prisma.video.findMany({where: {episode: null}})).filterInFilter(films, 'location', 'id');
         shows = (await prisma.folder.findMany()).filterInFilter(shows, 'location', 'id');
 
-        const moviesRes: { type: MediaType, file: drive_v3.Schema$File, res: { tmdbId: number, name: string, drift: number, popularity: number, backdrop: string | null, year: number }[] }[] = []
-        const showsRes: { type: MediaType, file: drive_v3.Schema$File, res: { tmdbId: number, name: string, drift: number, popularity: number, backdrop: string | null, year: number }[] }[] = []
+        const moviesRes: FrontBit[] = [];
+        const showsRes: FrontBit[] = [];
 
         for (let item of films) {
             const {results, backup} = await this.scanForMedia(item, 'MOVIE');
             let res = results.length ? results : backup;
+            const med = media.find(e => e.type === MediaType.MOVIE && e.tmdbId === res[0]?.tmdbId);
             res = res.map(e => {
                 e.backdrop = "https://image.tmdb.org/t/p/original" + e.backdrop;
                 return e;
             })
-            moviesRes.push({file: item, res, type: MediaType.MOVIE});
+
+            moviesRes.push({file: item, res, type: MediaType.MOVIE, available: !!med, name: med?.name || undefined});
         }
 
         for (let item of shows) {
             const {results, backup} = await this.scanForMedia(item, 'SHOW');
             let res = results.length ? results : backup;
+            const med = media.find(e => e.type === MediaType.SHOW && e.tmdbId === res[0]?.tmdbId);
             res = res.map(e => {
                 e.backdrop = "https://image.tmdb.org/t/p/original" + e.backdrop;
                 return e;
             })
-            showsRes.push({file: item, res, type: MediaType.SHOW});
+            showsRes.push({file: item, res, type: MediaType.SHOW, available: !!med, name: med?.name || undefined});
         }
 
         return {movies: moviesRes, shows: showsRes};
     }
 
+    /**
+     * @desc performs a search on Tmdb for person movie or show matching the search value
+     * @param searchValue
+     */
     async performSearch(searchValue: string): Promise<UpdateSearch[]> {
         return await prisma.media.findMany({
             where: {name: {contains: searchValue}},
@@ -697,6 +714,10 @@ export class Update {
         });
     }
 
+    /**
+     * @desc gets the media file for editing in the client side
+     * @param mediaId
+     */
     async findFile(mediaId: number): Promise<{ file: drive_v3.Schema$File | null, tmdbId: number } | null> {
         const media = await prisma.media.findFirst({where: {id: mediaId}});
         if (media)
@@ -713,6 +734,11 @@ export class Update {
         return null;
     }
 
+    /**
+     * @desc searches through frames library for item that matches
+     * @param name
+     * @param type
+     */
     async mediaSearch(name: string, type: MediaType) {
         const media = await prisma.media.findMany();
         const response = await search(type, name);
@@ -740,6 +766,11 @@ export class Update {
         return data;
     }
 
+    /**
+     * @descm searches to see if  media already exists before it's added on the client side during the editing process
+     * @param tmdbId
+     * @param type
+     */
     async getMedia(tmdbId: number, type: MediaType): Promise<{ file: string, found: boolean } | false> {
         const media = await getDetails(type, tmdbId);
 

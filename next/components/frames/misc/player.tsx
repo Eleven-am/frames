@@ -44,10 +44,6 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
             const buffered = video.buffered;
             setCurrent({current, duration, buffered});
 
-            let tracks = player.current.textTracks;
-            for (let track of tracks)
-                track.mode = "hidden";
-
             if (playing(video))
                 setBuffer(false);
         }
@@ -58,6 +54,10 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
             const current = player.current.currentTime = (response.position / 1000) * player.current.duration;
             setCurrent({current, duration: player.current.duration, buffered: player.current.buffered});
             player.current.autoplay = true;
+
+            let tracks = player.current.textTracks;
+            for (let track of tracks)
+                track.mode = "hidden";
         }
     }, [player.current])
 

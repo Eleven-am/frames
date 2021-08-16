@@ -2,7 +2,7 @@ import {atom, selector, useRecoilState, useRecoilValue, useResetRecoilState, use
 import {EditMedia} from "../../server/classes/media";
 import {FramesImages, UpdateInterface, UpdateMediaSearch} from "../../server/classes/update";
 import {MediaType} from '@prisma/client';
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {drive_v3} from "googleapis";
 import {InformDisplayContext} from "../components/misc/inform";
 import { pFetch } from "./baseFunctions";
@@ -18,6 +18,11 @@ export const EditMediaContext = atom<EditMedia|null>({
 const TmdbAtom = atom({
     key: 'TmdbAtom',
     default: -1
+})
+
+const FoundAtom = atom({
+    key: 'FoundAtom',
+    default: false
 })
 
 const LogoAtom = atom({
@@ -75,6 +80,7 @@ const useReset = () => {
     const poster = useResetRecoilState(PosterAtom);
     const type = useResetRecoilState(TypeAtom);
     const location = useResetRecoilState(LocationAtom);
+    const found = useResetRecoilState(FoundAtom);
 
     return () => {
         type();
@@ -84,6 +90,7 @@ const useReset = () => {
         backdrop();
         name();
         poster();
+        found();
     }
 }
 
@@ -94,6 +101,7 @@ function General({state}: { state: EditMedia }) {
     const [type, setType] = useRecoilState(TypeAtom);
     const [name, setName] = useRecoilState(NameAtom);
     const setLocation = useSetRecoilState(LocationAtom);
+    const setFound = useSetRecoilState(FoundAtom);
     const [search, setSearch] = useState('');
     const setInform = useSetRecoilState(InformDisplayContext);
     const {response, abort: resAbort} = useFetcher<UpdateMediaSearch[]>('/api/update/mediaSearch?value=' + search + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
@@ -113,8 +121,9 @@ function General({state}: { state: EditMedia }) {
             setFile(state.unScan.file);
             setType(state.unScan.type)
             if (state.unScan.res.length === 1) {
+                setFound(state.unScan.available);
                 setTmdb(state.unScan.res[0].tmdbId);
-                setName(state.unScan.res[0].name)
+                setName(state.unScan.res[0].name);
             }
         }
     }
@@ -144,15 +153,19 @@ function General({state}: { state: EditMedia }) {
     }, [tmdbI])
 
     useEffect(() => {
-        if (data && !data.found) {
+        if (data) {
+            if (data.found && ((tmdb !== parseInt(tmdbI) && state.media) || state.unScan)) {
+                setFound(true);
+                setInform({
+                    type: "error",
+                    heading: 'Existing Media',
+                    message: data.file + ' already exists consider deleting this duplicate'
+                })
+            }
+
             setTmdb(+(tmdbI));
             setName(data.file);
-        } else if (data && data.found)
-            setInform({
-                type: "error",
-                heading: 'Existing Media',
-                message: data.file + ' already exists consider deleting this duplicate'
-            })
+        }
     }, [data])
 
     if (file)
@@ -232,8 +245,9 @@ function Images({state}: { state: EditMedia }) {
     else return null;
 }
 
-function Tail({state}: { state: EditMedia }) {
+function Tail({state, close}: { state: EditMedia, close: () => void}) {
     const update = useRecoilValue(UpdateSelector);
+    const found = useRecoilValue(FoundAtom);
     const setInform = useSetRecoilState(InformDisplayContext);
 
     const attemptUpload = async () => {
@@ -251,11 +265,18 @@ function Tail({state}: { state: EditMedia }) {
             heading: 'Missing parameters',
             message: 'Some required parameters like TMDB ID, poster or backdrop are missing'
         })
+        close();
+    }
+
+    const deleteMedia = async () => {
+        await pFetch({file: update.location}, '/api/update/delete');
+        close();
     }
 
     return (
         <div className={ss.tail}>
-            <Template id={1} type={'none'} name={'submit'} onClick={attemptUpload}/>
+            {found ? <Template id={1} type={'none'} name={'delete this'} onClick={deleteMedia}/> : null}
+            <Template id={1} type={'none'} name={found ? 'replace': 'submit'} onClick={attemptUpload}/>
         </div>
     )
 }
@@ -291,17 +312,19 @@ export const ManageMedia = () => {
         }
     }, [state])
 
+    const close = useCallback(() => {
+        setOpen(false)
+        setTimeout(() => {
+            setOpen(true);
+            dispatch(null);
+            reset();
+        }, 200)
+    }, [])
+
     if (state)
         return (
             <>
-                <div className={`${ss.block} ${open ? ss.o : ss.c}`} onClick={() => {
-                    setOpen(false)
-                    setTimeout(() => {
-                        setOpen(true);
-                        dispatch(null);
-                        reset();
-                    }, 200)
-                }}>
+                <div className={`${ss.block} ${open ? ss.o : ss.c}`} onClick={close}>
                     <div className={ss.container} onClick={e => e.stopPropagation()}>
                         {state.media || state.unScan?.res.length ?
                             <img className={ss.bckImg}
@@ -325,7 +348,7 @@ export const ManageMedia = () => {
                                 </div>
                             </div>
 
-                            <Tail state={state}/>
+                            <Tail state={state} close={close}/>
                         </div>
                     </div>
                 </div>

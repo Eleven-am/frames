@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React from "react";
 import styles from './FullDetails.module.css';
 import info from '../Info.module.css';
 import Link from 'next/link';
@@ -32,7 +32,8 @@ export default function Details({response}: { response: SpringMediaInfo }) {
                             <br/>
                             <div>Companies</div>
                             <ul>{response.production.map((item, v) =>
-                                <Link key={v} href={'prod?id='+item.id} as={'/productionCompany='+item.name.replace(/\s/g, '+')}>
+                                <Link key={v} href={'prod?id=' + item.id}
+                                      as={'/productionCompany=' + item.name.replace(/\s/g, '+')}>
                                     <li className={styles.click}><span>{item.name}</span></li>
                                 </Link>
                             )}
@@ -44,7 +45,7 @@ export default function Details({response}: { response: SpringMediaInfo }) {
                     <div>Cast:</div>
                     <ul>{response.cast && response.cast.map((person, v) =>
                         <Link href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
-                            <li>
+                            <li key={v}>
                                 <span className={styles.click}>{person.name}</span>
                                 <br/>
                             </li>
