@@ -7,6 +7,7 @@ import Springboard from "../../../../server/classes/springboard";
 import {drive, magnet} from "../../../../server/base/utils";
 import User from "../../../../server/classes/auth";
 import {ListEditors} from "../../../../server/classes/listEditors";
+import {PickUpdate} from "../../../../next/utils/editPicks";
 
 const list = new ListEditors()
 const update = new Update();
@@ -18,24 +19,30 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     let {userId} = confirmContext(req.cookies);
     let response: any = "null";
 
-    if (req.method === 'POST') {
-        if (body.type === 'modify') {
-            const obj: {data: UpdateInterface, location: string} = req.body;
-            await spring.addMedia(obj.data, obj.location);
-            response = true;
-        }
-
-        if (body.type === 'delete' && await user.validateUser(userId))
-            response = await drive.deleteFile(req.body.file);
-    }
-
-    else if (body.type === 'getSections') {
+    if (body.type === 'getSections') {
         const otherArray = ['about', 'account'];
         response = await user.validateUser(userId) ? [...otherArray, 'manage']: otherArray;
     }
 
     else if (await user.validateUser(userId)){
-        if (body.type === 'search') {
+        if (req.method === 'POST') {
+            if (body.type === 'modify') {
+                const obj: {data: UpdateInterface, location: string} = req.body;
+                await spring.addMedia(obj.data, obj.location);
+                response = true;
+            }
+
+            else if (body.type === 'delete')
+                response = await drive.deleteFile(req.body.file);
+
+            else if (body.type === 'editorPicks') {
+                const obj: PickUpdate = req.body;
+                await list.addPick(obj.mediaIds, obj.category, obj.display, obj.type, obj.active);
+                response = true;
+            }
+        }
+
+        else if (body.type === 'search') {
             const search = Array.isArray(body.search) ? body.search[0] : body.search;
             response = await update.improveSearch(search);
         }
@@ -109,9 +116,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         else if (body.type === 'getPicks')
             response = await list.getPicks();
 
+        else if (body.type === 'getPick') {
+            const search = Array.isArray(body.value) ? body.value[0] : body.value;
+            response = await list.getSpecificPick(search);
+        }
+
         else if (body.type === 'externalScan') {
-            response = true;
             const file = Array.isArray(body.file) ? body.file[0] : body.file;
+            response = !!(await drive.readFolder(file)).length;
             if (body.lib === 'mov')
                 update.autoScan(file, '');
             else

@@ -2,7 +2,16 @@ import {prisma} from '../base/utils';
 import {generateKey} from "../base/baseFunctions";
 import {MediaSection} from "./media";
 import {SectionInterface} from "./playback";
-import {Generator} from '@prisma/client';
+import {Generator, PickType, MediaType} from '@prisma/client';
+
+export interface PickMedia {
+    id: number;
+    type: MediaType;
+    backdrop: string;
+    poster: string;
+    logo: string;
+    name: string;
+}
 
 export interface PlayListResponse {
     /**
@@ -25,6 +34,14 @@ export interface PicksList {
     display: string;
     poster: string;
     overview: string;
+}
+
+export interface EditPickInterface {
+    type: PickType;
+    active: boolean;
+    display: string;
+    category: string;
+    media: PickMedia[]
 }
 
 export class ListEditors {
@@ -83,7 +100,7 @@ export class ListEditors {
      */
     async getCategory(category: string): Promise<SectionInterface> {
         let pick = await prisma.pick.findMany({where: {category}, include: {media: true}});
-        if (category === 'maix') {
+        if (pick[0]?.type === PickType.BASIC) {
             let data: MediaSection[] = pick.map(item => {
                 return {
                     background: item.media.background,
@@ -112,19 +129,32 @@ export class ListEditors {
      * @param data a number array containing the mediaId of the media to be added
      * @param category the cypher string to request the pick on load
      * @param display the information diaplayed for the pick
+     * @param type
+     * @param active
      */
-    async addPick(data: number[], category: string, display: string) {
+    async addPick(data: number[], category: string, display: string, type: PickType, active: boolean) {
         display = display.toLowerCase();
         category = category.toLowerCase();
+        await prisma.pick.deleteMany({where: {category}});
+        if (type === PickType.BASIC)
+            await prisma.pick.deleteMany({where: {type: PickType.BASIC}});
 
         let res = data.map(e => {
             return {
                 mediaId: e, display, category,
-                active: false,
+                active, type,
             }
         })
 
         await prisma.pick.createMany({data: res});
+        let picks = await prisma.pick.findMany({
+            distinct: ['category'],
+            orderBy: {id: 'asc'},
+            where: {AND: [{active: true}, {NOT: {category}}]}
+        });
+
+        if (picks.length > 1 && active)
+            await prisma.pick.updateMany({where: {category: picks[0].category}, data: {active: false}});
     }
 
     /**
@@ -145,31 +175,10 @@ export class ListEditors {
     }
 
     /**
-     * @desc adds two lists that already exists to the active [icks
-     * @param categoryOne
-     * @param categoryTwo
-     */
-    async setActive(categoryOne: string, categoryTwo: string) {
-        const one = await prisma.pick.findFirst({where: {category: categoryOne}});
-        const two = await prisma.pick.findFirst({where: {category: categoryTwo}});
-
-        if (one && two) {
-            await prisma.pick.updateMany({
-                data: {active: false}
-            })
-
-            await prisma.pick.updateMany({
-                data: {active: true},
-                where: {category: {in: [categoryOne, categoryTwo]}}
-            })
-        }
-    }
-
-    /**
      * @desc gets a summary of all the picks available
      */
     async getPicks() {
-        const categories = await prisma.pick.findMany({select: {category: true}, distinct: ['category']});
+        const categories = await prisma.pick.findMany({select: {category: true}, distinct: ['category'], orderBy: {category: 'asc'}});
         const picks = await prisma.pick.findMany({include: {media: {select: {poster: true, name: true}}}});
 
         const data: PicksList[] = [];
@@ -183,6 +192,61 @@ export class ListEditors {
         }
 
         return data;
+    }
+
+    /**
+     * @desc gets a specific editor pick useful for editing
+     * @param category
+     */
+    async getSpecificPick(category: string): Promise<EditPickInterface> {
+        let pick = await prisma.pick.findMany({where: {category}, include: {media: true}});
+        const type = pick[0]?.type;
+        const active = pick.length ? pick[0].active : false;
+        const media: {
+            id: number;
+            type: MediaType;
+            backdrop: string;
+            poster: string;
+            logo: string;
+            name: string;
+        }[] = pick.map(item => {
+            return {
+                background: item.media.background,
+                id: item.media.id, name: item.media.name,
+                poster: item.media.poster, type: item.media.type,
+                logo: item.media.logo, backdrop: item.media.backdrop
+            }
+        })
+        const display = pick[0]?.display;
+        return {type, media, display, category, active}
+    }
+
+    /**
+     * @desc return available segments for display
+     * @returns {Promise<string[]>}
+     */
+    async getSegments(): Promise<string[]> {
+        let editors = await prisma.pick.findMany({
+            distinct: ['category'],
+            where: {AND: [{active: true}, {NOT: {type: PickType.BASIC}}]}
+        });
+
+        let basic = await prisma.pick.findMany({
+            distinct: ['category'],
+            where: {type: PickType.BASIC}
+        });
+
+        let rows = ['myList', 'continue', 'trending', 'suggestion'];
+        if (editors.length && basic.length) {
+            rows = [...rows, editors[0].category, basic[0].category, 'seen'];
+
+            if (editors.length > 1)
+                rows = [...rows, editors[1].category];
+
+        } else
+            rows = [...rows, 'seen'];
+
+        return [...rows, 'added'];
     }
 }
 

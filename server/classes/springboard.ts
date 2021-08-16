@@ -1,5 +1,5 @@
 import Media, {MediaInfo, MediaSection} from "./media";
-import {Media as Med, MediaType, Generator} from "@prisma/client";
+import {Generator, Media as Med, MediaType} from "@prisma/client";
 import {create_UUID, takeFive} from "../base/baseFunctions";
 import {FramesPerson, slimTrending, trending} from "../base/tmdb_hook";
 import Playback, {SectionInterface} from "./playback";
@@ -200,23 +200,6 @@ export default class Springboard extends Media {
         })
 
         return {type: 'basic', display: 'what others are watching', data}
-    }
-
-    /**
-     * @desc return available segments for display
-     * @returns {Promise<string[]>}
-     */
-    async getSegment(): Promise<string[]> {
-        let picks = await prisma.pick.findMany({
-            distinct: ['category'],
-            where: {AND: [{active: true}, {NOT: {category: 'maix'}}]}
-        });
-        let rows = ['myList', 'continue', 'trending', 'suggestion', 'maix', 'seen'];
-        if (picks.length < 1)
-            return [...rows, 'added'];
-
-        let data = takeFive(rows, 4);
-        return [...data.result, ...[picks[0].category], ...data.left, ...[picks[1].category, 'added']];
     }
 
     /**

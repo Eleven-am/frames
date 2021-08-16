@@ -44,13 +44,19 @@ model UserIdentifier {
   Session     Session  @relation(fields: [sessionId], references: [session], onDelete: Cascade)
 }
 
+enum PickType {
+  BASIC
+  EDITOR
+}
+
 model Pick {
-  id       Int     @id @default(autoincrement())
+  id       Int      @id @default(autoincrement())
   mediaId  Int
-  active   Boolean @default(false)
+  active   Boolean  @default(false)
+  type     PickType @default(EDITOR)
   category String
   display  String
-  media    Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  media    Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 }
 
 model Episode {

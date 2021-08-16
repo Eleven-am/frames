@@ -8,6 +8,7 @@ import Navbar from "../components/navbar/navbar";
 import AccountInfo from "../components/navbar/infoHolder/AccountInfo";
 import {Loading} from "../components/misc/Loader";
 import {ManageMedia} from "../utils/editMedia";
+import ManagePick from "../utils/editPicks";
 
 interface NavSectionAndOpacity {
     opacity?: number;
@@ -139,6 +140,7 @@ export default function HomeLayout({children, meta, frame}: { children: ReactNod
             <Navbar/>
             <AccountInfo/>
             <ManageMedia/>
+            <ManagePick/>
             <div
                 style={!searchContext ? {visibility: "visible"} : {visibility: "hidden", opacity: 0}}>
                 {children}

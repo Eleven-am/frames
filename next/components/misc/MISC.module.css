@@ -100,6 +100,66 @@
     grid-template-columns: 1fr 4fr;
 }
 
+.pickBody {
+    width: 100%;
+    height: calc(100% - 110px);
+    background: rgba(1, 16, 28, .6);
+}
+
+.pickGrid {
+    padding: 20px 50px;
+    display: grid;
+    align-items: center;
+    row-gap: 15px;
+    height:  calc(100% - 130px);
+    overflow: scroll;
+}
+
+.inputHolders {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    height: 40px;
+    padding-top: 10px;
+}
+
+.pickImgHolder {
+    position: relative;
+    width: 250px;
+    height: 140px;
+    border: 2px solid rgba(0, 0, 0, 0);
+    border-radius: 5px;
+    overflow: hidden;
+    transition: all .2s ease-in-out;
+}
+
+.pickImgHolder:hover {
+    border: 2px solid var(--nino-blue);
+}
+
+.pickImgHolder .img1 {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pickImgHolder .img2 {
+    position: absolute;
+    height: 20%;
+    max-width: 50%;
+    object-fit: contain;
+    padding: 5px;
+    left: 5%;
+    bottom: 5%;
+    background: rgba(1, 16, 28, .6);
+}
+
+.search {
+    display: flex;
+    align-items: center;
+    width: 30%;
+}
+
 .tail button {
     transform: scale(.7);
 }
@@ -127,7 +187,7 @@
     color: var(--nino-blue);
 }
 
-.genInput input {
+.genInput input, .select {
     width: 95%;
     height: 30px;
     outline: 0;
@@ -139,6 +199,10 @@
     transition: all 0.2s ease-in-out;
     align-items: center;
     margin: 10px 0;
+}
+
+.select {
+    width: 40%;
 }
 
 .list {

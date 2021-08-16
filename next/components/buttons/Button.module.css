@@ -33,7 +33,7 @@
     transition: all .2s ease-in-out;
     align-items: center;
     cursor: pointer;
-    z-index: 9999999;
+    z-index: 5;
 }
 
 .playButton, .roundGuys {

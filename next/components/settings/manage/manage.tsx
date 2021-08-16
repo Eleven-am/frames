@@ -3,6 +3,7 @@ import GetContents from "./getContents";
 import Library from "./library";
 import React, {useEffect, useState} from "react";
 import {useFetcher} from "../../../utils/customHooks";
+import Picks from "./Picks";
 
 export default function Manage() {
     const {response: array} = useFetcher<string[]>('/api/update/getManage');
@@ -20,7 +21,8 @@ export default function Manage() {
                 </li>)}
             </ul>
             {side === 'get contents' ? <GetContents/>:
-                side === 'library'? <Library/>: null}
+                side === 'library'? <Library/>:
+                    side === 'manage picks'? <Picks/>: null}
         </div>
     )
 }

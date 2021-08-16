@@ -4,10 +4,12 @@ import User from "../../server/classes/auth";
 import FramesCast from "../../server/classes/framesCast";
 import {get} from "../../server/base/baseFunctions";
 import env from "../../server/base/env";
+import {ListEditors} from "../../server/classes/listEditors";
 
 const spring = new Springboard();
 const user = new User();
 const frames = new FramesCast();
+const list = new ListEditors();
 
 export interface AuthCP {
     cpRight: string;
@@ -16,7 +18,7 @@ export interface AuthCP {
 }
 
 export const banner = async () => await spring.bannerTrending();
-export const segment = async () => await spring.getSegment();
+export const segment = async () => await list.getSegments();
 
 export const getAuthImages = async () => await spring.authImages();
 export const getGuest = async () => await user.getGuest();

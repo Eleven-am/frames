@@ -38,7 +38,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         response = await playback.getSeen(userId);
 
     else if (body.type === "segment")
-        response.data = await spring.getSegment();
+        response.data = await list.getSegments();
 
     else if (body.type === "suggestion")
         response = await playback.getSuggestions(userId);

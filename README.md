@@ -111,6 +111,14 @@ Start the server
       ![](art/15.png)
       ![](art/18.png)
       ![](art/17.png)
+  
+    * On the right side of the controls exists the fullscreen button, the subtitles button and the up-next button.
+      ![](art/32.png)
+      * Clicking on the up next button plays the next video as expected. 
+
+    * Frames supports only three subtitle languages at this point (English, French, and German)      
+      ![](art/33.png)
+
 
 * Frames has AirPlay and Chromecast functionality built in
   ![](art/16.png)
@@ -124,6 +132,20 @@ Start the server
 
 * The up next UI when the present video is done playing
   ![](art/21.png)
+
+* You can add three personalised categories to the home page.
+    * These categories include a list of previously chosen media and a name to display said media
+      ![](art/30.png)
+    * Two of these categories appear like this
+      ![](art/34.png)
+    * And the last one appears like this
+      ![](art/35.png)
+  
+    * Adding these editor picks is as easy as visiting the settings page => Mange => manage picks.Here you can modify or create new editor picks to display on the homepage
+      ![](art/31.png)
+      ![](art/29.png)
+
+
 
 ## Upcoming features
 * Creating and sharing your playlists with others

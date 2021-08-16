@@ -318,7 +318,7 @@ const Template = ({id, type, name, onClick}: ButtonInterfaces) => {
         mutate('/api/load/continue');
 
     return (
-        <button title={name} className={`${(id === 0 ? styles.playButton: id === 1 ? styles.trailerButton: styles.roundGuys)} ${styles.noFill}`} onClick={onClick}>
+        <button title={name} className={`${(id === 0 ? styles.playButton: id === 1 ? styles.trailerButton: styles.roundGuys)} ${type === 'add' ? '': styles.noFill}`} onClick={onClick}>
             {type === 'down' ? <svg viewBox="0 0 24 24">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
@@ -327,6 +327,14 @@ const Template = ({id, type, name, onClick}: ButtonInterfaces) => {
                 <polyline points="23 4 23 10 17 10"/>
                 <polyline points="1 20 1 14 7 14"/>
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>: type === 'add' ?  <svg viewBox="0 0 409.6 409.6">
+                <g>
+                    <path
+                        d="M392.533,187.733H221.867V17.067C221.867,7.641,214.226,0,204.8,0s-17.067,7.641-17.067,17.067v170.667H17.067
+                                C7.641,187.733,0,195.374,0,204.8s7.641,17.067,17.067,17.067h170.667v170.667c0,9.426,7.641,17.067,17.067,17.067
+                                s17.067-7.641,17.067-17.067V221.867h170.667c9.426,0,17.067-7.641,17.067-17.067S401.959,187.733,392.533,187.733z"
+                    />
+                </g>
             </svg>: type === 'none'? null: <svg viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="8" x2="12" y2="12"/>

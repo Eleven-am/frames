@@ -60,6 +60,8 @@ export default function Library() {
     useEffect(() => {
         if (text === '')
             abort.cancel();
+
+        return () => abort.cancel();
     }, [text])
 
     const unScanned = async () => {
