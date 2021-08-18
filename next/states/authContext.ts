@@ -1,4 +1,4 @@
-import {atom, selector, DefaultValue, useResetRecoilState} from 'recoil';
+import {atom, DefaultValue, selector, useResetRecoilState} from 'recoil';
 import NProgress from "nprogress";
 
 export const AuthContextErrorAtom = atom<string | null>({
@@ -38,12 +38,12 @@ export const AuthPicker = atom<boolean>({
     default: true
 })
 
-export const Authenticated = atom<boolean|null>({
+export const Authenticated = atom<boolean | null>({
     key: 'AuthenticatedAtom',
     default: null
 })
 
-export const AuthContextHandler = selector<{fade?: boolean, process?: Process, error?: string | null }>({
+export const AuthContextHandler = selector<{ fade?: boolean, process?: Process, error?: string | null }>({
     key: 'AuthContextHandler',
     get: ({get}) => {
         const errors = get(AuthErrors);
@@ -60,38 +60,31 @@ export const AuthContextHandler = selector<{fade?: boolean, process?: Process, e
             newError = 'invalid auth key';
 
         return {
-            fade: error ? false: get(AuthFade),
+            fade: error ? false : get(AuthFade),
             process: get(AuthContextProcessAtom),
-            error: newError === '' ? error: newError
+            error: newError === '' ? error : newError
         }
     }, set: ({set, get}, newValue) => {
         const auth = get(Authenticated);
         if (!(newValue instanceof DefaultValue)) {
             newValue.process && NProgress.start();
+            if (newValue.process && auth)
+                set(AuthContextProcessAtom, newValue.process);
+
+            if (newValue.error !== undefined)
+                set(AuthContextErrorAtom, newValue.error);
+
             if (newValue.fade !== undefined && auth) {
                 set(AuthFade, newValue.fade);
                 NProgress.done();
             }
-
-            if (newValue.process && newValue.error && auth) {
-                set(AuthContextErrorAtom, newValue.error);
-                set(AuthContextProcessAtom, newValue.process);
-            }
-
-            else if (newValue.process && auth) {
-                set(AuthContextErrorAtom, null);
-                set(AuthContextProcessAtom, newValue.process);
-            }
-
-            else if (newValue.error)
-                set(AuthContextErrorAtom, newValue.error);
         }
     }
 })
 
 const validateEmail = (email: string) => {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return email === '' ? true: re.test(email);
+    return email === '' ? true : re.test(email);
 };
 
 const validatePass = (pass: string) => {
@@ -130,7 +123,7 @@ const confirmAuth = (key: string) => {
 
 export const AuthErrors = selector({
     key: 'AuthErrors',
-    get: ({get}) =>  {
+    get: ({get}) => {
         const email = get(AuthContextEmailAtom);
         const pass = get(AuthContextPasswordAtom);
         const auth = get(AuthKeyAtom);

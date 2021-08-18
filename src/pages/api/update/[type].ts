@@ -109,8 +109,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         }
 
         else if (body.type === 'getManage') {
-            const data = ['library', 'manage picks', 'get contents', 'system config'];
-            response = environment.config.deluge || environment.config.usenet ? data:  ['library', 'manage picks', 'system config'];
+            const data = ['library', 'manage picks', 'get contents', 'manage keys', 'system config'];
+            response = environment.config.deluge || environment.config.usenet ? data:  ['library', 'manage picks', 'manage keys', 'system config'];
         }
 
         else if (body.type === 'getPicks')

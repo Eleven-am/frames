@@ -55,6 +55,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const req = context.req;
     let mediaId: number;
 
+    context.res.setHeader(
+        'Cache-Control',
+        'public, s-maxage=179, stale-while-revalidate=590'
+    )
+
     let {userId} = await import('./api/auth').then(mod => mod.confirmContext(req.cookies));
     if (pathname.hasOwnProperty('id'))
         mediaId = +(pathname.id)!;

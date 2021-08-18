@@ -6,7 +6,7 @@ import {Template} from "../../buttons/Buttons";
 import {useSetRecoilState} from "recoil";
 import {EditPickContext} from "../../../utils/editPicks";
 
-function Pick({obj}: {obj: PicksList}) {
+function Pick({obj}: { obj: PicksList }) {
     const dispatch = useSetRecoilState(EditPickContext);
 
     return (

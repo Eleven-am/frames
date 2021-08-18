@@ -2,7 +2,7 @@ import {prisma} from '../base/utils';
 import {generateKey} from "../base/baseFunctions";
 import {MediaSection} from "./media";
 import {SectionInterface} from "./playback";
-import {Generator, PickType, MediaType} from '@prisma/client';
+import {Generator, MediaType, PickType} from '@prisma/client';
 
 export interface PickMedia {
     id: number;
@@ -137,7 +137,10 @@ export class ListEditors {
         category = category.toLowerCase();
         await prisma.pick.deleteMany({where: {category}});
         if (type === PickType.BASIC)
-            await prisma.pick.deleteMany({where: {type: PickType.BASIC}});
+            await prisma.pick.updateMany({
+                where: {type: PickType.BASIC},
+                data: {active: false, type: PickType.EDITOR}
+            });
 
         let res = data.map(e => {
             return {
@@ -178,14 +181,18 @@ export class ListEditors {
      * @desc gets a summary of all the picks available
      */
     async getPicks() {
-        const categories = await prisma.pick.findMany({select: {category: true}, distinct: ['category'], orderBy: {category: 'asc'}});
+        const categories = await prisma.pick.findMany({
+            select: {category: true},
+            distinct: ['category'],
+            orderBy: {category: 'asc'}
+        });
         const picks = await prisma.pick.findMany({include: {media: {select: {poster: true, name: true}}}});
 
         const data: PicksList[] = [];
         for (let item of categories) {
             let temps = picks.filter(e => e.category === item.category);
             const last = temps.pop();
-            let overview = temps.map(e => e.media.name).join(', ') + (last ? ' and ' + last.media.name: '');
+            let overview = temps.map(e => e.media.name).join(', ') + (last ? ' and ' + last.media.name : '');
             overview = temps[0].display + ' includes ' + overview;
             const poster = temps[0].media.poster;
             data.push({...item, poster, overview, display: temps[0].display})

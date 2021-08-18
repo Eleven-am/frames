@@ -3,6 +3,7 @@ import {atom, useRecoilState, useSetRecoilState} from 'recoil';
 import {useIsMounted, useLoadEffect, useLocalStorage} from "./customHooks";
 import {pFetch, sFetch} from "./baseFunctions";
 import {AuthContextErrorAtom, AuthPicker} from "../states/authContext";
+import {ManageAuthKey} from "../../server/classes/auth";
 
 export interface ContextType {
     email: string;
@@ -140,14 +141,24 @@ export default function useUser(frames = false) {
         }
     }
 
-    const generateAuthKey = async () => {
+    const generateAuthKey = async (): Promise<{authKey?: string, error?: string}> => {
         if (user && user.role === Role.ADMIN) {
-            const response: string | null = await pFetch({...user, process: 'generateAuthKey'}, '/api/auth');
+            const response: {authKey: string} | null = await pFetch({...user, process: 'generateAuthKey'}, '/api/auth');
             if (response)
-                return {authKey: response};
+                return response;
         }
 
         return {error: 'You do not have permission to generate keys'};
+    }
+
+    const manageKeys = async () => {
+        if (user && user.role === Role.ADMIN) {
+            const response: ManageAuthKey[] | null = await pFetch({...user, process: 'manageKeys'}, '/api/auth');
+            if (response)
+                return {response};
+        }
+
+        return {error: 'You do not have permission this action'};
     }
 
     useLoadEffect(() => {
@@ -163,5 +174,5 @@ export default function useUser(frames = false) {
         return () => frames && signOut();
     }, [])
 
-    return {user, loading, confirmMail, generateAuthKey, signAsGuest, signIn, signUp, oauthAuth, signOut, confirmAuthKey}
+    return {user, loading, confirmMail, generateAuthKey, signAsGuest, signIn, signUp, oauthAuth, signOut, confirmAuthKey, manageKeys}
 }

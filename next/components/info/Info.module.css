@@ -37,7 +37,7 @@
     font-size: 50px;
     align-items: center;
     overflow: hidden;
-    width: 30%;
+    width: 100%;
     height: 20%;
 }
 
@@ -48,12 +48,13 @@
     -webkit-line-clamp: 2;
     line-height: 50px;
     -webkit-box-orient: vertical;
-    height: 90px;
+    width: 50%;
+    max-height: 90px;
 }
 
 .infoNaming img {
     object-fit: contain;
-    width: 100%;
+    width: 30%;
     height: 100%;
 }
 

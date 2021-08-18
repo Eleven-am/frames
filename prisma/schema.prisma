@@ -19,14 +19,22 @@ model Session {
   user     User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
+enum UseCase {
+  SIGNUP
+  DOWNLOAD
+}
+
 model Auth {
   id      Int      @id @default(autoincrement())
   authKey String   @unique
   access  Int
   created DateTime @default(now())
+  useCase UseCase  @default(SIGNUP)
   updated DateTime @updatedAt
   userId  String
+  auth    String?
   user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  view    View?    @relation(fields: [auth], references: [auth], onDelete: Cascade)
 }
 
 model UserIdentifier {
@@ -218,6 +226,7 @@ model View {
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
   frame     Frame[]
   episodeId Int?
+  Auth      Auth[]
 }
 
 enum MediaType {

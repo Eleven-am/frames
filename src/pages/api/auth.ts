@@ -95,21 +95,20 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
                 }
             }
             res.status(200).json(response)
-
-        } else if (query.action === 'genKey') {
-            response = await user.generateAuthKey(userId);
-            res.status(200).json(response)
         }
 
         return;
     }
 
-    const body = req.body
+    const body = req.body;
     if (body.process === 'confirmEmail')
         response = await user.validateEmail(body.email);
 
     else if (body.process === 'confirmAuthKey')
         response = await user.validateAuthKey(body.authKey);
+
+    else if (body.process === 'manageKeys')
+        response = await user.getKeys(userId);
 
     else if (body.process === 'confirmAuth') {
         const data = await user.validateSession(body.session);
@@ -179,8 +178,10 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
             }
         }
 
-    } else if (body.process === 'generateAuthKey')
-        response = await user.generateAuthKey(userId);
+    } else if (body.process === 'generateAuthKey') {
+        const authKey = await user.generateAuthKey(userId);
+        response = authKey ? {authKey}: authKey;
+    }
 
     res.status(200).json(response)
 }

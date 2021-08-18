@@ -42,8 +42,8 @@ const SearchRes = ({obj, setSearchResponse, setLoad}: {obj: FrontSearch, setLoad
     }
 
     return (
-        <div className={obj.present && obj.recom? `${ss.res} ${ss.had}`: ss.res} onClick={getRec}>
-            <img src={obj.backdrop} alt={obj.name} className={obj.type === 'person' ? ss.resPerson: ss.resImage}/>
+        <div className={obj.present && obj.recom ? `${ss.res} ${ss.had}` : ss.res} onClick={getRec}>
+            <img src={obj.backdrop} alt={obj.name} className={obj.type === 'person' ? ss.resPerson : ss.resImage}/>
             <div className={ss.resDiv}>
                 <div className={ss.resSpan}>
                     <span>{obj.name}</span>

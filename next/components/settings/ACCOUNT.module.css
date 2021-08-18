@@ -11,16 +11,17 @@
 
 .display {
     width: 100%;
-    height: 100%;
+    height: calc(100% - 100px);
     border-radius: 5px;
     display: grid;
     grid-template-columns: 1fr 4fr;
+    margin-top: 100px;
 }
 
 .side {
     list-style: none;
     color: #d9eeffa1;
-    margin: 100px 0 10px 70px;
+    margin: 0 0 10px 70px;
     padding: 0;
 }
 
@@ -69,8 +70,13 @@
     border-bottom: 1px solid var(--nino-blue);
 }
 
-.data {
-    margin: 100px 0 0 0;
+.infH {
+    height: 100%;
+    overflow: scroll;
+}
+
+.infH::-webkit-scrollbar {
+    display: none;
 }
 
 .searchContainer, .butContainers {

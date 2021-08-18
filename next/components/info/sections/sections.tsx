@@ -5,14 +5,12 @@ import styles from '../Info.module.css';
 import ss from '../../entities/Sections.module.css';
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {
-    InfoDivAtom,
     InfoEpisodesContext,
     InfoMediaIdContext,
     InformSeasonContext,
     InfoSeasonContext,
     InfoSeasonsContext,
-    InfoSectionContext,
-    InfoStartHeight
+    InfoSectionContext
 } from "../../../states/infoContext";
 import {SpringMediaInfo} from "../../../../server/classes/springboard";
 
@@ -44,16 +42,17 @@ function Sections({response}: { response: SpringMediaInfo }) {
     )
 }
 
-export default function InfoSections({response}: { response: SpringMediaInfo }) {
+export default function InfoSections({
+                                         response,
+                                         setReference
+                                     }: { response: SpringMediaInfo, setReference: ((arg: Element | null) => void) }) {
     const [sections, setSections] = useRecoilState(InformSeasonContext);
     const reference = useRef<HTMLDivElement>(null);
     const [section, setSection] = useRecoilState(InfoSectionContext)
     const isServer = typeof window === "undefined";
     const setSeasons = useSetRecoilState(InfoSeasonsContext)
     const season = useRecoilValue(InfoSeasonContext);
-    const setHeight = useSetRecoilState(InfoStartHeight);
     const setMedia = useSetRecoilState(InfoMediaIdContext);
-    const setReference = useSetRecoilState(InfoDivAtom);
 
     useEffect(() => {
         setSeasons(response.seasons || []);
@@ -63,9 +62,7 @@ export default function InfoSections({response}: { response: SpringMediaInfo }) 
     }, [])
 
     useEffect(() => {
-        const height = reference.current?.getBoundingClientRect().top;
         setReference(reference.current)
-        setHeight(height);
     }, [reference])
 
     return (

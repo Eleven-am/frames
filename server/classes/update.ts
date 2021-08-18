@@ -767,7 +767,7 @@ export class Update {
     }
 
     /**
-     * @descm searches to see if  media already exists before it's added on the client side during the editing process
+     * @descm searches to see if media already exists before it's added on the client side during the editing process
      * @param tmdbId
      * @param type
      */

@@ -3,15 +3,14 @@ import styles from './auth/Auth.module.css';
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {
     AuthContextEmailAtom,
-    AuthContextErrorAtom,
     AuthContextHandler,
     AuthContextPasswordAtom,
     AuthErrors,
     AuthFade,
-    AuthKeyAtom,
-    AuthPicker, useReset
+    AuthPicker,
+    useReset
 } from "../../states/authContext";
-import {useEventListener, useWeSocket} from "../../utils/customHooks";
+import {useAuth, useEventListener, useWeSocket} from "../../utils/customHooks";
 import useUser from "../../utils/userTools";
 
 const ENDPOINT = 'https://frameshomebase.vercel.app/api/oauth?type=';
@@ -29,53 +28,16 @@ interface SocketResponse {
     }
 }
 
-function useAuth() {
-    const {confirmAuthKey} = useUser();
-    const [lAuth, setLAuth] = useState(false);
-    const [valid, setValid] = useState(false);
-    const [auth, setAuth] = useRecoilState(AuthKeyAtom);
-    const {authError} = useRecoilValue(AuthErrors);
-    const setError = useSetRecoilState(AuthContextErrorAtom);
-
-    const confirmKey = async () => {
-        const res = await confirmAuthKey(auth);
-        if (res !== 0) {
-            const error = res === -1 ? 'invalid auth key' : 'this auth key has already been used';
-            setError(error);
-            setLAuth(true);
-        } else
-            setValid(true);
-    }
-
-    useEffect(() => {
-        if (auth.length === 23)
-            confirmKey()
-
-        else {
-            if (auth === 'homeBase')
-                setValid(true);
-
-            else
-                setValid(false);
-
-            setError(null);
-            setLAuth(false);
-        }
-    }, [auth])
-
-    return {authError: authError || lAuth, auth, setAuth, valid}
-}
-
 function Login() {
     const [state, dispatch] = useRecoilState(AuthContextHandler);
     const [email, setEmail] = useRecoilState(AuthContextEmailAtom);
     const [pass, setPass] = useState('');
     const {confirmMail, signIn} = useUser();
     const {emailError} = useRecoilValue(AuthErrors);
-    const {error, process, fade} = state;
+    const {error, process} = state;
 
     const submit = () => {
-        dispatch({fade: true});
+        dispatch({fade: true, error: null});
         setTimeout(async () => {
             if (process === 'email') {
                 if (email !== '' && !error && !emailError)
@@ -84,23 +46,22 @@ function Login() {
                     })
 
                 else dispatch({error: 'enter a valid email address'});
+                fade()
             } else if (process === 'password')
                 await signIn(email, pass);
-        }, 200)
+        }, 500)
     }
 
-    useEffect(() => {
-        setTimeout(() => {
-            if (fade) {
-                dispatch({fade: false});
-            }
-        }, 1500)
-    }, [fade])
+    const fade = () => setTimeout(() => dispatch({fade: false}), 1000);
 
     useEventListener('keyup', event => {
         if (event.code === 'Enter')
             submit();
     })
+
+    useEffect(() => {
+        fade();
+    }, [])
 
     return (
         <>
@@ -108,12 +69,16 @@ function Login() {
                 <input readOnly={process !== "email"}
                        className={process === "email" ? styles["log-input"] : styles["log-pass"]}
                        style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="email"
-                       placeholder="enter your email address" onChange={(e) =>
-                    setEmail(e.currentTarget.value)}/>
+                       placeholder="enter your email address" onChange={(e) => {
+                    dispatch({error: null})
+                    setEmail(e.currentTarget.value)
+                }}/>
                 <input className={process === "password" ? styles["log-input"] : styles["log-pass"]}
                        style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="password"
-                       placeholder="enter your password" onChange={(e) =>
-                    setPass(e.currentTarget.value)}/>
+                       placeholder="enter your password" onChange={(e) => {
+                    dispatch({error: null})
+                    setPass(e.currentTarget.value)
+                }}/>
             </div>
             <div className={styles["submit-width"]}>
                 <button
@@ -136,14 +101,13 @@ function Create() {
     const fade = useRecoilValue(AuthFade);
     const [email, setEmail] = useRecoilState(AuthContextEmailAtom);
     const [pass, setPass] = useRecoilState(AuthContextPasswordAtom);
-    const setError = useSetRecoilState(AuthContextErrorAtom);
     const [cPass, setCPass] = useState(false);
     const [confirmPass, setConfirmPass] = useState('');
     const {emailError, passError} = useRecoilValue(AuthErrors);
     const {auth, setAuth, authError, valid} = useAuth();
 
     const submit = async () => {
-        if (email !== '' && !emailError && !passError && !authError)
+        if (email !== '' && pass !== '' && auth !== '' && !emailError && !passError && !authError)
             await signUp(email, pass, auth);
     }
 
@@ -159,10 +123,10 @@ function Create() {
 
     useEffect(() => {
         if (confirmPass !== pass && confirmPass !== '') {
-            setError('Passwords do not match');
+            dispatch({error: 'Passwords do not match'});
             setCPass(true);
         } else {
-            setError(null);
+            dispatch({error: null});
             setCPass(false);
         }
     }, [confirmPass])
@@ -178,8 +142,8 @@ function Create() {
                 <div className={styles["create-holders"]}>
                     <label htmlFor="authKey">auth key</label>
                     <br/>
-                    <input maxLength={23}
-                           style={valid ? {borderColor: "#3cab66d0"} : authError ? {borderColor: "rgba(245, 78, 78, .9)"}: {}} type="text"
+                    <input maxLength={23} type="text"
+                           style={valid ? {borderColor: "#3cab66d0"} : authError ? {borderColor: "rgba(245, 78, 78, .9)"} : {}}
                            placeholder="enter your auth key" onChange={(e) => setAuth(e.currentTarget.value)}/>
                     <div className={styles.authSpacers}/>
                     <label htmlFor="create-pass">password</label>
@@ -242,7 +206,7 @@ function Pick() {
     })
 
     useEventListener('visibilitychange', event => {
-        if (!event.srcElement.hidden)
+        if (!event.srcElement.hidden && (data === undefined || data.user === undefined))
             dispatch({fade: false});
     })
 
@@ -316,7 +280,8 @@ function Pick() {
                     <div className={styles["log-input-holder"]}>
                         <input
                             className={styles["log-input"]}
-                            style={valid ? {borderColor: "#3cab66d0"} : authError ? {borderColor: "rgba(245, 78, 78, .9)"}: {}} type="text"
+                            style={valid ? {borderColor: "#3cab66d0"} : authError ? {borderColor: "rgba(245, 78, 78, .9)"} : {}}
+                            type="text"
                             placeholder="enter an auth key" onChange={(e) =>
                             setAuth(e.currentTarget.value)}/>
                     </div>

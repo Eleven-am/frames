@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import {Role} from '@prisma/client';
+import {Role, UseCase} from '@prisma/client';
 import {create_UUID, generateKey, get} from "../base/baseFunctions";
 import {prisma} from '../base/utils';
 import env from "../base/env";
@@ -30,6 +30,13 @@ export interface AuthInterface {
     error?: string
     response?: string
     payLoad?: { userId: string, session: string, context: Role, email: string }
+}
+
+export interface ManageAuthKey {
+    case: UseCase;
+    name: string;
+    backdrop: string;
+    description: string;
 }
 
 export class Session {
@@ -136,18 +143,18 @@ export class Session {
 
             } else {
                 const client: IP | false = await get('http://ip-api.com/json/' + address);
-                city = client === false? '': client.city;
-                country = client === false? '': client.country;
-                regionName = client === false? '': client.regionName;
+                city = client === false ? '' : client.city;
+                country = client === false ? '' : client.country;
+                regionName = client === false ? '' : client.regionName;
             }
 
             const data = {osName: osName || '', userId, browserName, sessionId, address, regionName, country, city};
             if (city && country && regionName)
                 await prisma.userIdentifier.upsert({
-                create: data,
-                update: data,
-                where: {sessionId}
-            });
+                    create: data,
+                    update: data,
+                    where: {sessionId}
+                });
         }
     }
 }
@@ -203,18 +210,69 @@ export class Auth extends Session {
      * @desc clears out the auth key by assigning a user to it and updating the accessing
      * @param authKey
      * @param userId
+     * @param useCase
+     * @param authView
      */
-    async utiliseAuthKey(authKey: string, userId: string) {
+    async utiliseAuthKey(authKey: string, userId: string, useCase: UseCase, authView: string | null = null) {
         const auth = await prisma.auth.findUnique({where: {authKey}});
         const user = await prisma.user.findUnique({where: {userId}});
         if (user && auth && auth.access === 0)
             await prisma.auth.update({
                 where: {authKey},
-                data: {userId, access: auth.access + 1}
+                data: {userId, access: auth.access + 1, auth: authView, useCase}
             })
 
         else if (authKey !== 'homeBase')
             throw new Error('Unauthorised access attempted');
+    }
+
+    /**
+     * @desc provides information about all keys on the database
+     * @param userId user requesting the information
+     */
+    async getKeys(userId: string): Promise<ManageAuthKey[]> {
+        if (await this.validateUser(userId)) {
+            const keys = await prisma.auth.findMany({
+                include: {
+                    user: true,
+                    view: {include: {episode: true, video: {include: {media: true}}}}
+                }, orderBy: {id: 'desc'}
+            });
+
+            const response: ManageAuthKey[] = [];
+
+            for (let item of keys) {
+                let description = '';
+                let backdrop = '/frames.png';
+
+                if (item.access === 0)
+                    description = item.user.email + ' created this auth key';
+
+                else {
+                    description = item.useCase === UseCase.SIGNUP ? item.user.email + ' signed up with this auth key' : '';
+
+                    if (item.view) {
+                        let media = item.view.video.media.name;
+                        backdrop = item.view.video.media.backdrop;
+
+                        if (item.view.episode)
+                            media = media + `: S${item.view.episode.seasonId}, E${item.view.episode.episode}`;
+
+                        description = item.user.email + ' downloaded ' + media + ' using this auth key';
+                    }
+                }
+
+                response.push({
+                    case: item.useCase,
+                    description, backdrop,
+                    name: 'Key: ' + item.authKey
+                })
+            }
+
+            return response;
+        }
+
+        return []
     }
 }
 
@@ -247,7 +305,7 @@ export default class User extends Auth {
         await prisma.user.create({
             data: {email, username, password, userId, role}
         });
-        await this.utiliseAuthKey(authKey, userId);
+        await this.utiliseAuthKey(authKey, userId, UseCase.SIGNUP);
         return {
             response: 'created',
             payLoad: {email, session: await this.generateSession(userId), userId, context: role}

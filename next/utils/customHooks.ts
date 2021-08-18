@@ -5,6 +5,9 @@ import {RecoilState, useRecoilState, useRecoilValue, useSetRecoilState} from "re
 import {NavSectionAndOpacity} from "../states/navigation";
 import NProgress from "nprogress";
 import {GridOnScreenAtom} from "../states/gridLibraryContext";
+import {SystemMaximised} from "../states/miscStates";
+import useUser from "./userTools";
+import {AuthContextErrorAtom, AuthErrors, AuthKeyAtom} from "../states/authContext";
 
 declare global {
     interface Document {
@@ -49,7 +52,7 @@ export function useFetcher<S>(key: string, config?: SWRConfiguration) {
 }
 
 export function useFullscreen(string: string): [boolean, (arg0: boolean) => void] {
-    const [maximised, setMaximised] = useState(false);
+    const [maximised, setMaximised] = useRecoilState(SystemMaximised);
 
     const toggleFS = useCallback(async (maximised: boolean) => {
         const holder = document.getElementById(string) as HTMLDivElement | null;
@@ -345,4 +348,41 @@ export function useInfiniteScroll<S>(type: string, value: string) {
     }, [data])
 
     return {data: flat, loading: !!isLoadingMore, error};
+}
+
+export function useAuth() {
+    const {confirmAuthKey} = useUser();
+    const [lAuth, setLAuth] = useState(false);
+    const [valid, setValid] = useState(false);
+    const [auth, setAuth] = useRecoilState(AuthKeyAtom);
+    const {authError} = useRecoilValue(AuthErrors);
+    const setError = useSetRecoilState(AuthContextErrorAtom);
+
+    const confirmKey = async () => {
+        const res = await confirmAuthKey(auth);
+        if (res !== 0) {
+            const error = res === -1 ? 'invalid auth key' : 'this auth key has already been used';
+            setError(error);
+            setLAuth(true);
+        } else
+            setValid(true);
+    }
+
+    useEffect(() => {
+        if (auth.length === 23)
+            confirmKey()
+
+        else {
+            if (auth === 'homeBase')
+                setValid(true);
+
+            else
+                setValid(false);
+
+            setError(null);
+            setLAuth(false);
+        }
+    }, [auth])
+
+    return {authError: authError || lAuth, auth, setAuth, valid}
 }

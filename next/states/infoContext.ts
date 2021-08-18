@@ -56,35 +56,6 @@ export const InfoEpisodesContext = selector({
     }
 })
 
-export const InfoStartHeight = atom<number | undefined>({
-    key: 'InfoStartHeight',
-    default: undefined
-})
-
-export const InfoSectionAtom = atom<number | undefined>({
-    key: 'InfoSectionAtom',
-    default: undefined
-})
-
-export const InfoDivAtom = atom<HTMLDivElement | null>({
-    key: 'InfoDivAtom',
-    default: null
-})
-
-export const InfoOpacitySelector = selector({
-    key: 'InfoOpacitySelector',
-    get: ({get}) => {
-        const start = get(InfoStartHeight);
-        const value = get(InfoSectionAtom);
-        if (start && value) {
-            let height = 1 - ((value / start) - 0.3);
-            let lowOpacity = height - 0.3;
-            return {height, lowOpacity};
-        }
-
-        return {height: 0.25, lowOpacity: 0};
-    }
-})
 
 export const InformSeasonContext = selector<string[]>({
     key: 'InformSeasonContext',
@@ -102,9 +73,6 @@ export const resetInfo = () => {
     const media = useResetRecoilState(InfoMediaIdContext);
     const section = useResetRecoilState(InfoSectionContext);
     const sections = useResetRecoilState(InfoSectionsContext);
-    const startHeight = useResetRecoilState(InfoStartHeight);
-    const sectionAtom = useResetRecoilState(InfoSectionAtom);
-    const div = useResetRecoilState(InfoDivAtom);
 
     return () => {
         trailer();
@@ -112,8 +80,5 @@ export const resetInfo = () => {
         season();
         media();
         sections();
-        startHeight();
-        sectionAtom();
-        div();
     }
 }

@@ -22,8 +22,8 @@ export default function Details({response}: { response: SpringMediaInfo }) {
                     {response.crew?.length ? <>
                         <div>Production Team:</div>
                         <ul>{response.crew.map((person, v) =>
-                            <Link href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
-                                <li key={v}>{person.job}: <span className={styles.click}>{person.name}</span></li>
+                            <Link key={v} href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
+                                <li>{person.job}: <span className={styles.click}>{person.name}</span></li>
                             </Link>)}
                         </ul>
                     </> : null}
@@ -44,8 +44,8 @@ export default function Details({response}: { response: SpringMediaInfo }) {
                 <div id={styles["item-cast"]}>
                     <div>Cast:</div>
                     <ul>{response.cast && response.cast.map((person, v) =>
-                        <Link href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
-                            <li key={v}>
+                        <Link key={v} href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
+                            <li>
                                 <span className={styles.click}>{person.name}</span>
                                 <br/>
                             </li>

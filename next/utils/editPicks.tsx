@@ -113,8 +113,7 @@ function Tail({close}: { close: () => void }) {
                 message: `Failed to add the editor pick ${update.display} to the database`
             })
             close();
-        } else
-            setInform({
+        } else setInform({
                 type: "error",
                 heading: 'Missing fields must be provided',
                 message: 'Some required fields like display, category or media were not provided'

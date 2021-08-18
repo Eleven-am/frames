@@ -427,7 +427,7 @@ export default class Media extends Episode {
                         }, update: {...res, background}
                     });
 
-                    const video = media.type ? await prisma.video.upsert({
+                    const video = media.type === MediaType.MOVIE ? await prisma.video.upsert({
                         where: {location},
                         create: {english: null, french: null, german: null, location, mediaId: media.id},
                         update: {}

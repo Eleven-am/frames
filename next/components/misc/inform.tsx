@@ -1,6 +1,6 @@
 import styles from "../entities/Sections.module.css";
 import {useEffect, useRef, useState} from "react";
-import {atom, useRecoilState, useRecoilValue} from "recoil";
+import {atom, useRecoilState} from "recoil";
 
 interface Inform {
     type: 'error' | 'warn' | 'alert';
@@ -8,7 +8,7 @@ interface Inform {
     message: string;
 }
 
-export const InformDisplayContext = atom<Inform|null>({
+export const InformDisplayContext = atom<Inform | null>({
     key: 'InformDisplayContext',
     default: null
 })
