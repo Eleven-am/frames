@@ -1,9 +1,22 @@
-import {GroupWatch, MyList, PlayButton, PLayList, Rating, Seen, Shuffle, TrailerButton} from "../../buttons/Buttons";
-import React from "react";
+import {
+    GroupWatch,
+    MyList,
+    PlayButton,
+    PLayList,
+    Rating,
+    Seen,
+    Shuffle,
+    Template,
+    TrailerButton
+} from "../../buttons/Buttons";
+import {Role} from '@prisma/client';
 import info from '../Info.module.css';
-import {useRecoilValue} from "recoil";
+import {useRecoilValue, useSetRecoilState} from "recoil";
 import {infoTrailerContext} from "../../../states/infoContext";
 import {SpringMediaInfo} from "../../../../server/classes/springboard";
+import useUser from "../../../utils/userTools";
+import {EditMediaContext} from "../../misc/editMedia";
+import {EditMedia} from "../../../../server/classes/media";
 
 interface InfoType {
     response: SpringMediaInfo,
@@ -11,7 +24,21 @@ interface InfoType {
 }
 
 export default function InfoDetails ({response, loadTrailer}: InfoType) {
-    const trailer = useRecoilValue(infoTrailerContext)
+    const trailer = useRecoilValue(infoTrailerContext);
+    const dispatch = useSetRecoilState(EditMediaContext);
+    const {user} = useUser();
+
+    const handleEdit = () => {
+        const {id, name, type, backdrop, poster, logo} = response;
+        const data: EditMedia = {
+            media: {
+                id, name, type,
+                backdrop, poster, logo
+            }
+        }
+        dispatch(data);
+    }
+
     return (
         <>
             <div className={info.infoNaming}>
@@ -25,6 +52,7 @@ export default function InfoDetails ({response, loadTrailer}: InfoType) {
                 <MyList id={response.id} myList={response.myList}/>
                 <Seen id={response.id} seen={response.seen}/>
                 <GroupWatch id={response.id}/>
+                {user?.role === Role.ADMIN ? <Template id={2} type={'edit'} name={'edit ' + response.name} onClick={handleEdit}/>: null}
             </div>
             <div className={info.detailsHolder}>
                 <div className={info.infoDetails}>

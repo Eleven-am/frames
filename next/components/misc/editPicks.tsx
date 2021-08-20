@@ -1,14 +1,14 @@
-import ss from "../components/misc/MISC.module.css";
+import ss from "./MISC.module.css";
 import React, {useCallback, useEffect, useState} from "react";
 import {atom, selector, useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
-import {EditPickInterface, PickMedia, PicksList} from "../../server/classes/listEditors";
-import style from '../components/settings/ACCOUNT.module.css';
+import {EditPickInterface, PickMedia, PicksList} from "../../../server/classes/listEditors";
+import style from '../settings/ACCOUNT.module.css';
 import {PickType} from '@prisma/client';
-import {useFetcher} from "./customHooks";
-import {UpdateSearch} from "../../server/classes/update";
-import {InformDisplayContext} from "../components/misc/inform";
-import {pFetch} from "./baseFunctions";
-import {Template} from "../components/buttons/Buttons";
+import {useFetcher} from "../../utils/customHooks";
+import {UpdateSearch} from "../../../server/classes/update";
+import {InformDisplayContext} from "./inform";
+import {pFetch} from "../../utils/baseFunctions";
+import {Template} from "../buttons/Buttons";
 
 const PickMediaAtom = atom<PickMedia[]>({
     key: 'PickMediaAtom',

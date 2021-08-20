@@ -2,7 +2,7 @@ import ss from "../ACCOUNT.module.css";
 import React, {useEffect, useState} from "react";
 import {FrontBit, FrontTmDB, UpdateSearch} from "../../../../server/classes/update";
 import {useSetRecoilState} from "recoil";
-import {EditMediaContext} from "../../../utils/editMedia";
+import {EditMediaContext} from "../../misc/editMedia";
 import {InformDisplayContext} from "../../misc/inform";
 import {Template} from "../../buttons/Buttons";
 import {useFetcher} from "../../../utils/customHooks";
@@ -27,7 +27,7 @@ const SearchRes = ({obj}: { obj: UpdateSearch }) => {
                 <div className={ss.resSpan}>
                     <span>{obj.name}</span>
                 </div>
-                <p className="overview">{obj.overview}</p>
+                <p>{obj.overview}</p>
             </div>
         </div>
     )

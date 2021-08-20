@@ -7,8 +7,8 @@ import SearchLayout from "../components/search/search";
 import Navbar from "../components/navbar/navbar";
 import AccountInfo from "../components/navbar/infoHolder/AccountInfo";
 import {Loading} from "../components/misc/Loader";
-import {ManageMedia} from "../utils/editMedia";
-import ManagePick from "../utils/editPicks";
+import {ManageMedia} from "../components/misc/editMedia";
+import ManagePick from "../components/misc/editPicks";
 
 interface NavSectionAndOpacity {
     opacity?: number;

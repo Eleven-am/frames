@@ -9,8 +9,35 @@ import {useSetRecoilState} from "recoil";
 import {InformDisplayContext} from "../../misc/inform";
 
 function KeyHolder({obj}: { obj: ManageAuthKey }) {
+    const dispatch = useSetRecoilState(InformDisplayContext);
+
+    const copy = async () => {
+        if (obj.access === 0)
+            navigator.clipboard.writeText(obj.key)
+                .then(() => {
+                    dispatch({
+                        type: "alert",
+                        heading: 'Copy Successful',
+                        message: 'auth key copied successfully'
+                    })
+                })
+                .catch((error) => {
+                    dispatch({
+                        type: "error",
+                        heading: 'Something went wrong',
+                        message: error as string
+                    })
+                })
+
+        else dispatch({
+            type: "warn",
+            heading: 'Invalid action',
+            message: 'This auth key has been exhausted'
+        })
+    }
+
     return (
-        <div className={`${ss.res} ${ss.had}`}>
+        <div className={obj.access !== 0 ? `${ss.res} ${ss.had}` : ss.res} onClick={copy}>
             <img src={obj.backdrop} alt={obj.name}
                  className={obj.case === UseCase.SIGNUP ? ss.resPerson : ss.resImage}/>
             <div className={ss.resDiv}>

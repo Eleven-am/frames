@@ -22,11 +22,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const host = req.headers.host;
     let url = 'http' + (host?.includes('localhost') ? '' : 's') + '://' + host;
 
-    context.res.setHeader(
-        'Cache-Control',
-        'public, s-maxage=179, stale-while-revalidate=590'
-    )
-
     if (pathname.hasOwnProperty('id')){
         const company = await import('../../next/SSR').then(mod => mod.getProd(pathname.id as string));
         if (company){

@@ -2,7 +2,7 @@ import ss from '../misc.module.css';
 import sv from '../misc.module.css';
 import style from './misc.module.css';
 import {BackButton} from "../../buttons/Buttons";
-import {useRecoilState, useRecoilValue} from "recoil";
+import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {
     bufferingSelector,
     differance,
@@ -18,6 +18,7 @@ import {generateKey} from "../../../../server/base/baseFunctions";
 import {useCallback, useEffect, useRef} from "react";
 import useCast from "../../../utils/castContext";
 import cd from "../frames.module.css";
+import {InformDisplayContext} from "../../misc/inform";
 
 export const Toppers = ({response}: { response: SpringPlay }) => {
     return (
@@ -59,6 +60,7 @@ export const Overview = ({response}: { response: SpringPlay }) => {
 
 export const ShareFrame = ({location}: { location: string }) => {
     const [value, setValue] = useRecoilState(shareOver);
+    const dispatch = useSetRecoilState(InformDisplayContext);
     const video = useRecoilValue(framesPlayer);
     const response = useRef<string>();
     const base = typeof Window !== "undefined" ? window.location.protocol + '//' + window.location.host + '/frame=' : '';
@@ -69,8 +71,19 @@ export const ShareFrame = ({location}: { location: string }) => {
 
     const copy = useCallback(async () => {
         navigator.clipboard.writeText(base + response.current)
+            .then(() => {
+                dispatch({
+                    type: "alert",
+                    heading: 'Copy Successful',
+                    message: 'Video url copied successfully'
+                })
+            })
             .catch((error) => {
-                console.log(`Copy failed! ${error}`)
+                dispatch({
+                    type: "error",
+                    heading: 'Something went wrong',
+                    message: error as string
+                })
             })
     }, [base, response])
 

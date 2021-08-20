@@ -18,6 +18,7 @@ interface ButtonInterfaces {
     myRating?: number;
     url?: string;
     onClick?: React.MouseEventHandler<HTMLButtonElement>;
+    onHover?: (arg: boolean) => void;
 }
 
 const PlayButton = ({id, name, url}: ButtonInterfaces) => {
@@ -115,8 +116,14 @@ const Shuffle = ({id, type}: ButtonInterfaces) => {
 };
 
 const PLayList = ({id, type}: ButtonInterfaces) => {
+    const dispatch = useSetRecoilState(InformDisplayContext);
+
     return type === 'MOVIE' ? (
-        <button className={`${styles.roundGuys} ${styles.noFill}`} title={'add to playlist'}>
+        <button className={`${styles.roundGuys} ${styles.noFill}`} title={'add to playlist'} onClick={() => dispatch({
+            type: "error",
+            heading: 'Function not available',
+            message: 'The playlist feature is currently under development'
+        })}>
             <svg viewBox="0 0 24 24">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                 <line x1="12" y1="8" x2="12" y2="16"/>
@@ -179,7 +186,7 @@ const MyList = ({id, myList}: ButtonInterfaces) => {
             className={styles.roundGuys}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
-            onClick={() => listHandler()}
+            onClick={listHandler}
             title={list ? "remove" : "add to list"}
         >
             {list ? (
@@ -222,7 +229,7 @@ const MyList = ({id, myList}: ButtonInterfaces) => {
 };
 
 const GroupWatch = ({id}: ButtonInterfaces) => {
-    const dispatch = useSetRecoilState(InformDisplayContext)
+    const dispatch = useSetRecoilState(InformDisplayContext);
 
     return (
         <button title={'GroupWatch'} className={styles.roundGuys} onClick={() => dispatch({
@@ -287,7 +294,7 @@ const InfoButton = ({id, name, type}: ButtonInterfaces) => {
     )
 }
 
-const BackButton = ({response}: {response?: SpringPlay}) => {
+const BackButton = ({response}: { response?: SpringPlay }) => {
     const router = useRouter();
 
     const routeOut = async () => {
@@ -301,7 +308,7 @@ const BackButton = ({response}: {response?: SpringPlay}) => {
     }
 
     return (
-        <svg className={styles.bb} viewBox="0 0 512 512" onClick={() => routeOut()}>
+        <svg className={styles.bb} viewBox="0 0 512 512" onClick={routeOut}>
             <path d="M256,0C114.844,0,0,114.844,0,256s114.844,256,256,256s256-114.844,256-256S397.156,0,256,0z M256,490.667
 				C126.604,490.667,21.333,385.396,21.333,256S126.604,21.333,256,21.333S490.667,126.604,490.667,256S385.396,490.667,256,490.667
 				z"/>
@@ -313,36 +320,54 @@ const BackButton = ({response}: {response?: SpringPlay}) => {
     )
 }
 
-const Template = ({id, type, name, onClick}: ButtonInterfaces) => {
+const Template = ({id, type, name, onClick, onHover}: ButtonInterfaces) => {
     if (name === 'see details')
         mutate('/api/load/continue');
 
     return (
-        <button title={name} className={`${(id === 0 ? styles.playButton: id === 1 ? styles.trailerButton: styles.roundGuys)} ${type === 'add' ? '': styles.noFill}`} onClick={onClick}>
+        <button title={name} onMouseEnter={() => onHover ? onHover(true) : null}
+                onMouseLeave={() => onHover ? onHover(false) : null}
+                className={`${(id === 0 ? styles.playButton : id === 1 ? styles.trailerButton : styles.roundGuys)} ${type === 'add' ? '' : styles.noFill}`}
+                onClick={onClick}>
             {type === 'down' ? <svg viewBox="0 0 24 24">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>: type === 'scan' ? <svg viewBox="0 0 24 24">
+            </svg> : type === 'scan' ? <svg viewBox="0 0 24 24">
                 <polyline points="23 4 23 10 17 10"/>
                 <polyline points="1 20 1 14 7 14"/>
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>: type === 'add' ?  <svg viewBox="0 0 409.6 409.6">
-                <g>
-                    <path
-                        d="M392.533,187.733H221.867V17.067C221.867,7.641,214.226,0,204.8,0s-17.067,7.641-17.067,17.067v170.667H17.067
+            </svg> : type === 'edit' ?  <svg viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg> : type === 'add' ? <svg viewBox="0 0 409.6 409.6">
+                    <g>
+                        <path
+                            d="M392.533,187.733H221.867V17.067C221.867,7.641,214.226,0,204.8,0s-17.067,7.641-17.067,17.067v170.667H17.067
                                 C7.641,187.733,0,195.374,0,204.8s7.641,17.067,17.067,17.067h170.667v170.667c0,9.426,7.641,17.067,17.067,17.067
                                 s17.067-7.641,17.067-17.067V221.867h170.667c9.426,0,17.067-7.641,17.067-17.067S401.959,187.733,392.533,187.733z"
-                    />
-                </g>
-            </svg>: type === 'none'? null: <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>}
+                        />
+                    </g>
+                </svg> : type === 'none' ? null : <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>}
             {id !== 2 && name}
         </button>
     )
 }
 
-export {Template, PLayList, BackButton, InfoButton, GroupWatch, PlayButton, TrailerButton, Shuffle, Seen, MyList, Rating};
+export {
+    Template,
+    PLayList,
+    BackButton,
+    InfoButton,
+    GroupWatch,
+    PlayButton,
+    TrailerButton,
+    Shuffle,
+    Seen,
+    MyList,
+    Rating
+};

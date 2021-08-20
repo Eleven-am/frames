@@ -65,11 +65,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const req = context.req;
     const link = req.headers.host + '/watch=';
 
-    context.res.setHeader(
-        'Cache-Control',
-        'public, s-maxage=179, stale-while-revalidate=590'
-    )
-
     let {userId} = await import('./api/auth').then(mod => mod.confirmContext(req.cookies));
     const check = await import('../../next/SSR').then(mod => mod.confirmUser(userId));
     userId = !check ? await import('../../next/SSR').then(mod => mod.getGuest()) : userId;

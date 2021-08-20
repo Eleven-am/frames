@@ -20,12 +20,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const pathname = context.query;
     const req = context.req;
     const host = req.headers.host;
-
-    context.res.setHeader(
-        'Cache-Control',
-        'public, s-maxage=179, stale-while-revalidate=590'
-    )
-
     let url = 'http' + (host?.includes('localhost') ? '' : 's') + '://' + host;
 
     if (pathname.hasOwnProperty('id')) {

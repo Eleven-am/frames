@@ -228,11 +228,24 @@
     color: #d9eeffa1;
 }
 
-.genInput {
+.genInput, .epiHolder {
     margin: 5px 0;
     padding: 10px;
     height: 390px;
     overflow: scroll;
+}
+
+.buttons {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0.8);
+}
+
+.info {
+    margin-top: 10px;
+    transition: all .2s ease-in-out;
 }
 
 .images {
@@ -254,4 +267,43 @@
 
 .images img:hover {
     border: 1px solid var(--nino-blue);
+}
+
+.epi {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.epiOut {
+    display: flex;
+    min-width: 600px;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.label {
+    width: 40%;
+    margin: 0 20px;
+}
+
+.epiSub {
+    display: flex;
+    justify-content: center;
+    transform: scale(0.7);
+}
+
+.label input {
+    width: 95%;
+    height: 30px;
+    outline: 0;
+    background: rgba(1, 16, 28, 0.1);
+    border-radius: 10px;
+    border: 2px solid #fff;
+    color: #fff;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    align-items: center;
 }

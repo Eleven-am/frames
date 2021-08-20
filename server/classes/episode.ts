@@ -1,5 +1,5 @@
 import {getDetails, getEpisode, getSeasonInfo, tmdbEpisode} from "../base/tmdb_hook";
-import {prisma, magnet} from '../base/utils';
+import {prisma, magnet, drive} from '../base/utils';
 import {drive_v3} from "googleapis";
 import {MediaType} from '@prisma/client';
 
@@ -24,6 +24,22 @@ export interface DetailedEpisode extends EpisodeInterface {
     logo: string;
     type: MediaType;
     playlistId?: number;
+}
+
+export interface EditEpisode {
+    id: number;
+    episode: number;
+    seasonId: number;
+    location: string;
+    name: string;
+    overview: string;
+    backdrop: string;
+    found: boolean;
+}
+
+export interface EditEpisodes {
+    season: string;
+    episodes: EditEpisode[]
 }
 
 export default class Episode {
@@ -234,5 +250,88 @@ export default class Episode {
                 }
             }
         }
+    }
+
+    /**
+     * @desc Gets the media episodes for editing
+     * @param showId the media to be edited
+     */
+    async getEpisodesForEdit(showId: number) {
+        const media = await prisma.media.findUnique({where: {id: showId}});
+        let seasons = await prisma.episode.findMany({
+            where: {showId},
+            distinct: ["seasonId"],
+        });
+
+        const details: EditEpisodes[] = [];
+        if (media)
+            for (let season of seasons) {
+                let episodes = await prisma.episode.findMany({
+                    where: {showId, seasonId: season.seasonId},
+                    select: {id: true, episode: true, seasonId: true, video: true},
+                    orderBy: [{seasonId: 'asc'}, {episode: 'asc'}]
+                });
+
+                let response = await getSeasonInfo({
+                    tmdbId: media.tmdbId,
+                    seasonId: season.seasonId,
+                });
+
+                const resEpisodes: EditEpisode[] = [];
+                if (response) {
+                    let season = response.episodes;
+                    for (let item of episodes) {
+                        let episode = season.find(e => e.episode_number === item.episode);
+                        let overview, backdrop, name;
+                        const found = !!episode;
+                        const location = item.video.location;
+                        overview = backdrop = name = '';
+                        if (episode) {
+                            overview = episode && episode.overview && episode.overview !== "" ? episode.overview : '';
+                            name = item.episode + '. ' + (episode && episode.name ? episode.name : '');
+                            backdrop = episode && episode.still_path ? "https://image.tmdb.org/t/p/original" + episode.still_path : '';
+                        }
+
+                        resEpisodes.push({
+                            seasonId: item.seasonId, id: item.id,
+                            found, location, name, overview, backdrop, episode: item.episode
+                        })
+                    }
+                } else {
+                    for (let item of episodes) {
+                        let overview, backdrop, name;
+                        const found = false;
+                        const location = item.video.location;
+                        overview = backdrop = name = '';
+
+                        resEpisodes.push({
+                            seasonId: item.seasonId, id: item.id,
+                            found, location, name, overview, backdrop, episode: item.episode
+                        })
+                    }
+                }
+
+                details.push({
+                    season: 'Season ' + season.seasonId,
+                    episodes: resEpisodes
+                })
+            }
+
+        return details;
+    }
+
+    /**
+     * @desc gets the name of the fundamental file from google drive
+     * @param id
+     */
+    async getFIleInfo(id: number): Promise<string> {
+        const episode = await prisma.episode.findUnique({where: {id}, select: {video: true}});
+        if (episode) {
+            const file = await drive.getFile(episode.video.location);
+            if (file)
+                return file.name!;
+        }
+
+        return 'Not found';
     }
 }

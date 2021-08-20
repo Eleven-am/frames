@@ -8,7 +8,6 @@ import useUser from "../../next/utils/userTools";
 import {useNavBar} from "../../next/utils/customHooks";
 import {useRecoilState} from "recoil";
 import {AuthCP} from '../../next/SSR';
-import {GetServerSidePropsContext} from "next";
 
 const metaTags = {
     overview: 'Frames is a streaming service that offers a wide variety of TV shows, movies, anime, documentaries, and more on thousands straight to your browser',
@@ -17,7 +16,7 @@ const metaTags = {
     poster: '/meta.png'
 }
 
-export default function Auth({images, auth}: {auth: AuthCP, images: string[]}) {
+export default function Auth({images, auth}: { auth: AuthCP, images: string[] }) {
     const {user} = useUser();
     const router = useRouter();
     const [address, setAddress] = useRecoilState(addressAtom);
@@ -31,7 +30,7 @@ export default function Auth({images, auth}: {auth: AuthCP, images: string[]}) {
         }
     }, [user])
 
-    return(
+    return (
         <>
             <Navbar/>
             <Header meta={metaTags}/>
@@ -41,12 +40,7 @@ export default function Auth({images, auth}: {auth: AuthCP, images: string[]}) {
     )
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-    context.res.setHeader(
-        'Cache-Control',
-        'public, s-maxage=179, stale-while-revalidate=590'
-    )
-
+export async function getServerSideProps() {
     const images = await import('../../next/SSR').then(mod => mod.getAuthImages());
     const auth = await import('../../next/SSR').then(mod => mod.getAuthCpRight());
     return {props: {images, auth}};

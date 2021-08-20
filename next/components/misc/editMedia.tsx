@@ -1,16 +1,18 @@
 import {atom, selector, useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
-import {EditMedia} from "../../server/classes/media";
-import {FramesImages, UpdateInterface, UpdateMediaSearch} from "../../server/classes/update";
+import {EditMedia} from "../../../server/classes/media";
+import {FramesImages, UpdateInterface, UpdateMediaSearch} from "../../../server/classes/update";
 import {MediaType} from '@prisma/client';
-import {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {drive_v3} from "googleapis";
-import {InformDisplayContext} from "../components/misc/inform";
-import { pFetch } from "./baseFunctions";
-import {Template} from "../components/buttons/Buttons";
-import ss from '../components/misc/MISC.module.css';
-import {useFetcher} from "./customHooks";
+import {InformDisplayContext} from "./inform";
+import {pFetch} from "../../utils/baseFunctions";
+import {Template} from "../buttons/Buttons";
+import ss from './MISC.module.css';
+import sss from '../settings/ACCOUNT.module.css';
+import {useFetcher} from "../../utils/customHooks";
+import {EditEpisode, EditEpisodes} from "../../../server/classes/episode";
 
-export const EditMediaContext = atom<EditMedia|null>({
+export const EditMediaContext = atom<EditMedia | null>({
     key: 'EditMediaContext',
     default: null
 })
@@ -55,7 +57,7 @@ const TypeAtom = atom<MediaType>({
     default: 'MOVIE'
 })
 
-const UpdateSelector = selector<{data: UpdateInterface, location: string}>({
+const UpdateSelector = selector<{ data: UpdateInterface, location: string }>({
     key: 'UpdateSelector',
     get: ({get}) => {
         return {
@@ -104,14 +106,20 @@ function General({state}: { state: EditMedia }) {
     const setFound = useSetRecoilState(FoundAtom);
     const [search, setSearch] = useState('');
     const setInform = useSetRecoilState(InformDisplayContext);
-    const {response, abort: resAbort} = useFetcher<UpdateMediaSearch[]>('/api/update/mediaSearch?value=' + search + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
-    const {response: data, abort: dataAbort} = useFetcher<{ file: string, found: boolean } | false>('/api/update/getMedia?value=' + tmdbI + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
+    const {
+        response,
+        abort: resAbort
+    } = useFetcher<UpdateMediaSearch[]>('/api/update/mediaSearch?value=' + search + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
+    const {
+        response: data,
+        abort: dataAbort
+    } = useFetcher<{ file: string, found: boolean } | false>('/api/update/getMedia?value=' + tmdbI + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
 
     const getFile = async (ac: AbortController) => {
         if (state.media) {
             const res = await fetch('/api/update/getMediaFile?id=' + state.media.id, {signal: ac.signal});
             const data: { file: drive_v3.Schema$File | null, tmdbId: number } | null = await res.json();
-            if (data){
+            if (data) {
                 data.file && setFile(data.file);
                 setTmdb(data.tmdbId);
                 setName(state.media.name);
@@ -202,7 +210,10 @@ function Images({state}: { state: EditMedia }) {
     const [poster, setPoster] = useRecoilState(PosterAtom);
     const [logo, setLogo] = useRecoilState(LogoAtom);
     const [backdrop, setBackdrop] = useRecoilState(BackdropAtom);
-    const {response, abort} = useFetcher<FramesImages>('/api/update/findImages?value=' + tmdb + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
+    const {
+        response,
+        abort
+    } = useFetcher<FramesImages>('/api/update/findImages?value=' + tmdb + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
 
     useEffect(() => {
         if (state && state.media) {
@@ -218,34 +229,162 @@ function Images({state}: { state: EditMedia }) {
             <div className={ss.genInput}>
                 <label>Poster</label>
                 <div className={ss.images}>
-                    {response.posters.map(e =>  <img title={e.name} src={e.url} onClick={() => setPoster(e.url)} alt={e.name}/>)}
+                    {response.posters.map(e => <img title={e.name} src={e.url} onClick={() => setPoster(e.url)}
+                                                    alt={e.name}/>)}
                 </div>
                 <input type="text" onChange={e => setPoster(e.currentTarget.value)} defaultValue={poster}/>
                 <label>Backdrop</label>
                 <div className={ss.images}>
-                    {response.backdrops.map(e => <img title={e.name} src={e.url} onClick={() => setBackdrop(e.url)} alt={e.name}/>)}
+                    {response.backdrops.map(e => <img title={e.name} src={e.url} onClick={() => setBackdrop(e.url)}
+                                                      alt={e.name}/>)}
                 </div>
                 <input type="text" onChange={e => setBackdrop(e.currentTarget.value)} defaultValue={backdrop}/>
                 <label>Logo</label>
                 <div className={ss.images}>
-                    {response.logos.map(e => <img title={e.name} src={e.url} onClick={() => setLogo(e.url)} alt={e.name}/>)}
+                    {response.logos.map(e => <img title={e.name} src={e.url} onClick={() => setLogo(e.url)}
+                                                  alt={e.name}/>)}
                 </div>
                 <input type="text" onChange={e => setLogo(e.currentTarget.value)} defaultValue={logo}/>
-                {poster !== '' || backdrop !== '' || logo !== '' ?<>
+                {poster !== '' || backdrop !== '' || logo !== '' ? <>
                     <label>Selected</label>
                     <div className={ss.images}>
                         <img title={'poster'} src={poster} alt={'selected'}/>
                         <img title={'backdrop'} src={backdrop} alt={'selected'}/>
                         <img title={'logo'} src={logo} alt={'selected'}/>
                     </div>
-                </>: null}
+                </> : null}
             </div>
         )
 
     else return null;
 }
 
-function Tail({state, close}: { state: EditMedia, close: () => void}) {
+function Episode({obj}: { obj: EditEpisode }) {
+    const [clicked, setClicked] = useState(false);
+    const [name, setName] = useState('Not found');
+    const [seasonId, setSeason] = useState(obj.seasonId);
+    const [episode, setEpisode] = useState(obj.episode);
+    const state = useRecoilValue(EditMediaContext);
+    const setInform = useSetRecoilState(InformDisplayContext);
+
+    const onClick = async () => {
+        if (!clicked) {
+            const res = await fetch('/api/update/getEpisodeName?value=' + obj.id);
+            const data: { name: string } = await res.json();
+            setName(data.name);
+            setClicked(true);
+        }
+    }
+
+    const submit = async () => {
+        const data: boolean = await pFetch({
+            seasonId,
+            episode,
+            location: obj.location,
+            showId: state?.media?.id
+        }, '/api/update/updateEpisode');
+        setInform({
+            type: data ? "alert" : "warn",
+            heading: data ? 'Episode updated' : 'Episode details conflict',
+            message: data ? 'The episode has successfully been updated' : 'Another episode with the same season and episode already exists'
+        })
+
+        setClicked(false);
+    }
+
+    return (
+        <div className={sss.res}
+             style={!obj.found ? {color: 'rgba(245, 78, 78, .9)'} : {}}
+             onMouseLeave={() => setClicked(false)}
+             onClick={onClick}>
+            {!clicked ?
+                <>
+                    <img src={obj.backdrop} style={{marginRight: '10px'}} alt={obj.name} className={sss.resImage}/>
+                    <div className={sss.resDiv}>
+                        <div className={sss.resSpan}>
+                            <span>{obj.name}</span>
+                        </div>
+                        <p>{obj.overview}</p>
+                    </div>
+                </> :
+                <div className={ss.epiOut}>
+                    <div>
+                        <span>{name}</span>
+                        <div className={ss.epi}>
+                            <label className={ss.label}>
+                                Season number
+                                <input type="number" onChange={e => setSeason(+(e.currentTarget.value))}
+                                       defaultValue={obj.seasonId}/>
+                            </label>
+
+                            <label className={ss.label}>
+                                Episode number
+                                <input type="number" onChange={e => setEpisode(+(e.currentTarget.value))}
+                                       defaultValue={obj.episode}/>
+                            </label>
+                        </div>
+                        <div className={ss.epiSub}>
+                            <Template id={1} type={'none'} name={'submit'} onClick={submit}/>
+                        </div>
+                    </div>
+                </div>}
+        </div>
+    )
+}
+
+function Season({season, episodes}: { season: string, episodes: EditEpisode[] }) {
+
+    return (
+        <div style={{marginTop: '10px'}}>
+            <span>{season}</span>
+
+            {episodes.map((episode, v) => <Episode obj={episode} key={v}/>)}
+        </div>
+    )
+}
+
+function Episodes({state}: { state: EditMedia }) {
+    const [thoroughHover, setThoroughHover] = useState(false);
+    const [quickHover, setQuickHover] = useState(false);
+    const {response} = useFetcher<EditEpisodes[]>('/api/update/getEpisodesForEdit?value=' + state.media?.id);
+    const setInform = useSetRecoilState(InformDisplayContext);
+
+    const submit = async (bool: boolean) => {
+        if (state.media) {
+            await pFetch({thoroughScan: bool, id: state.media?.id}, '/api/update/showScan');
+            setInform({
+                type: "alert",
+                heading: 'Starting library scan',
+                message: 'Frames would begin scanning your library shortly'
+            })
+        } else setInform({
+            type: "error",
+            heading: 'Invalid action',
+            message: `Can't episodes for show as it's not yet been added to Frames`
+        })
+    }
+
+    return (
+        <div className={ss.epiHolder}>
+            <div className={ss.buttons}>
+                <Template id={0} onClick={() => submit(true)} type={'scan'} name={'thorough scan'}
+                          onHover={setThoroughHover}/>
+                <Template id={1} onClick={() => submit(false)} type={'scan'} name={'quick scan'}
+                          onHover={setQuickHover}/>
+            </div>
+
+            {thoroughHover || quickHover ?
+                <div
+                    className={ss.info}>{thoroughHover ? 'Only use thorough hover when you have episodes files you wish to replace. The thorough scan takes much longer to complete' : `Ideal for scanning new files you have added to the present show. It's quick and doesn't attempt to fix episodes that has already been scanned`}</div> : null}
+
+            {state.unScan && <div>To see episodes you need to add this show to your media database</div>}
+
+            {(response || []).map((e, v) => <Season season={e.season} episodes={e.episodes} key={v}/>)}
+        </div>
+    )
+}
+
+function Tail({state, close}: { state: EditMedia, close: () => void }) {
     const update = useRecoilValue(UpdateSelector);
     const found = useRecoilValue(FoundAtom);
     const setInform = useSetRecoilState(InformDisplayContext);
@@ -256,8 +395,8 @@ function Tail({state, close}: { state: EditMedia, close: () => void}) {
             if (file)
                 setInform({
                     type: "alert",
-                    heading: 'Media ' + (state.media ? 'updated': 'added'),
-                    message: update.data.name + ' has been successfully ' + (state.media ? 'updated': 'added to your library')
+                    heading: 'Media ' + (state.media ? 'updated' : 'added'),
+                    message: update.data.name + ' has been successfully ' + (state.media ? 'updated' : 'added to your library')
                 })
 
         } else setInform({
@@ -276,7 +415,7 @@ function Tail({state, close}: { state: EditMedia, close: () => void}) {
     return (
         <div className={ss.tail}>
             {found ? <Template id={1} type={'none'} name={'delete this'} onClick={deleteMedia}/> : null}
-            <Template id={1} type={'none'} name={found ? 'replace': 'submit'} onClick={attemptUpload}/>
+            <Template id={1} type={'none'} name={found ? 'replace' : 'submit'} onClick={attemptUpload}/>
         </div>
     )
 }
@@ -286,19 +425,9 @@ export const ManageMedia = () => {
     const [open, setOpen] = useState(true);
     const [select, setSelect] = useState('');
     const [sides, setSides] = useState<string[]>([]);
-    const setInform = useSetRecoilState(InformDisplayContext);
     const reset = useReset();
 
     let list: string[] = [];
-
-    useEffect(() => {
-        if (select === 'Episodes')
-            setInform({
-                type: 'error',
-                heading: 'Feature not available',
-                message: 'Editing of episodes is currently not supported'
-            })
-    }, [select])
 
     useEffect(() => {
         if (state?.media) {
@@ -343,7 +472,8 @@ export const ManageMedia = () => {
 
                                 <div>
                                     {select === 'General' ? <General state={state}/> :
-                                        select === 'Images' ? <Images state={state}/> : null
+                                        select === 'Images' ? <Images state={state}/> :
+                                            <Episodes state={state}/>
                                     }
                                 </div>
                             </div>

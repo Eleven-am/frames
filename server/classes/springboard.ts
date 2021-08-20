@@ -71,8 +71,12 @@ export default class Springboard extends Media {
                         video: {mediaId}
                     }
                 })).length;
-            else
-                return !!(await prisma.view.findMany({where: {video: {mediaId}, userId, finished: 2}})).length;
+            else {
+                const episodes = await prisma.episode.findMany({where: {showId: mediaId}});
+                const views = await prisma.view.findMany({where: {position: {gt: 919}, userId, episode: {showId: mediaId}}});
+                const seen = views.filterInFilter(episodes, 'videoId', 'videoId');
+                return !seen.length;
+            }
 
         } else return false;
     }

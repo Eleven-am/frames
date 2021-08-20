@@ -226,6 +226,9 @@
     animation: pull .5s forwards;
 }
 
+.s {
+    top: -100px;
+}
 
 @keyframes drop {
     0% {

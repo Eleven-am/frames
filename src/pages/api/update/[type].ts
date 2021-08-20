@@ -4,10 +4,10 @@ import {NextApiRequest, NextApiResponse} from "next";
 import {confirmContext} from "../auth";
 import {Update, UpdateInterface} from "../../../../server/classes/update";
 import Springboard from "../../../../server/classes/springboard";
-import {drive, magnet} from "../../../../server/base/utils";
+import {drive, magnet, prisma} from "../../../../server/base/utils";
 import User from "../../../../server/classes/auth";
 import {ListEditors} from "../../../../server/classes/listEditors";
-import {PickUpdate} from "../../../../next/utils/editPicks";
+import {PickUpdate} from "../../../../next/components/misc/editPicks";
 
 const list = new ListEditors()
 const update = new Update();
@@ -38,6 +38,28 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             else if (body.type === 'editorPicks') {
                 const obj: PickUpdate = req.body;
                 await list.addPick(obj.mediaIds, obj.category, obj.display, obj.type, obj.active);
+                response = true;
+            }
+
+            else if (body.type === 'updateEpisode') {
+                const obj:{seasonId: number, episode: number, location: string, showId: number} = req.body;
+                const {showId, seasonId, episode, location} = obj;
+                const file = await drive.getFile(location);
+                response = false;
+                const episodeFile = await prisma.episode.findUnique({where: {episodeId: {seasonId, episode, showId}}});
+                if (!episodeFile && file) {
+                    await spring.addEpisode(showId, file, episode, seasonId);
+                    response = true;
+                }
+            }
+
+            else if (body.type === 'showScan') {
+                const obj: {thoroughScan: boolean, id: number} = req.body;
+                const show = await prisma.folder.findUnique({select: {location: true, media: true}, where: {showId: obj.id}});
+                const episodes = await prisma.episode.findMany({include: {video: true}, where: {showId: obj.id}});
+                if (show)
+                    update.scanShow(obj.thoroughScan, obj.thoroughScan, show, episodes)
+
                 response = true;
             }
         }
@@ -101,6 +123,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             const type = body.lib === 'movie'? MediaType.MOVIE: MediaType.SHOW;
             const search = +(body.value);
             response = await update.interpretImages(type, search);
+        }
+
+        else if (body.type === 'getEpisodesForEdit') {
+            const showId = +(body.value);
+            response = await spring.getEpisodesForEdit(showId);
+        }
+
+        else if (body.type === 'getEpisodeName') {
+            const episodeId = +(body.value);
+            const name = await spring.getFIleInfo(episodeId);
+            response = {name};
         }
 
         else if (body.type === 'modifyMedia') {

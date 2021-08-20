@@ -35,8 +35,10 @@ export interface AuthInterface {
 export interface ManageAuthKey {
     case: UseCase;
     name: string;
+    key: string;
     backdrop: string;
     description: string;
+    access: number;
 }
 
 export class Session {
@@ -264,8 +266,8 @@ export class Auth extends Session {
 
                 response.push({
                     case: item.useCase,
-                    description, backdrop,
-                    name: 'Key: ' + item.authKey
+                    description, backdrop, key: item.authKey,
+                    name: 'Key: ' + item.authKey, access: item.access
                 })
             }
 

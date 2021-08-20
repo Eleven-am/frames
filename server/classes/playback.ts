@@ -53,58 +53,21 @@ export default class Playback {
     async getNextEpisode(mediaId: number, userId: string): Promise<VideoPos | null> {
         let media = await prisma.media.findFirst({
             where: {id: mediaId},
-            include: {episodes: true}
+            include: {episodes: {orderBy: [{seasonId: 'asc'}, {episode: 'asc'}]}}
         });
 
         if (media && media.type === MediaType.SHOW) {
             let episodes = media.episodes;
-            episodes = episodes.sortKeys("seasonId", "episode", true, true);
             let result = await prisma.view.findMany({
                 where: {
                     userId,
                     episode: {showId: mediaId},
                     position: {gt: 0}
                 }, include: {episode: true},
-                orderBy: [{updated: 'desc'}, {position: 'desc'}]
+                orderBy: [{created: 'desc'}, {updated: 'desc'}, {position: 'desc'}]
             })
 
             if (result.length) {
-                const seen = result.some(e => e.finished === 2);
-
-                if (seen) {
-                    const sortSeen = result.map(e => {
-                        return {
-                            id: e.episode!.id,
-                            seasonId: e.episode!.seasonId,
-                            episode: e.episode!.episode
-                        }
-                    }).sortKeys("seasonId", "episode", true, true);
-                    const lastWatched = sortSeen.length ? sortSeen[sortSeen.length - 1] : null;
-
-                    if (lastWatched && lastWatched.id !== episodes[episodes.length - 1].id) {
-                        const unseen = result.filterInFilter(episodes, 'videoId', 'videoId');
-                        const episode = unseen.find(e => {
-                            return e.seasonId === lastWatched.seasonId && e.episode > lastWatched.episode || e.seasonId > lastWatched.seasonId;
-                        })
-
-                        if (episode) {
-                            await prisma.view.updateMany({
-                                where: {
-                                    userId,
-                                    video: {mediaId}
-                                }, data: {finished: 1}
-                            })
-
-                            return {
-                                position: 0,
-                                id: episode.id,
-                                videoId: episode.videoId,
-                                found: true,
-                            };
-                        }
-                    }
-                }
-
                 let lastSeen = result[0];
                 if (lastSeen.finished === 0) {
                     return {
@@ -112,19 +75,28 @@ export default class Playback {
                         id: lastSeen.episodeId!,
                         videoId: lastSeen.videoId,
                         found: true,
-                    };
+                    }
+
                 } else {
                     let lastSeenIndex = episodes.findIndex(item => item.id === lastSeen.episodeId);
-                    let nextEpisode = lastSeenIndex >= 0 && lastSeenIndex < episodes.length - 2 ? episodes[lastSeenIndex + 1] : null;
-                    if (nextEpisode && lastSeen.finished !== 2) {
-                        let video = result.find(e => e.episodeId === nextEpisode!.id)
+                    let nextEpisode = lastSeenIndex >= 0 && lastSeenIndex <= episodes.length - 2 ? episodes[lastSeenIndex + 1] : null;
+                    if (nextEpisode) {
+                        let video = result.find(e => e.episodeId === nextEpisode!.id);
+
+                        if (result.every(e => e.finished === 2) && episodes.length)
+                            return {
+                                position: 0,
+                                id: episodes[0].id,
+                                videoId: episodes[0].videoId,
+                                found: false,
+                            }
 
                         return {
                             position: video && video.position < 920 ? video.position : 0,
                             id: nextEpisode.id,
                             videoId: nextEpisode.videoId,
                             found: true,
-                        };
+                        }
                     }
                 }
             }
@@ -134,7 +106,7 @@ export default class Playback {
                     position: 0,
                     id: episodes[0].id,
                     videoId: episodes[0].videoId,
-                    found: false,
+                    found: !result.length,
                 };
         }
 
@@ -424,8 +396,8 @@ export default class Playback {
         let info = await prisma.view.findMany({
             where: {userId, position: {gt: 0}},
             include: {video: {include: {media: true}}},
-            orderBy: [{updated: 'desc'}]
-        });
+            orderBy: [{updated: 'desc'}, {created: 'desc'}, {position: 'desc'}]
+        })
         let data = info.map(e => {
             return {
                 finished: e.finished,
@@ -434,7 +406,7 @@ export default class Playback {
                 type: e.video.media.type, id: e.video.media.id, position: e.position
             }
         }).uniqueID('id').filter(e => (e.position < 919 && e.type === MediaType.MOVIE) || (e.type === MediaType.SHOW && e.finished !== 2))
-            .slice(0, 12).map(e => {
+            .map(e => {
                 return {
                     position: e.position,
                     backdrop: e.backdrop, name: e.name,
@@ -445,17 +417,20 @@ export default class Playback {
         let episode = new Episode();
         let result: MediaSection[] = [];
         for await (let item of data) {
-            if (item.type === MediaType.SHOW) {
-                let e = await this.getNextEpisode(item.id, userId);
-                if (e && e.found) {
-                    let f = await episode.getEpisode(e!.id);
-                    item.position = e.position;
-                    item.backdrop = f?.backdrop || item.backdrop;
-                    result.push(item);
-                }
+            if (result.length < 13) {
+                if (item.type === MediaType.SHOW) {
+                    let e = await this.getNextEpisode(item.id, userId);
+                    if (e && e.found) {
+                        let f = await episode.getEpisode(e!.id);
+                        item.position = e.position;
+                        item.backdrop = f?.backdrop || item.backdrop;
+                        result.push(item);
+                    }
 
-            } else if (item.type === MediaType.MOVIE)
-                result.push(item);
+                } else if (item.type === MediaType.MOVIE)
+                    result.push(item);
+
+            } else break;
         }
 
         return {display: 'continue watching', data: result, type: 'editor'};
@@ -471,7 +446,7 @@ export default class Playback {
         position = Math.ceil(position);
         const file = await prisma.view.findFirst({
             where: {auth, userId},
-            include: {video: {include: {media: {include: {episodes: true}}}}}
+            include: {video: {include: {media: {include: {episodes: {orderBy: [{seasonId: 'asc'}, {episode: 'asc'}]}}}}}}
         });
 
         if (file && position < 1001) {
@@ -482,7 +457,7 @@ export default class Playback {
                 await prisma.view.update({where: {id: file.id}, data: {finished: 1, position}});
 
             else if (file.episodeId && file.video.media.episodes) {
-                const episodes = file.video.media.episodes.sortKeys("seasonId", "episode", true, true);
+                const episodes = file.video.media.episodes;
                 if (episodes.length) {
                     const finished = episodes[episodes.length - 1].id === file.episodeId ? 2 : 1;
                     await prisma.view.update({where: {id: file.id}, data: {finished, position}});

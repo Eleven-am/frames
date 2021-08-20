@@ -4,7 +4,7 @@ import {PicksList} from "../../../../server/classes/listEditors";
 import {Loading} from "../../misc/Loader";
 import {Template} from "../../buttons/Buttons";
 import {useSetRecoilState} from "recoil";
-import {EditPickContext} from "../../../utils/editPicks";
+import {EditPickContext} from "../../misc/editPicks";
 
 function Pick({obj}: { obj: PicksList }) {
     const dispatch = useSetRecoilState(EditPickContext);

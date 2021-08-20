@@ -253,7 +253,7 @@ export class Update {
                 matches = name.match(/\d{2}/g);
                 let index = /^\d{2}/.test(name) || /e\d{2}.*?e\d{2}/i.test(name) ? 0 : matches ? matches.length - 1 : -1;
                 if (/\d{3}/.test(name) && !/^\d{2}/.test(name))
-                    matches = name.match(/(?<season>\d)(?<episode>\d{2})/);
+                    matches = /episode.*?\d{3}/i.test(name) ? name.match(/(?<episode>\d{3})/) : name.match(/(?<season>\d)(?<episode>\d{2})/);
 
                 res = matches && matches.groups === undefined && matches.length ? {groups: {episode: matches[index]}} : null;
 

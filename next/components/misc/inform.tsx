@@ -16,25 +16,34 @@ export const InformDisplayContext = atom<Inform | null>({
 export const Information = () => {
     const timer = useRef<NodeJS.Timeout>();
     const timer2 = useRef<NodeJS.Timeout>();
+    const timer3 = useRef<NodeJS.Timeout>();
     const [state, setState] = useRecoilState(InformDisplayContext);
-    const [drop, setDrop] = useState(false);
+    const [drop, setDrop] = useState<boolean|null>(null);
 
     useEffect(() => {
+        setDrop(drop => {
+            return drop === null? drop: false
+        });
         if (state) {
-            const time = state.type === 'error' ? 7 : state.type === "warn" ? 5 : 3;
-            setDrop(true);
             timer.current && clearTimeout(timer.current);
             timer2.current && clearTimeout(timer2.current);
-            timer.current = setTimeout(() => {
-                setDrop(false)
-                timer2.current = setTimeout(() => setState(null), 100)
-            }, time * 1000);
+            timer3.current = setTimeout(() => {
+                setDrop(true);
+                const time = state.type === 'error' ? 7 : state.type === "warn" ? 5 : 3;
+                timer.current = setTimeout(() => {
+                    setDrop(false);
+                    timer2.current = setTimeout(() => {
+                        setState(null)
+                        setDrop(null);
+                    }, 100)
+                }, time * 1000);
+            }, drop === null? 0: 100)
         }
     }, [state])
 
     if (state)
         return (
-            <div className={`${styles.infoCon} ${drop ? styles.d : styles.p}`}>
+            <div className={`${styles.infoCon} ${drop === null? styles.s: drop ? styles.d : styles.p}`}>
                 <div
                     className={`${styles.infoHolder} ${(state.type === 'warn' ? styles.w : state.type === 'error' ? styles.e : styles.a)}`}>
                     <div className={styles.left}>
