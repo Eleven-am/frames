@@ -88,6 +88,7 @@ export default class Episode {
         let data: EpisodeInterface[] = [];
         let episodes = await prisma.episode.findMany({
             where: {showId, seasonId},
+            orderBy: [{seasonId: "asc"}, {episode: "asc"}],
             select: {media: true, id: true, episode: true, seasonId: true},
         });
         let result = await prisma.view.findMany({
@@ -99,11 +100,11 @@ export default class Episode {
             orderBy: [{updated: 'desc'}, {position: 'desc'}]
         })
 
-        episodes = episodes.sortKeys('seasonId', 'episode', true, true);
         let response = await getSeasonInfo({
             tmdbId: episodes[0].media.tmdbId,
             seasonId: episodes[0].seasonId,
         });
+
         if (response){
             let season = response.episodes;
             for (let item of episodes) {
@@ -113,6 +114,15 @@ export default class Episode {
                 let overview = episode && episode.overview && episode.overview !== "" ? episode.overview : item.media.overview;
                 let name = item.episode + '. ' + (episode && episode.name ? episode.name : "Episode " + item.episode);
                 let backdrop = episode && episode.still_path ? "https://image.tmdb.org/t/p/original" + episode.still_path : item.media.backdrop;
+                data.push({position, overview, name, backdrop, id: item.id});
+            }
+
+        } else {
+            for (let item of episodes) {
+                let view = result.find(e => e.episode && e.episode.episode === item.episode && e.episode.seasonId === seasonId);
+                let position = view ? view.position > 919 ? 100 : view.position / 10 : 0;
+                let {backdrop, overview, name} = item.media;
+                name = item.episode + '. Episode ' + item.episode;
                 data.push({position, overview, name, backdrop, id: item.id});
             }
         }

@@ -22,7 +22,6 @@ export const segment = async () => await list.getSegments();
 
 export const getAuthImages = async () => await spring.authImages();
 export const getGuest = async () => await user.getGuest();
-export const createGuest = async (auth: string) => await user.createGuestUser(auth);
 export const confirmUser = async (auth: string) => await user.confirmUserId(auth);
 export const getAuthCpRight = async () => {
     const response = await get<AuthCP>('https://frameshomebase.maix.ovh/api/oauth?type=authenticate&state=' + env.config.cypher);

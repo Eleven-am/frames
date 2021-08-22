@@ -10,12 +10,14 @@ const user = new User();
 const update = new Update();
 
 if (process.env['FRAMESSEED'] === undefined)
-user.createAccounts()
-    .then(() => {process.env['FRAMESSEED'] = String(true)})
-    .then(() => update.autoScan())
-    .then(() => update.scanEpisodes(false))
-    .then(() => update.getSubs())
-    .catch(err => console.warn(err));
+    user.createAccounts()
+        .then(() => {
+            process.env['FRAMESSEED'] = String(true)
+        })
+        .then(() => update.autoScan())
+        .then(() => update.scanEpisodes(false))
+        .then(() => update.getSubs())
+        .catch(err => console.warn(err));
 
 const verify = <T extends object | null>(token: string, secret: string): T => {
     return jwt.verify(token, secret) as T;
@@ -29,7 +31,7 @@ export interface CookiePayload {
 
 type CookieInterface = CookiePayload | null
 
-export const writeCookie = async (res: NextApiResponse, userInstance: CookiePayload, req: NextApiRequest) => {
+const writeCookie = async (res: NextApiResponse, userInstance: CookiePayload, req: NextApiRequest) => {
     const claim = sign({...userInstance}, env.config.secret, {expiresIn: 604800});
     await user.saveIdentity(userInstance.userId, userInstance.session, req);
     res.setHeader('Set-Cookie', cookie.serialize('frames-cookie', claim, {
@@ -39,8 +41,6 @@ export const writeCookie = async (res: NextApiResponse, userInstance: CookiePayl
         sameSite: 'strict',
         path: '/'
     }))
-
-    return userInstance;
 }
 
 const deleteCookie = async (res: NextApiResponse, session: string) => {
@@ -80,24 +80,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
         if (query.action === 'logout') {
             await user.validateSession(session);
             await deleteCookie(res, session);
-            res.json({action: 'logout', session: ''});
-
-        } else if (query.action === 'framedUser') {
-            const data = await user.getFramedUser(userId);
-            if (data.payLoad)
-                await writeCookie(res, data.payLoad, req);
-
-            response = data.error ? data : {
-                context: {
-                    email: data.payLoad?.email,
-                    session: data.payLoad?.session,
-                    role: data.payLoad?.context
-                }
-            }
-            res.status(200).json(response)
+            response = {action: 'logout', session: ''};
         }
-
-        return;
     }
 
     const body = req.body;
@@ -111,12 +95,13 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
         response = await user.getKeys(userId);
 
     else if (body.process === 'confirmAuth') {
-        const data = await user.validateSession(body.session);
+        const tempSession = body.session || session;
+        const data = await user.validateSession(tempSession);
         if (data.payLoad)
             await writeCookie(res, data.payLoad, req);
 
         else if (data.error)
-            await deleteCookie(res, body.session);
+            await deleteCookie(res, tempSession);
 
         response = data.error ? data : {
             context: {
@@ -125,8 +110,9 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
                 role: data.payLoad?.context
             }
         }
+    }
 
-    } else if (body.process === 'logIn') {
+    else if (body.process === 'logIn') {
         const data = await user.authenticateUser(body.user, body.pass);
         if (data.payLoad)
             await writeCookie(res, data.payLoad, req);
@@ -138,8 +124,9 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
                 role: data.payLoad?.context
             }
         }
+    }
 
-    } else if (body.process === 'create') {
+    else if (body.process === 'create') {
         const data = await user.register(body.user, body.pass, body.username, body.authKey);
         if (data.payLoad)
             await writeCookie(res, data.payLoad, req);
@@ -151,8 +138,9 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
                 role: data.payLoad?.context
             }
         }
+    }
 
-    } else if (body.process === 'OAUTH') {
+    else if (body.process === 'OAUTH') {
         const data = await user.oauthHandler(body.user, body.pass, body.username, body.authKey);
         if (data.payLoad)
             await writeCookie(res, data.payLoad, req);
@@ -164,9 +152,10 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
                 role: data.payLoad?.context
             }
         }
+    }
 
-    } else if (body.process === 'guestIn') {
-        const data = await user.createGuestUser(body.guest);
+    else if (body.process === 'guestIn') {
+        const data = await user.createGuestUser('' + Date.now());
         if (data.payLoad)
             await writeCookie(res, data.payLoad, req);
 
@@ -177,10 +166,25 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
                 role: data.payLoad?.context
             }
         }
+    }
 
-    } else if (body.process === 'generateAuthKey') {
+    else if (body.process === 'generateAuthKey') {
         const authKey = await user.generateAuthKey(userId);
-        response = authKey ? {authKey}: authKey;
+        response = authKey ? {authKey} : authKey;
+    }
+
+    else if (body.process === 'framedUser') {
+        const data = await user.getFramedUser(userId);
+        if (data.payLoad)
+            await writeCookie(res, data.payLoad, req);
+
+        response = data.error ? data : {
+            context: {
+                email: data.payLoad?.email,
+                session: data.payLoad?.session,
+                role: data.payLoad?.context
+            }
+        }
     }
 
     res.status(200).json(response)

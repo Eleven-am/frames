@@ -1,8 +1,8 @@
 import {Role} from '@prisma/client';
 import {atom, useRecoilState, useSetRecoilState} from 'recoil';
-import {useIsMounted, useLoadEffect, useLocalStorage} from "./customHooks";
-import {pFetch, sFetch} from "./baseFunctions";
-import {AuthContextErrorAtom, AuthPicker} from "../states/authContext";
+import {useIsMounted, useLoadEffect} from "./customHooks";
+import {pFetch} from "./baseFunctions";
+import {AuthContextErrorAtom, AuthFade, AuthPicker} from "../states/authContext";
 import {ManageAuthKey} from "../../server/classes/auth";
 
 export interface ContextType {
@@ -30,9 +30,9 @@ export default function useUser(frames = false) {
     const [loading, setLoading] = useRecoilState(Loading);
     const setError = useSetRecoilState(AuthContextErrorAtom);
     const setPicker = useSetRecoilState(AuthPicker);
+    const setFade = useSetRecoilState(AuthFade);
     const [user, setUser] = useRecoilState(UserContext);
     const mounted = useIsMounted();
-    const [localUser, setLocalUser] = useLocalStorage<ContextType | null>('framesUser', null);
 
     const confirmMail = async (user: string) => {
         let info: boolean = await pFetch({process: 'confirmEmail', email: user}, '/api/auth');
@@ -54,7 +54,6 @@ export default function useUser(frames = false) {
             setLoading(false);
         } else if (res.context) {
             setUser(res.context);
-            setLocalUser(res.context);
             setLoading(false);
         }
     }
@@ -68,30 +67,27 @@ export default function useUser(frames = false) {
             setLoading(false);
         } else if (res.context) {
             setUser(res.context);
-            setLocalUser(res.context);
             setLoading(false);
         }
     }
 
     const signAsGuest = async () => {
         setLoading(true);
-        const data = {guest: '' + Date.now(), process: 'guestIn'};
+        setFade(true);
+        const data = {process: 'guestIn'};
         let res: ServerResponse = await pFetch(data, '/api/auth');
         if (res.error) {
             setUser(null);
-            setLocalUser(null);
             setLoading(false);
 
         } else if (res.context) {
             setUser(res.context);
-            setLocalUser(res.context);
             setLoading(false);
         }
     }
 
     const signOut = async () => {
         setUser(null);
-        setLocalUser(null);
         await fetch('/api/auth?action=logout');
         setLoading(false);
     }
@@ -105,45 +101,42 @@ export default function useUser(frames = false) {
             setLoading(false);
         } else if (res.context) {
             setUser(res.context);
-            setLocalUser(res.context);
             setLoading(false);
         }
     }
 
-    const confirmAuth = async (user: ContextType) => {
+    const confirmAuth = async () => {
         setLoading(true);
-        const data = {...user, process: 'confirmAuth'};
-        let res: ServerResponse = await pFetch(data, '/api/auth');
+        let res: ServerResponse = await pFetch({process: 'confirmAuth'}, '/api/auth');
         if (res.error) {
             setUser(null);
-            setLocalUser(null);
             setLoading(false);
 
         } else if (res.context) {
             setUser(res.context);
-            setLocalUser(res.context);
             setLoading(false);
         }
     }
 
     const getFrameUser = async () => {
         setLoading(true);
-        let res = await sFetch<ServerResponse>('/api/auth?action=framedUser');
+        let res: ServerResponse = await pFetch({process: 'framedUser'}, '/api/auth');
         if (res && res.context) {
             setUser(res.context);
-            setLocalUser(null);
             setLoading(false);
 
         } else {
             setUser(null);
-            setLocalUser(null);
             setLoading(false);
         }
     }
 
-    const generateAuthKey = async (): Promise<{authKey?: string, error?: string}> => {
+    const generateAuthKey = async (): Promise<{ authKey?: string, error?: string }> => {
         if (user && user.role === Role.ADMIN) {
-            const response: {authKey: string} | null = await pFetch({...user, process: 'generateAuthKey'}, '/api/auth');
+            const response: { authKey: string } | null = await pFetch({
+                ...user,
+                process: 'generateAuthKey'
+            }, '/api/auth');
             if (response)
                 return response;
         }
@@ -165,8 +158,8 @@ export default function useUser(frames = false) {
         if (frames)
             getFrameUser();
 
-        else if (!user && localUser && mounted())
-            confirmAuth(localUser);
+        else if (!user && mounted())
+            confirmAuth();
 
         else
             setLoading(false);
@@ -174,5 +167,17 @@ export default function useUser(frames = false) {
         return () => frames && signOut();
     }, [])
 
-    return {user, loading, confirmMail, generateAuthKey, signAsGuest, signIn, signUp, oauthAuth, signOut, confirmAuthKey, manageKeys}
+    return {
+        user,
+        loading,
+        confirmMail,
+        generateAuthKey,
+        signAsGuest,
+        signIn,
+        signUp,
+        oauthAuth,
+        signOut,
+        confirmAuthKey,
+        manageKeys
+    }
 }

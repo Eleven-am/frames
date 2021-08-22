@@ -47,7 +47,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         response = await spring.getTrending();
 
     else if (body.type === 'authImages')
-        response = await spring.authImages();
+        response = await spring.authImages(true);
 
     else if (body.type === 'genre') {
         const genre = !Array.isArray(body.genre)? body.genre: body.genre[0];

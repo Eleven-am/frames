@@ -209,15 +209,36 @@ export default class Springboard extends Media {
     /**
      * @returns Promise<string[]> posters of the Trending images at the moment
      */
-    async authImages(): Promise<string[]> {
-        let dBase = await prisma.media.findMany({select: {poster: true, type: true, tmdbId: true}});
+    async authImages(app = false): Promise<string[]> {
+        let dBase = await prisma.media.findMany({select: {id: true, poster: true, type: true, tmdbId: true}});
         let {movies, tv} = await slimTrending();
         let moviesData: Med[] = movies.collapse(dBase, MediaType.MOVIE, 'popularity');
         let tvData: Med[] = tv.collapse(dBase, MediaType.SHOW, 'popularity');
         dBase = moviesData.concat(tvData).sortKey('popularity', false);
-        return dBase.map(e => {
+
+        if (!app)
+            return dBase.map(e => {
             return e.poster
-        }).slice(0, 10)
+        }).slice(0, 10);
+
+        else {
+            moviesData = movies.collapse(dBase, MediaType.MOVIE, 'poster_path');
+            tvData = tv.collapse(dBase, MediaType.SHOW, 'poster_path');
+
+            let poster: any[] = moviesData.concat(tvData);
+            const response: string[] = [];
+            poster = poster.map(e => {
+                e.poster_path = 'https://image.tmdb.org/t/p/original' + e.poster_path;
+                return e;
+            });
+
+            for (let item of dBase) {
+                const file = poster.find(e => e.id === item.id);
+                response.push(file.poster_path || item.poster);
+            }
+
+            return response.slice(0, 10);
+        }
     }
 
     /**
