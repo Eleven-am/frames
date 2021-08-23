@@ -55,14 +55,14 @@ export const useLoop = (initialState: {start: number, end: number}) => {
     const trailer = useRecoilValue(TrailerAtom);
     const interval = useRef<NodeJS.Timeout>();
 
-    useEffect(() => setState(initialState), [initialState]);
+    useEffect(() => setState(initialState), []);
 
     useEffect(() => {
         interval.current && clearInterval(interval.current);
         if (!trailer) {
             interval.current = setInterval(
                 () => setState(state => {
-                    return trailer ? state: {...state, start: state.end < state.start + 1? 0: state.start + 1}
+                    return trailer ? state: {...state, start: state.end - 1 < state.start + 1? 0: state.start + 1}
                 }), 20000
             )
         }

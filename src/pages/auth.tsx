@@ -8,6 +8,7 @@ import useUser from "../../next/utils/userTools";
 import {useNavBar} from "../../next/utils/customHooks";
 import {useRecoilState} from "recoil";
 import {AuthCP} from '../../next/SSR';
+import {Loading} from "../../next/components/misc/Loader";
 
 const metaTags = {
     overview: 'Frames is a streaming service that offers a wide variety of TV shows, movies, anime, documentaries, and more on thousands straight to your browser',
@@ -17,7 +18,7 @@ const metaTags = {
 }
 
 export default function Auth({images, auth}: { auth: AuthCP, images: string[] }) {
-    const {user} = useUser();
+    const {user, loading} = useUser();
     const router = useRouter();
     const [address, setAddress] = useRecoilState(addressAtom);
     useNavBar('login', 1);
@@ -29,6 +30,9 @@ export default function Auth({images, auth}: { auth: AuthCP, images: string[] })
             router.push(temp);
         }
     }, [user])
+
+    if (loading)
+        return <Loading/>
 
     return (
         <>

@@ -46,67 +46,48 @@ export default function useUser(frames = false) {
     }
 
     const signIn = async (user: string, pass: string) => {
-        setLoading(true);
         let data = {user, pass, process: 'logIn'};
         let res: ServerResponse = await pFetch(data, '/api/auth');
-        if (res.error) {
+        if (res.error)
             setError(res.error);
-            setLoading(false);
-        } else if (res.context) {
+        else if (res.context)
             setUser(res.context);
-            setLoading(false);
-        }
     }
 
     const signUp = async (user: string, pass: string, authKey: string) => {
-        setLoading(true);
         let data = {user, pass, authKey, process: 'create'};
         let res: ServerResponse = await pFetch(data, '/api/auth');
-        if (res.error) {
+        if (res.error)
             setError(res.error);
-            setLoading(false);
-        } else if (res.context) {
+        else if (res.context)
             setUser(res.context);
-            setLoading(false);
-        }
     }
 
     const signAsGuest = async () => {
-        setLoading(true);
         setFade(true);
         const data = {process: 'guestIn'};
         let res: ServerResponse = await pFetch(data, '/api/auth');
-        if (res.error) {
+        if (res.error)
             setUser(null);
-            setLoading(false);
-
-        } else if (res.context) {
+        else if (res.context)
             setUser(res.context);
-            setLoading(false);
-        }
     }
 
     const signOut = async () => {
         setUser(null);
         await fetch('/api/auth?action=logout');
-        setLoading(false);
     }
 
     const oauthAuth = async (user_name: string, oauthPass: number, email: string, authKey?: string) => {
-        setLoading(true);
         const user = {user: email, pass: `${oauthPass}`, username: user_name, authKey, process: 'OAUTH'};
         let res: ServerResponse = await pFetch(user, '/api/auth');
-        if (res.error) {
+        if (res.error)
             setError(res.error);
-            setLoading(false);
-        } else if (res.context) {
+        else if (res.context)
             setUser(res.context);
-            setLoading(false);
-        }
     }
 
     const confirmAuth = async () => {
-        setLoading(true);
         let res: ServerResponse = await pFetch({process: 'confirmAuth'}, '/api/auth');
         if (res.error) {
             setUser(null);
@@ -119,7 +100,6 @@ export default function useUser(frames = false) {
     }
 
     const getFrameUser = async () => {
-        setLoading(true);
         let res: ServerResponse = await pFetch({process: 'framedUser'}, '/api/auth');
         if (res && res.context) {
             setUser(res.context);
@@ -155,15 +135,16 @@ export default function useUser(frames = false) {
     }
 
     useLoadEffect(() => {
-        if (frames)
-            getFrameUser();
+        if (loading) {
+            if (frames)
+                getFrameUser();
 
-        else if (!user && mounted())
-            confirmAuth();
+            else if (!user && mounted())
+                confirmAuth();
 
-        else
-            setLoading(false);
-
+            else
+                setLoading(false);
+        }
         return () => frames && signOut();
     }, [])
 
