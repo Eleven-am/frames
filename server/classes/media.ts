@@ -21,6 +21,7 @@ import Episode, {DetailedEpisode, EpisodeInterface} from "./episode";
 import {drive, magnet, prisma} from '../base/utils';
 import {FrontBit, UpdateInterface} from "./update";
 import {aJax} from "../base/baseFunctions";
+import {SectionInterface} from "./playback";
 
 /**
  * Only for getInfo
@@ -69,6 +70,17 @@ export interface FramesCompany {
     images: string[],
     movies: MediaSection[],
     shows: MediaSection[]
+}
+
+export interface CollectionFace {
+    collectionName: string;
+    collectionId: number;
+    collectionPoster: string;
+}
+
+export interface CollectionHomeFace {
+    display: string;
+    data: CollectionFace[]
 }
 
 export default class Media extends Episode {
@@ -736,6 +748,64 @@ export default class Media extends Episode {
             }
 
             await this.addMedia(data, location);
+        }
+    }
+
+    async getCollections(): Promise<number[]> {
+        const response: number[] = [];
+
+        const medias = await prisma.media.findMany({
+            distinct: ['collectionId']
+        })
+
+        for (let item of medias)
+            if (item.collectionId)
+                response.push(item.collectionId);
+
+        return response;
+    }
+
+    async getSpecificCollection(collectionId: number): Promise<SectionInterface & {poster: string} | null> {
+        let int = Math.floor(Math.random() * 2);
+        const collections = await getCollection(collectionId);
+        const media = await prisma.media.findMany({
+            where: {collectionId},
+            select: {id: true, poster: true, backdrop: true, name: true, type: true, logo: true, background: true}
+        });
+
+        if (collections)
+            return {
+                display: collections.name,
+                data: media, type: int === 1 ? 'basic': 'editor',
+                poster: 'https://image.tmdb.org/t/p/original' + collections.backdrop_path || ''
+            }
+
+        return null;
+    }
+
+    async getCollectionsForHomeScreen(): Promise<CollectionHomeFace> {
+        let medias = await prisma.media.findMany({
+            distinct: ['collectionId'],
+            select: {id: true, poster: true, backdrop: true, name: true, logo: true, background: true, collectionId: true}
+        })
+
+        medias = medias.randomiseDB(medias.length, 0);
+
+        const response: CollectionFace[] = [];
+        for (let item of medias) {
+            if (item.collectionId && response.length < 12) {
+                const info = await getCollection(item.collectionId);
+                if (info)
+                    response.push({
+                        collectionId: info.id,
+                        collectionName: info.name,
+                        collectionPoster: 'https://image.tmdb.org/t/p/original' + info.poster_path || ''
+                    })
+            }
+        }
+
+        return {
+            display: '', data: response
         }
     }
 }

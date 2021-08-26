@@ -84,6 +84,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             response = type ? await magnet.findMovie(tmdb_id) : await magnet.findSeason(tmdb_id, 1);
         }
 
+        else if (body.type === 'epiDown') {
+            const tmdb_id = +(body.id);
+            await spring.getNewEpisodes(tmdb_id);
+            response = true;
+        }
+
         else if (body.type === 'libSearch') {
             const search = Array.isArray(body.value) ? body.value[0] : body.value;
             response = await update.performSearch(search);

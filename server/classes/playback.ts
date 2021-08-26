@@ -139,7 +139,7 @@ export default class Playback {
                     }
             })
 
-            const subs: { language: string, url: string }[] = [];
+            let subs: { language: string, url: string }[] = [];
             for (let item of tempSubs) {
                 if (item !== undefined)
                     subs.push(item);
@@ -147,7 +147,7 @@ export default class Playback {
 
             let info = await prisma.view.create({data: obj});
             if (subs.length < 1)
-                await subtitle.getSub(videoId);
+                subs = await subtitle.getSub(videoId);
 
             return {
                 frame: false,
@@ -274,7 +274,12 @@ export default class Playback {
 
         let user = await prisma.user.findFirst({
             where: {userId},
-            include: {views: {include: {video: {include: {episode: true}}}}, lists: true, ratings: true}
+            include: {
+                views: {
+                    orderBy: [{created: 'desc'}, {updated: 'desc'}, {position: 'desc'}],
+                    include: {video: {include: {episode: true}}}
+                }, lists: true, ratings: true
+            }
         });
 
         if (user) {

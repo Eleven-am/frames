@@ -17,6 +17,7 @@ import {SpringMediaInfo} from "../../../../server/classes/springboard";
 import useUser from "../../../utils/userTools";
 import {EditMediaContext} from "../../misc/editMedia";
 import {EditMedia} from "../../../../server/classes/media";
+import {InformDisplayContext} from "../../misc/inform";
 
 interface InfoType {
     response: SpringMediaInfo,
@@ -26,6 +27,7 @@ interface InfoType {
 export default function InfoDetails ({response, loadTrailer}: InfoType) {
     const trailer = useRecoilValue(infoTrailerContext);
     const dispatch = useSetRecoilState(EditMediaContext);
+    const setInform = useSetRecoilState(InformDisplayContext);
     const {user} = useUser();
 
     const handleEdit = () => {
@@ -37,6 +39,15 @@ export default function InfoDetails ({response, loadTrailer}: InfoType) {
             }
         }
         dispatch(data);
+    }
+
+    const handleDownload = async () => {
+        await fetch(`/api/update/epiDown?id=${response.id}`);
+        setInform({
+            type: "alert",
+            heading: 'Library scan begun',
+            message: 'Frames would begin checking for new episodes of ' + response.name
+        })
     }
 
     return (
@@ -52,7 +63,12 @@ export default function InfoDetails ({response, loadTrailer}: InfoType) {
                 <MyList id={response.id} myList={response.myList}/>
                 <Seen id={response.id} seen={response.seen}/>
                 <GroupWatch id={response.id}/>
-                {user?.role === Role.ADMIN ? <Template id={2} type={'edit'} name={'edit ' + response.name} onClick={handleEdit}/>: null}
+                {user?.role === Role.ADMIN ?
+                    <>
+                        <Template id={2} type={'edit'} name={'edit ' + response.name} onClick={handleEdit}/>
+                        {response.download ? <Template id={2} type={'down'} name={'download more ' + response.name} onClick={handleDownload}/>: null}
+                    </>
+                    : null}
             </div>
             <div className={info.detailsHolder}>
                 <div className={info.infoDetails}>

@@ -6,6 +6,7 @@ import Playback, {SectionInterface} from "./playback";
 import {prisma} from '../base/utils';
 import {Playlist} from "./listEditors";
 import {DetailedEpisode} from "./episode";
+import env from "../base/env";
 
 const play = new Playback();
 const playlist = new Playlist();
@@ -20,6 +21,7 @@ export interface SpringMediaInfo extends P {
     seen: boolean;
     myRating: number;
     myList: boolean;
+    download: boolean;
 }
 
 export interface SpringLoad {
@@ -99,7 +101,7 @@ export default class Springboard extends Media {
                 let myList = !!user.lists.length;
                 let myRating = user.ratings.length ? (user.ratings[0].rate * 10) : 5;
 
-                return {...info, seen, myList, myRating};
+                return {...info, seen, myList, myRating, download: !!env.config.deluge && info.type === MediaType.SHOW};
             }
         }
         return null;

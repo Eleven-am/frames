@@ -1,5 +1,5 @@
 import {getDetails, getEpisode, getSeasonInfo, tmdbEpisode} from "../base/tmdb_hook";
-import {prisma, magnet, drive} from '../base/utils';
+import {drive, magnet, prisma} from '../base/utils';
 import {drive_v3} from "googleapis";
 import {MediaType} from '@prisma/client';
 
@@ -17,15 +17,6 @@ export interface EpisodeInterface {
     id: number;
 }
 
-export interface DetailedEpisode extends EpisodeInterface {
-    overview: string;
-    episode?: number;
-    seasonId?: number;
-    logo: string;
-    type: MediaType;
-    playlistId?: number;
-}
-
 export interface EditEpisode {
     id: number;
     episode: number;
@@ -40,6 +31,15 @@ export interface EditEpisode {
 export interface EditEpisodes {
     season: string;
     episodes: EditEpisode[]
+}
+
+export interface DetailedEpisode extends EpisodeInterface {
+    overview: string;
+    episode?: number;
+    seasonId?: number;
+    logo: string;
+    type: MediaType;
+    playlistId?: number;
 }
 
 export default class Episode {
@@ -105,7 +105,7 @@ export default class Episode {
             seasonId: episodes[0].seasonId,
         });
 
-        if (response){
+        if (response) {
             let season = response.episodes;
             for (let item of episodes) {
                 let episode = season.find(e => e.episode_number === item.episode);
@@ -149,7 +149,16 @@ export default class Episode {
             let overview = episodeInfo.overview && episodeInfo.overview !== "" ? episodeInfo.overview : episode.media.overview;
             let name = episodeInfo.name ? episodeInfo.name : "Episode " + episode.episode;
             let backdrop = episodeInfo.still_path ? "https://image.tmdb.org/t/p/original" + episodeInfo.still_path : episode.media.backdrop;
-            return {type: MediaType.SHOW, overview, name, logo, backdrop, id: episode.videoId, episode: obj.episode, seasonId: obj.seasonId};
+            return {
+                type: MediaType.SHOW,
+                overview,
+                name,
+                logo,
+                backdrop,
+                id: episode.videoId,
+                episode: obj.episode,
+                seasonId: obj.seasonId
+            };
         }
 
         return null;
@@ -188,7 +197,7 @@ export default class Episode {
      * @param episode_number
      * @param seasonId
      */
-    async addEpisode (showId: number, file: drive_v3.Schema$File, episode_number: number, seasonId: number) {
+    async addEpisode(showId: number, file: drive_v3.Schema$File, episode_number: number, seasonId: number) {
         let data = {
             english: null,
             location: file.id!,
@@ -206,6 +215,8 @@ export default class Episode {
             episode: episode_number, seasonId,
             showId, videoId: video.id,
         }
+
+        await prisma.episode.deleteMany({where: {videoId: video.id}});
 
         await prisma.episode.upsert({
             create: {...episode},
@@ -225,19 +236,24 @@ export default class Episode {
      * @param showId
      */
     async getNewEpisodes(showId: number) {
-        let media = await prisma.media.findFirst({where: {id: showId}, include: {episodes: true}});
+        let media = await prisma.media.findFirst({
+            where: {id: showId},
+            include: {episodes: {orderBy: [{seasonId: 'asc'}, {episode: 'asc'}]}}
+        });
         if (media) {
-            const episodes = media.episodes.sortKeys('season', 'episode', true, true);
+            const episodes = media.episodes;
             const seasons = episodes.uniqueID('seasonId');
             const show = await getDetails(MediaType.SHOW, media.tmdbId);
             if (show) {
                 if (show.number_of_seasons > seasons.length || show.number_of_episodes > episodes.length) {
                     if (show.number_of_seasons > seasons.length) {
                         const promises: Promise<boolean>[] = [];
-                        const season = [...Array(show.number_of_seasons).keys()].map(e => {return {seasonId: e}});
-                        const missingSeason = seasons.filterInFilter<{seasonId: number}>(season, 'seasonId', 'seasonId');
+                        const season = [...Array(show.number_of_seasons).keys()].map(e => {
+                            return {seasonId: e}
+                        });
+                        const missingSeason = seasons.filterInFilter<{ seasonId: number }>(season, 'seasonId', 'seasonId');
                         missingSeason.forEach(e => {
-                             promises.push(magnet.findSeason(media!.tmdbId, e.seasonId))
+                            promises.push(magnet.findSeason(media!.tmdbId, e.seasonId))
                         })
 
                         await Promise.all(promises);

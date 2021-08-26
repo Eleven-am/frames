@@ -138,9 +138,11 @@ export class Subtitles {
     /**
      * @desc does the actual scan for the subtitles of a specific video file
      * @param videoId
+     * @param auth
      */
-    async getSub(videoId: number) {
-        if (this.OpenSubtitles){
+    async getSub(videoId: number, auth?: string) {
+        let returnSubs: { language: string, url: string }[] = [];
+        if (this.OpenSubtitles) {
             const video = await prisma.video.findFirst({where: {id: videoId}, include: {media: true, episode: true}});
             if (video) {
                 const file = await drive.getFile(video.location);
@@ -167,9 +169,9 @@ export class Subtitles {
                         obj.extensions = ['srt', 'vtt'];
                         let keys = ['en', 'fr', 'de'];
                         let lang = ['english', 'french', 'german'];
-                        const subs: { [p: string]: string } | null = await this.OpenSubtitles.search(obj)
+                        const subs: { [p: string]: string | null } | null = await this.OpenSubtitles.search(obj)
                             .then((temp: { [x: string]: { url: any; }; } | undefined) => {
-                                if (temp !== undefined) {
+                                if (temp) {
                                     let item: { [key: string]: string } = {};
                                     keys.forEach((value, pos) => {
                                         item[lang[pos]] = temp[value] === undefined ? null : temp[value].url;
@@ -183,11 +185,20 @@ export class Subtitles {
 
                         if (subs) {
                             await prisma.video.update({where: {id: videoId}, data: subs});
+                            if (auth)
+                                for (let item of lang)
+                                    if (subs[item])
+                                        returnSubs.push({
+                                            language: item,
+                                            url: '/api/stream/subtitles?auth=' + auth + '&language=' + subs[item]
+                                        })
                         }
                     }
                 }
             }
         }
+
+        return returnSubs;
     }
 }
 
@@ -452,7 +463,7 @@ export class Update {
     async scanForMedia(item: drive_v3.Schema$File, type: MediaType) {
         if (type === MediaType.MOVIE) {
             const ext = path.extname(item.name!)
-            if ((ext === '.mp4' || ext === '.m4v')){
+            if ((ext === '.mp4' || ext === '.m4v')) {
                 let name: string, year: number;
                 let regex = /(?<name>^.*?)\.(?<year>\d{4})\.\d+p[^"]+/
                 let matches = item.name!.match(regex);
@@ -743,7 +754,7 @@ export class Update {
         const media = await prisma.media.findMany();
         const response = await search(type, name);
 
-        const movies: UpdateMediaSearch[] = response && response.results? response.results.filter(e => e.backdrop_path !== null && e.overview !== '').map(e => {
+        const movies: UpdateMediaSearch[] = response && response.results ? response.results.filter(e => e.backdrop_path !== null && e.overview !== '').map(e => {
             return {
                 popularity: e.popularity,
                 name: e.name ? e.name : e.title,
@@ -754,7 +765,7 @@ export class Update {
                 date: e.release_date || 'null',
                 backdrop: "https://image.tmdb.org/t/p/original" + e.backdrop_path
             }
-        }): [];
+        }) : [];
 
         const data: UpdateMediaSearch[] = [];
         for (let item of movies) {
@@ -767,7 +778,7 @@ export class Update {
     }
 
     /**
-     * @descm searches to see if media already exists before it's added on the client side during the editing process
+     * @desc searches to see if media already exists before it's added on the client side during the editing process
      * @param tmdbId
      * @param type
      */

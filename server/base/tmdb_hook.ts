@@ -25,7 +25,11 @@ export interface tmdbMedia {
 }
 
 export interface Collection {
-    parts: tmdbMedia[]
+    id: number;
+    name: string;
+    poster_path: string | null;
+    backdrop_path: string;
+    parts: tmdbMedia[];
 }
 
 export interface tmdbSeason {
