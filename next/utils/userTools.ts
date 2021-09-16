@@ -134,7 +134,6 @@ export default function useUser(frames = false, confirm = false) {
     }
 
     useLoadEffect(() => {
-        console.log({confirm, loading, frames})
         if (loading && confirm) {
             if (frames)
                 getFrameUser();
