@@ -147,7 +147,11 @@ Start the server
 * The up next UI when the present video is done playing
   ![](art/21.png)
 
-* Frames allows any non-guest user download video files provided they are given a key from the admin
+* Frames has the collection page that shows you default collection for media in your library
+  ![](art/41.png)
+  ![](art/42.png)
+
+* Frames allows any non-guest user download video files provided they are given a key from the admin(These links are only valid for 2 hours)
      ![](art/43.png)
      ![](art/44.png)
 
@@ -163,6 +167,9 @@ Start the server
       ![](art/31.png)
       ![](art/29.png)
     
+* Admin accounts can create and manage auth keys. These keys are used to create new accounts or download videos
+  ![](art/45.png)
+
 ## Upcoming features
 * Creating and sharing your playlists with others
 * Ability to download a video if you have a valid auth key
