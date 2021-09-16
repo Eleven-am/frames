@@ -119,6 +119,20 @@ Start the server
     * Frames supports only three subtitle languages at this point (English, French, and German)      
       ![](art/33.png)
 
+* GroupWatch: This feature allows you to watch a media with your friends at the same time.
+    ###### How it works
+    * To create a new session click on one of these buttons 
+    ![](art/36.png)
+        The join button in the video player
+    ![](art/40.png)
+        The join button in the info page
+    * When a session is created a link is copied to your clipboard anyone with access to this link can join the session
+    ![](art/37.png)
+    * A session spans multiple videos. As lon as all; parties remains connected the session allows you to actually marathon videos together.
+    * There's no limit to the amount of people that can join a session
+    ![](art/38.png)
+    * Users in a session can send a ping to themselves with a maximum of 280 characters. Ping history isn't saved
+    ![](art/39.png)
 
 * Frames has AirPlay and Chromecast functionality built in
   ![](art/16.png)
@@ -133,6 +147,10 @@ Start the server
 * The up next UI when the present video is done playing
   ![](art/21.png)
 
+* Frames allows any non-guest user download video files provided they are given a key from the admin
+     ![](art/43.png)
+     ![](art/44.png)
+
 * You can add three personalised categories to the home page.
     * These categories include a list of previously chosen media and a name to display said media
       ![](art/30.png)
@@ -144,10 +162,7 @@ Start the server
     * Adding these editor picks is as easy as visiting the settings page => Mange => manage picks.Here you can modify or create new editor picks to display on the homepage
       ![](art/31.png)
       ![](art/29.png)
-
-
-
+    
 ## Upcoming features
 * Creating and sharing your playlists with others
-* Group watch
 * Ability to download a video if you have a valid auth key
