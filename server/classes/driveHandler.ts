@@ -22,12 +22,13 @@ export default class DriveHandler {
      * @desc gets every file in a google drive folder
      * @param folder
      * @param pageToken
+     * @param trashed
      */
-    readFolder = async (folder: string, pageToken?: string): Promise<drive_v3.Schema$File[]> => {
+    readFolder = async (folder: string, trashed = 'false', pageToken?: string): Promise<drive_v3.Schema$File[]> => {
         pageToken = pageToken || "";
         let res = await this.drive.files.list({
-            q: `'${folder}' in parents and trashed = false`,
-            fields: 'nextPageToken, files(id, name, size, mimeType)',
+            q: `'${folder}' in parents and trashed = ${trashed}`,
+            fields: 'nextPageToken, files(id, name, size, mimeType, trashed)',
             spaces: 'drive',
             orderBy: 'name',
             pageSize: 1000,
@@ -35,7 +36,7 @@ export default class DriveHandler {
         });
 
         let files = res.data.files || [];
-        let temp = !!res.data.nextPageToken ? await this.readFolder(folder, res.data.nextPageToken) : [];
+        let temp = !!res.data.nextPageToken ? await this.readFolder(folder, trashed, res.data.nextPageToken) : [];
         return files.concat(temp);
     }
 
@@ -94,7 +95,7 @@ export default class DriveHandler {
                 fileId: fileId,
                 fields: "id, name, size, mimeType, contentHints/thumbnail, videoMediaMetadata, thumbnailLink, explicitlyTrashed"
             }).then(response => resolve(response.data))
-                .catch(error => resolve(null))
+                .catch(() => resolve(null))
         })
     }
 
@@ -162,18 +163,34 @@ export default class DriveHandler {
     }
 
     /**
+     * @desc Restores previously deleted element from trash
+     * @param fileId
+     */
+    restoreFile = async (fileId: string): Promise<boolean> => {
+        return new Promise<boolean>(resolve => {
+            this.drive2.files.untrash({'fileId': fileId})
+                .then(resp => {
+                    console.log(resp);
+                    resolve(true);
+                })
+                .catch(err => {
+                    console.warn(err);
+                    resolve(false);
+                });
+        })
+    }
+
+    /**
      * @desc downloads a file from google drive to user
      * @param file_id
      * @param name
      * @param dest
-     * @param mime
      * @returns {Promise<void>}
      */
-    rawDownload = async (file_id: string, name: string, dest: NextApiResponse, mime?: string) => {
+    rawDownload = async (file_id: string, name: string, dest: NextApiResponse) => {
         // @ts-ignore
         let {mimeType} = await this.getFile(file_id);
-        let value = mime ? 'inline' : 'attachment; filename=' + name + ' [nino].mp4';
-        mime = mime || mimeType;
+        let value = 'attachment; filename=' + name + ' [frames].mp4';
 
         let {data} = await this.drive.files.get({
             fileId: file_id,
@@ -181,19 +198,8 @@ export default class DriveHandler {
         }, {responseType: 'stream'});
 
         dest.setHeader('Content-disposition', value);
-        dest.setHeader('Content-type', mime!);
+        dest.setHeader('Content-type', mimeType);
         data.pipe(dest);
-    }
-
-    /**
-     * @desc Restores previously deleted element from trash
-     * @param fileId
-     * @returns {Promise<*>}
-     */
-    restoreFile = async (fileId: string) => {
-        return await this.drive2.files.untrash({
-            'fileId': fileId
-        });
     }
 
     /**
@@ -204,12 +210,12 @@ export default class DriveHandler {
      */
     renameFile = async (fileId: string, name: string) => {
         if (environment.config.deleteAndRename)
-            { // @ts-ignore
-                return await this.drive.files.update({
-                                'fileId': fileId,
-                                'resource': {name}
-                            })
-            }
+        { // @ts-ignore
+            return await this.drive.files.update({
+                'fileId': fileId,
+                'resource': {name}
+            })
+        }
         else return false;
     }
 

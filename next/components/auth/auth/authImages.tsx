@@ -1,7 +1,7 @@
 import styles from "./Auth.module.css";
 import {useLoop} from "../../../states/homeContext";
-import {useRecoilState, useSetRecoilState} from "recoil";
-import {AuthContextProcessAtom, Authenticated, AuthPicker} from "../../../states/authContext";
+import {useSetRecoilState} from "recoil";
+import {Authenticated, useReset} from "../../../states/authContext";
 import useUser from "../../../utils/userTools";
 import {useEffect} from "react";
 import {AuthCP} from "../../../SSR";
@@ -36,16 +36,8 @@ function Information({response}: { response: AuthCP }) {
 
 export default function AuthImages({response, auth}: { response: string[], auth: AuthCP }) {
     const current = useLoop({start: 0, end: response.length});
-    const [process, dispatch] = useRecoilState(AuthContextProcessAtom);
-    const setPicker = useSetRecoilState(AuthPicker);
     const {signAsGuest} = useUser();
-
-    const signIn = () => {
-        if (process !== 'pick') {
-            dispatch('pick');
-            setPicker(true);
-        }
-    }
+    const reset = useReset();
 
     return (
         <>
@@ -62,7 +54,7 @@ export default function AuthImages({response, auth}: { response: string[], auth:
                     ) : null;
                 })}
             </div>
-            <div id={styles["signIn-button"]} className={styles['signIn-button']} onClick={signIn}>
+            <div id={styles["signIn-button"]} className={styles['signIn-button']} onClick={reset}>
                 sign in
             </div>
 

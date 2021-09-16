@@ -29,6 +29,14 @@ module.exports = {
             destination: '/watch'
         },
         {
+            source: '/room=:roomKey',
+            destination: '/watch'
+        },
+        {
+            source: '/collection=:collectionId',
+            destination: '/collection'
+        },
+        {
             source: '/productionCompany=:prod',
             destination: '/prod'
         },

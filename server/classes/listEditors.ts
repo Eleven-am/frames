@@ -3,6 +3,7 @@ import {generateKey} from "../base/baseFunctions";
 import {MediaSection} from "./media";
 import {SectionInterface} from "./playback";
 import {Generator, MediaType, PickType} from '@prisma/client';
+import Episode from "./episode";
 
 export interface PickMedia {
     id: number;
@@ -42,6 +43,23 @@ export interface EditPickInterface {
     display: string;
     category: string;
     media: PickMedia[]
+}
+
+const episodeClass = new Episode();
+
+export interface FramePlaylistVideo {
+    id: number;
+    name: string;
+    overview: string;
+    backdrop: string;
+    logo: string;
+    type: MediaType;
+}
+
+export interface FramePlaylist {
+    name: string;
+    videos: FramePlaylistVideo[];
+    generator: Generator;
 }
 
 export class ListEditors {
@@ -265,12 +283,16 @@ export class Playlist {
      * @param name user generic name provided for the playlist
      * @param userId
      * @param generator generated automatically by frames or by the user
+     * @param isPublic
      */
-    async createPlaylists(videos: number[], name: string, userId: string, generator: Generator): Promise<string> {
+    async createPlaylists(videos: number[], name: string, userId: string, generator: Generator, isPublic = false): Promise<string> {
         const identifier = generateKey(5, 7);
+        if (generator === Generator.FRAMES)
+            await prisma.playlist.deleteMany({where: {name, userId}});
+
         await prisma.playlist.create({
             data: {
-                userId, name, identifier, generator
+                userId, name, identifier, generator, isPublic
             }
         });
 
@@ -349,17 +371,55 @@ export class Playlist {
     /**
      * @desc gets the first video in the playlist
      * @param identifier
+     * @param userId
      */
-    async findFirstVideo(identifier: string): Promise<PlayListResponse | null> {
-        const playList = await prisma.playlist.findUnique({where: {identifier}});
+    async findFirstVideo(identifier: string, userId: string): Promise<PlayListResponse | null> {
+        const playlist = await prisma.playlist.findUnique({where: {identifier}});
         const next = await prisma.playlistVideos.findFirst({where: {playlistId: identifier}});
-        if (next && playList)
+        if (next && playlist && (playlist.userId === userId || playlist.isPublic))
             return {
                 id: next.id,
                 videoId: next.videoId,
-                playList: playList.name,
+                playList: playlist.name,
                 identifier,
             }
+
+        return null;
+    }
+
+    /**
+     * @desc gets the integral playlist informatio
+     * @param identifier
+     * @param userId
+     */
+    async getPlaylist(identifier: string, userId: string): Promise<FramePlaylist | null> {
+        const playlist = await prisma.playlist.findUnique({
+            where: {identifier},
+            include: {PlaylistVideos: {include: {video: {include: {media: true, episode: true}}}}}
+        });
+
+        if (playlist && (playlist.userId === userId || playlist.isPublic)) {
+            const name = playlist.name;
+            const videos: FramePlaylistVideo[] = [];
+            const playlistVideos = playlist.PlaylistVideos;
+
+            for await (let item of playlistVideos) {
+                const {name, backdrop, overview, logo} = item.video.media;
+                if (item.video.media.type === MediaType.MOVIE)
+                    videos.push({id: item.id, name, backdrop, overview, logo, type: MediaType.MOVIE});
+
+                else if (item.video.episode) {
+                    const episode = await episodeClass.getEpisode(item.video.episode.id);
+                    if (episode) {
+                        const {overview, backdrop} = episode;
+                        videos.push({id: item.id, name, backdrop, overview, logo, type: MediaType.SHOW});
+                    }
+                }
+
+            }
+
+            return {name, videos, generator: playlist.generator};
+        }
 
         return null;
     }

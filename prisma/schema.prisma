@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["filterJson", "referentialActions"]
+  previewFeatures = ["filterJson"]
 }
 
 datasource db {
@@ -151,6 +151,7 @@ model Playlist {
   name           String
   generator      Generator        @default(FRAMES)
   identifier     String           @unique
+  isPublic       Boolean          @default(false)
   user           User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
   PlaylistVideos PlaylistVideos[]
 }
@@ -196,6 +197,7 @@ model User {
   suggestions Suggestion[]
   identifiers UserIdentifier[]
   views       View[]
+  downloads   Download[]
 }
 
 model Video {
@@ -212,21 +214,40 @@ model Video {
   playlistVideos PlaylistVideos[]
 }
 
+model Room {
+  id      Int    @id @default(autoincrement())
+  roomKey String @unique
+  auth    String
+  view    View   @relation(fields: [auth], references: [auth], onDelete: Cascade)
+}
+
+model Download {
+  id       Int      @id @default(autoincrement())
+  location String   @unique
+  userId   String
+  auth     String
+  view     View     @relation(fields: [auth], references: [auth], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  created  DateTime @default(now())
+}
+
 model View {
-  id        Int      @id @default(autoincrement())
-  auth      String   @unique
+  id        Int        @id @default(autoincrement())
+  auth      String     @unique
   userId    String
   videoId   Int
   position  Int
-  finished  Int      @default(0)
-  created   DateTime @default(now())
-  updated   DateTime @updatedAt
-  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  finished  Int        @default(0)
+  created   DateTime   @default(now())
+  updated   DateTime   @updatedAt
+  episode   Episode?   @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  video     Video      @relation(fields: [videoId], references: [id], onDelete: Cascade)
   frame     Frame[]
+  room      Room[]
   episodeId Int?
   Auth      Auth[]
+  downloads Download[]
 }
 
 enum MediaType {

@@ -1,86 +1,80 @@
 import React, {useEffect, useRef, useState} from "react";
 import styles from './controls.module.css';
 import {useRecoilValue, useSetRecoilState} from "recoil";
-import usePlayback, {displaySidesAtom, mutedSelector, shareOver, volumeWidth} from "../../../states/FramesStates";
+import usePlayback, {
+    displaySidesAtom,
+    DownOver,
+    FramesInformAtom,
+    framesPlayer,
+    mutedSelector,
+    shareOver,
+    volumeWidth
+} from "../../../states/FramesStates";
 import useCast from "../../../utils/castContext";
 import useUser from "../../../utils/userTools";
 import {Role} from '@prisma/client';
 import {SpringPlay} from "../../../../server/classes/springboard";
-import {useIsMounted} from "../../../utils/customHooks";
+import {useEventListener} from "../../../utils/customHooks";
+
+function AutoCastConnect({response}: { response: SpringPlay }) {
+    const {connected, castMedia} = useCast();
+    const frames = useRecoilValue(framesPlayer);
+    const {current} = useRecoilValue(FramesInformAtom);
+
+    useEffect(() => {
+        if (connected) {
+            castMedia({
+                currentTime: current,
+                src: response.cdn + response.location,
+                paused: !!frames?.paused, volume: frames?.volume || 1
+            }, {
+                backdrop: response.backdrop,
+                location: response.cdn + response.location,
+                name: response.name, logo: response.logo
+            })
+        }
+    }, [connected, response])
+
+    return null;
+}
 
 export default function Left({response}: { response: SpringPlay }) {
     const twoSecs = useRef<NodeJS.Timeout>();
-    const {connected: castConnected, castMedia, available, connect, disconnect} = useCast();
+    const {connected: castConnected, available, connect, disconnect} = useCast();
     const {frames: video, muteUnmuteVideo, setVolume} = usePlayback();
     const sides = useRecoilValue(displaySidesAtom);
     const width = useRecoilValue(volumeWidth);
     const mute = useRecoilValue(mutedSelector);
     const setShare = useSetRecoilState(shareOver);
-    const isMounted = useIsMounted();
+    const setDown = useSetRecoilState(DownOver);
     const [airPlay, setAirplay] = useState(false);
     const [connected, setConnected] = useState(false);
     const [volumeChange, setVolumeChange] = useState(false);
     const {user} = useUser();
 
     useEffect(() => {
-        if (castConnected && isMounted()) {
-            castMedia(video!, {
-                backdrop: response.backdrop,
-                location: response.cdn + response.location,
-                name: response.name,
-                logo: response.logo
-            })
-        }
-    }, [castConnected, response])
-
-    useEffect(() => {
         !sides && setVolumeChange(true);
         twoSecs.current && clearTimeout(twoSecs.current);
-        twoSecs.current = setTimeout(() => setVolumeChange(false), 2000)
+        twoSecs.current = setTimeout(() => setVolumeChange(false), 2000);
     }, [mute, width])
 
-    useEffect(() => {
-        if (video)
-            if (window.WebKitPlaybackTargetAvailabilityEvent) {
-                video.addEventListener('webkitplaybacktargetavailabilitychanged', function (event: any) {
-                    switch (event.availability) {
-                        case "available":
-                            setAirplay(true);
-                            break;
-                        case "not-available":
-                            setAirplay(false);
-                            break;
-                    }
-                });
-
-                video.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', function (event: any) {
-                    if (event.target.remote.state === "connected")
-                        setConnected(true);
-                    else
-                        setConnected(false);
-                });
-            }
-
-        return () => {
-            video?.removeEventListener('webkitplaybacktargetavailabilitychanged', (event: any) => {
-                switch (event.availability) {
-                    case "available":
-                        setAirplay(true);
-                        break;
-                    case "not-available":
-                        setAirplay(false);
-                        break;
-                }
-            })
-
-            video?.removeEventListener('webkitcurrentplaybacktargetiswirelesschanged', (event: any) => {
-                if (event.target?.remote?.state === "connected")
-                    setConnected(true);
-                else
-                    setConnected(false);
-            })
+    useEventListener('webkitplaybacktargetavailabilitychanged', event => {
+        switch (event.availability) {
+            case "available":
+                setAirplay(true);
+                break;
+            case "not-available":
+                setAirplay(false);
+                break;
         }
-    }, [video])
+    }, video);
+
+    useEventListener('webkitcurrentplaybacktargetiswirelesschanged', event => {
+        if (event.target.remote.state === "connected")
+            setConnected(true);
+        else
+            setConnected(false);
+    }, video);
 
     const handleWidthClick = (event: React.MouseEvent<HTMLElement>) => {
         const rect = event.currentTarget!.getBoundingClientRect();
@@ -128,6 +122,13 @@ export default function Left({response}: { response: SpringPlay }) {
                     <line x1="12" y1="2" x2="12" y2="15"/>
                 </svg>
             </button> : null}
+            <button className={styles.nf}>
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+            </button>
             <button onClick={muteUnmuteVideo} className={mute ? `${styles.f} ${styles.muted}` : styles.f}>
                 <svg viewBox="0 0 24 24">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -138,10 +139,11 @@ export default function Left({response}: { response: SpringPlay }) {
                 <div className={mute ? `${styles.vf} ${styles.muted}` : styles.vf} style={{width}}/>
                 <div className={styles.vh}/>
             </div>
-            {user && user.role !== Role.GUEST ? <button className={`${styles.f} ${styles.download}`}>
-                <svg viewBox="0 0 299.998 299.998">
-                    <g>
-                        <path d="M149.995,0C67.156,0,0,67.159,0,149.997c0,82.837,67.156,150,149.995,150s150.003-67.163,150.003-150
+            {user && user.role !== Role.GUEST ?
+                <button className={`${styles.f} ${styles.download}`} onClick={() => setDown(true)}>
+                    <svg viewBox="0 0 299.998 299.998">
+                        <g>
+                            <path d="M149.995,0C67.156,0,0,67.159,0,149.997c0,82.837,67.156,150,149.995,150s150.003-67.163,150.003-150
                             C299.997,67.159,232.834,0,149.995,0z M110.967,105.357c2.075-2.075,4.793-3.112,7.511-3.112c2.718,0,5.434,1.037,7.508,3.112
                             l13.297,13.295v-3.911V62.477c0-5.867,4.754-10.621,10.621-10.621s10.621,4.754,10.621,10.621v52.263v4.63l4.63-4.63l9.386-9.384
                             c2.075-2.075,4.79-3.112,7.508-3.112s5.436,1.037,7.511,3.112c2.552,2.549,3.522,6.079,2.933,9.384
@@ -156,9 +158,10 @@ export default function Left({response}: { response: SpringPlay }) {
                             l4.108,4.108h-3.641c-7.265,0-11.256,3.621-11.256,4.819v69.005c0,1.201,3.992,4.819,11.256,4.819h99.135
                             c7.265,0,11.256-3.621,11.256-4.819V140.31c0-1.198-3.992-4.819-11.256-4.819h-3.12l4.111-4.111
                             c4.282-4.279,6.894-9.786,7.516-15.727c13.681,2.913,23.498,12.69,23.498,24.66V209.315z"/>
-                    </g>
-                </svg>
-            </button> : null}
+                        </g>
+                    </svg>
+                </button> : null}
+            <AutoCastConnect response={response}/>
         </div>
     )
 }

@@ -18,7 +18,7 @@ const metaTags = {
 }
 
 export default function Auth({images, auth}: { auth: AuthCP, images: string[] }) {
-    const {user, loading} = useUser();
+    const {user, loading} = useUser(false, true);
     const router = useRouter();
     const [address, setAddress] = useRecoilState(addressAtom);
     useNavBar('login', 1);

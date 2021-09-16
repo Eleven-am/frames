@@ -1,20 +1,21 @@
-import {createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState} from "react";
+import {createContext, ReactNode, useCallback, useContext, useEffect, useRef} from "react";
 import {atom, useRecoilState, useSetRecoilState} from "recoil";
 import {CastEventAtom, LoadVideo, VideoStateAtom} from "../states/FramesStates";
-import Cast, {CastEvent, CastEventType} from "chomecast-sender";
+import Cast, {CastEvent, CastEventType, MediaObject} from "chomecast-sender";
 
-const CastContext = createContext<Cast | null>(null)
+const CastContext = createContext<Cast | undefined>(undefined);
 
 export function CastContextProvider({children}: { children: ReactNode }) {
-    const [cast, setCast] = useState<Cast | null>(null);
+    const cast = useRef<Cast>();
 
     useEffect(() => {
-        if (typeof Window !== "undefined" && cast === null)
-            setCast(new Cast('73BFF1D2', 'urn:x-cast:com.frames.cast'));
-    }, [cast])
+        if (typeof Window !== "undefined")
+            cast.current = new Cast('73BFF1D2', 'urn:x-cast:com.frames.cast');
+    }, [])
 
     return (
-        <CastContext.Provider value={cast}>
+        <CastContext.Provider value={cast.current}>
+            <CastListener/>
             {children}
         </CastContext.Provider>
     )
@@ -25,47 +26,10 @@ const sourceAtom = atom({
     default: ''
 })
 
-export default function useCast() {
+export function CastListener() {
     const cast = useContext(CastContext);
-    const [source, setSource] = useRecoilState(sourceAtom);
     const setVideo = useSetRecoilState(VideoStateAtom);
     const setEventState = useSetRecoilState(CastEventAtom);
-
-    const sendMessage = useCallback((object: any) => {
-        cast?.connected && cast.send(object);
-    }, [cast?.connected]);
-
-    const connect = useCallback(() => {
-        cast?.available && cast.connect();
-    }, [cast?.available])
-
-    const seek = useCallback((position: number) => {
-        cast && cast.connected && cast.seek(position)
-    }, [cast?.connected])
-
-    const playPause = useCallback(() => {
-        cast?.connected && cast.playPause();
-    }, [cast?.connected])
-
-    const muteUnmute = useCallback(() => {
-        cast?.connected && cast.muteUnmute();
-    }, [cast?.connected])
-
-    const setCastVolume = useCallback((float: number) => {
-        cast?.connected && cast.volume(float);
-    }, [cast?.connected])
-
-    const disconnect = useCallback(() => {
-        cast && cast.connected && cast.disconnect();
-    }, [cast?.connected])
-
-    const castMedia = useCallback((video: HTMLVideoElement, obj: LoadVideo) => {
-        if (cast?.connected && source !== obj.location) {
-            cast.castMedia(video, obj);
-            setSource(obj.location);
-        }
-    }, [cast?.connected])
-
     const eventHandler = (event: CastEvent | null) => {
         setEventState(event);
         if (event && event.state && event.state.time !== 0)
@@ -95,22 +59,52 @@ export default function useCast() {
 
         cast?.on(CastEventType.END, () => eventHandler(null))
 
-        cast?.on(CastEventType.NAMESPACE, event => {
-            const data: { current: number | null, duration: number | null } = JSON.parse(event.namespaceResponse!);
-            eventHandler({
-                ...event,
-                state: {
-                    ...event.state,
-                    time: data.current || event.state.time,
-                    duration: data.duration || event.state.duration
-                }
-            });
-        })
-
         cast?.on(CastEventType.BUFFERING, eventHandler)
 
         cast?.on(CastEventType.MUTED, eventHandler)
     }, [cast])
+
+    return null;
+}
+
+export default function useCast() {
+    const cast = useContext(CastContext);
+    const [source, setSource] = useRecoilState(sourceAtom);
+
+    const sendMessage = useCallback((object: any) => {
+        cast?.connected && cast.send(object);
+    }, [cast?.connected]);
+
+    const connect = useCallback(() => {
+        cast?.available && cast.connect();
+    }, [cast?.available])
+
+    const seek = useCallback((position: number) => {
+        cast && cast.connected && cast.seek(position)
+    }, [cast?.connected])
+
+    const playPause = useCallback(() => {
+        cast?.connected && cast.playPause();
+    }, [cast?.connected])
+
+    const muteUnmute = useCallback(() => {
+        cast?.connected && cast.muteUnmute();
+    }, [cast?.connected])
+
+    const setCastVolume = useCallback((float: number) => {
+        cast?.connected && cast.volume(float);
+    }, [cast?.connected])
+
+    const disconnect = useCallback(() => {
+        cast && cast.connected && cast.disconnect();
+    }, [cast?.connected])
+
+    const castMedia = useCallback((video: MediaObject, obj: LoadVideo) => {
+        if (cast?.connected && source !== obj.location) {
+            cast.castMedia(video, obj);
+            setSource(obj.location);
+        }
+    }, [cast?.connected])
 
     return {
         connect,

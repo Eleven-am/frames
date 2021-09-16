@@ -21,17 +21,17 @@ import Episode, {DetailedEpisode, EpisodeInterface} from "./episode";
 import {drive, magnet, prisma} from '../base/utils';
 import {FrontBit, UpdateInterface} from "./update";
 import {aJax} from "../base/baseFunctions";
-import {SectionInterface} from "./playback";
 
 /**
  * Only for getInfo
  */
-export interface MediaInfo extends Omit<Med, "background" | "production" | "tmdbId" | "vote_average" | "collectionId" | "created" | "updated"> {
+export interface MediaInfo extends Omit<Med, "background" | "production" | "tmdbId" | "vote_average" | "created" | "updated" | "collectionId"> {
     recommendations?: Array<{ poster: string, id: number, name: string, tmdbId: number, type: boolean }>
     cast?: Array<{ character: string, name: string, id: number }>
     crew?: Array<{ job: string, name: string, id: number }>
     review?: number | null
     production: any
+    collection: { id: number, name: string } | null;
     section?: Array<string>
     seasons?: Array<EpisodeInterface>
 }
@@ -72,6 +72,11 @@ export interface FramesCompany {
     shows: MediaSection[]
 }
 
+export interface FramesCollection extends Omit<FramesCompany, 'logo'> {
+    collectionId: number;
+    poster: string;
+}
+
 export interface CollectionFace {
     collectionName: string;
     collectionId: number;
@@ -103,17 +108,19 @@ export default class Media extends Episode {
                 type: true
             }
         });
+        let collection = null;
 
         await this.checkAndUpdate(entry);
         if (entry) {
             if (slim)
-                return {...entry, type: entry.type};
+                return {...entry, type: entry.type, collection: null};
 
             let dBase: any[] = [];
             let {cast, crew} = await castCrew(entry.tmdbId, entry.type);
             if (entry.collectionId) {
                 let res = await getCollection(entry.collectionId);
                 if (res) {
+                    collection = {id: entry.collectionId, name: res.name};
                     const parts = res.parts;
                     dBase = parts.sortKey('release_date', true).collapse(database, MediaType.MOVIE);
                     dBase = dBase.filter(item => item.tmdbId !== entry!.tmdbId);
@@ -153,7 +160,7 @@ export default class Media extends Episode {
                 genre,
                 production,
                 rating,
-                release
+                release,
             } = entry;
 
             let {
@@ -179,6 +186,7 @@ export default class Media extends Episode {
                 poster,
                 production,
                 rating,
+                collection,
                 recommendations: recommendations,
                 release,
                 review: vote_average,
@@ -274,6 +282,89 @@ export default class Media extends Episode {
             return {data, pages}
 
         } else return {data: [], pages: 0}
+    }
+
+    /**
+     * @desc gets the list of collections from the database based on the page number
+     * @param page
+     */
+    async getCollections(page: number) {
+        const medias = await prisma.media.findMany({
+            distinct: ['collectionId'],
+            orderBy: [{vote_average: 'desc'}, {updated: 'desc'}]
+        });
+
+        let data = medias.filter(e => e.collectionId !== null).map(e => e.collectionId) as number[];
+        page = 20 * (page - 1);
+        let pages = Math.floor(data.length / 20) + 1;
+        data = data.length > page ? data.slice(page, page + 20) : [];
+
+        const response: CollectionFace[] = [];
+        for await (let item of data) {
+            const info = await getCollection(item);
+            if (info) {
+                if (info.poster_path)
+                    response.push({
+                        collectionId: info.id,
+                        collectionName: info.name,
+                        collectionPoster: 'https://image.tmdb.org/t/p/original' + info.poster_path
+                    })
+
+                else {
+                    const media = (await prisma.media.findMany({
+                        where: {collectionId: item},
+                        orderBy: {vote_average: 'desc'}
+                    }))[0];
+
+                    const tmdbItem = info.parts.find(e => e.id === media.tmdbId);
+                    if (tmdbItem) {
+                        response.push({
+                            collectionId: info.id,
+                            collectionName: info.name,
+                            collectionPoster: 'https://image.tmdb.org/t/p/original' + tmdbItem.poster_path
+                        })
+                    }
+                }
+            } else {
+                const info = medias.find(e => e.collectionId === item);
+                if (info) {
+                    const res = await getDetails(info.type, info.tmdbId);
+                    if (res)
+                        response.push({
+                            collectionId: info.collectionId!,
+                            collectionName: info.name,
+                            collectionPoster: 'https://image.tmdb.org/t/p/original' + res.poster_path
+                        })
+                }
+            }
+        }
+
+        return {data: response, pages}
+    }
+
+    /**
+     * @desc gets the collection from the movies that are trending at the moment
+     */
+    async getTrendingCollections() {
+        const dBase = await prisma.media.findMany();
+        let data: Med[] = await trending(3, dBase);
+
+        const response: CollectionFace[] = [];
+        const collections: (number | null)[] = data.map(e => e.collectionId);
+
+        for await (let item of collections) {
+            if (item && response.length < 12) {
+                const info = await getCollection(item);
+                if (info)
+                    response.push({
+                        collectionId: info.id,
+                        collectionName: info.name,
+                        collectionPoster: 'https://image.tmdb.org/t/p/original' + info.poster_path
+                    })
+            }
+        }
+
+        return response;
     }
 
     /**
@@ -527,7 +618,7 @@ export default class Media extends Episode {
                     e.libName = temp.name;
                 e.recom = true;
                 return e;
-            }).filter(e => e.backdrop !== null && e.overview !== '');
+            }).filter(e => e.backdrop !== null && e.overview !== '').uniqueID('id');
         }
 
         return data;
@@ -751,62 +842,47 @@ export default class Media extends Episode {
         }
     }
 
-    async getCollections(): Promise<number[]> {
-        const response: number[] = [];
+    /**
+     * desc generates the display information for a specific collection from TMDB
+     * @param collectionId
+     */
+    async getCollection(collectionId: number): Promise<FramesCollection | null> {
+        const collection = await getCollection(collectionId);
+        const media = await prisma.media.findMany();
+        if (collection) {
+            const moviesData = collection.parts.collapse(media, MediaType.MOVIE, 'popularity');
+            const showsData = collection.parts.collapse(media, MediaType.SHOW, 'popularity');
 
-        const medias = await prisma.media.findMany({
-            distinct: ['collectionId']
-        })
+            const movies: (MediaSection & Required<{ poster: string }>)[] = moviesData.map(e => {
+                return {
+                    poster: e.poster,
+                    name: e.name, type: e.type,
+                    id: e.id, background: e.background
+                }
+            });
+            const shows: (MediaSection & Required<{ poster: string }>)[] = showsData.map(e => {
+                return {
+                    poster: e.poster,
+                    name: e.name, type: e.type,
+                    id: e.id, background: e.background
+                }
+            });
 
-        for (let item of medias)
-            if (item.collectionId)
-                response.push(item.collectionId);
+            for await (let item of moviesData.concat(showsData))
+                if (item.collectionId !== collectionId)
+                    await prisma.media.update({where: {id: item.id}, data: {collectionId}});
 
-        return response;
-    }
+            const images = movies.concat(shows).sortKey('popularity', false).map(e => e.poster);
 
-    async getSpecificCollection(collectionId: number): Promise<SectionInterface & {poster: string} | null> {
-        let int = Math.floor(Math.random() * 2);
-        const collections = await getCollection(collectionId);
-        const media = await prisma.media.findMany({
-            where: {collectionId},
-            select: {id: true, poster: true, backdrop: true, name: true, type: true, logo: true, background: true}
-        });
-
-        if (collections)
             return {
-                display: collections.name,
-                data: media, type: int === 1 ? 'basic': 'editor',
-                poster: 'https://image.tmdb.org/t/p/original' + collections.backdrop_path || ''
+                poster: 'https://image.tmdb.org/t/p/original' + collection.backdrop_path || '',
+                images, collectionId,
+                name: collection.name,
+                movies, shows,
             }
+        }
 
         return null;
-    }
-
-    async getCollectionsForHomeScreen(): Promise<CollectionHomeFace> {
-        let medias = await prisma.media.findMany({
-            distinct: ['collectionId'],
-            select: {id: true, poster: true, backdrop: true, name: true, logo: true, background: true, collectionId: true}
-        })
-
-        medias = medias.randomiseDB(medias.length, 0);
-
-        const response: CollectionFace[] = [];
-        for (let item of medias) {
-            if (item.collectionId && response.length < 12) {
-                const info = await getCollection(item.collectionId);
-                if (info)
-                    response.push({
-                        collectionId: info.id,
-                        collectionName: info.name,
-                        collectionPoster: 'https://image.tmdb.org/t/p/original' + info.poster_path || ''
-                    })
-            }
-        }
-
-        return {
-            display: '', data: response
-        }
     }
 }
 

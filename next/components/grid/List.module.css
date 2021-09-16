@@ -49,7 +49,7 @@
     z-index: 10;
 }
 
-.gridHolder {
+.gridHolder, .collectionHolder {
     position: fixed;
     top: 18vh;
     height: 80.5vh;
@@ -60,4 +60,8 @@
     align-items: center;
     width: 100%;
     z-index: -1;
+}
+
+.collectionHolder {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 }

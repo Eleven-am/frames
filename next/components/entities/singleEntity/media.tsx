@@ -3,7 +3,7 @@ import {MediaType} from '@prisma/client';
 import styles from './Grid.module.css';
 import secondStyles from '../Sections.module.css'
 import Image from "next/image";
-import Link from "next/link";
+import {FramesLink as Link} from "../../misc/Loader";
 import {MediaSection} from "../../../../server/classes/media";
 
 export default function Media({data, media} : {data: MediaSection, media: boolean}) {

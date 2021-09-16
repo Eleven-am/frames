@@ -104,21 +104,17 @@ const validatePass = (pass: string) => {
 }
 
 const confirmAuth = (key: string) => {
-    let result = false;
     let rgx = new RegExp(/^[A-Za-z0-9]{1,5}$/);
     let nonRgx = new RegExp(/[$-/:-?{-~!"^_`\[\]\s+]/);
 
     if (key === '' || key === 'homeBase')
-        result = true;
+        return true;
 
-    else if ((key.length % 6 === 0 && key.charAt(key.length - 1) === "-") || key.length > 6) {
+    else if (key.length > 5) {
         let matches = key.split('-').filter(e => e !== '');
-        result = matches.every(match => rgx.test(match) && !nonRgx.test(match));
+        return matches.every(match => rgx.test(match) && !nonRgx.test(match));
 
-    } else if (key.length < 6)
-        result = rgx.test(key) && !nonRgx.test(key);
-
-    return result;
+    } else return rgx.test(key) && !nonRgx.test(key);
 }
 
 export const AuthErrors = selector({

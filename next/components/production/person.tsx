@@ -2,11 +2,10 @@ import {FramesPerson} from "../../../server/base/tmdb_hook";
 import {useFetcher} from "../../utils/customHooks";
 import {Loading} from "../misc/Loader";
 import styles from "./back.module.css";
-import Link from "next/link";
+import {FramesLink as Link} from "../misc/Loader";
 import {SectionBone} from "../entities/section";
 import {useEffect, useRef} from "react";
 import useOnScroll from "../../utils/opacityScroll";
-
 
 function MinHolder ({data, person}: {data: number, person: FramesPerson}) {
     const {reset, setReference, onScroll, values} = useOnScroll();

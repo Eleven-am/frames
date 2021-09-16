@@ -110,7 +110,7 @@ export function Header({meta}: { meta: MetaTags }) {
 }
 
 export default function HomeLayout({children, meta, frame}: { children: ReactNode, meta?: MetaTags, frame?: boolean }) {
-    const {user, loading} = useUser(frame);
+    const {user, loading} = useUser(frame, true);
     const searchContext = useRecoilValue(searchActive);
     const [address, setAddress] = useRecoilState(addressAtom);
     const router = useRouter();

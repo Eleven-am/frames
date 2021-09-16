@@ -1,11 +1,13 @@
 import styles from './Button.module.css';
-import React, {useState} from "react";
-import Link from "next/link";
+import React, {useEffect, useState} from "react";
+import {FramesLink as Link} from "../misc/Loader";
 import {useRouter} from "next/router";
 import {SpringPlay} from "../../../server/classes/springboard";
 import {useSetRecoilState} from "recoil";
 import {InformDisplayContext} from "../misc/inform";
 import {mutate} from "swr";
+import useGroupWatch from "../../utils/groupWatch";
+import {useIsMounted} from "../../utils/customHooks";
 
 interface ButtonInterfaces {
     id: number;
@@ -22,6 +24,13 @@ interface ButtonInterfaces {
 }
 
 const PlayButton = ({id, name, url}: ButtonInterfaces) => {
+    const {pushNext} = useGroupWatch();
+
+    useEffect(() => {
+        if (url)
+            return () => pushNext(url);
+    }, [])
+
     return (
         <Link href={url || '/watch?id=' + id}>
             <button className={styles.playButton}>
@@ -228,15 +237,18 @@ const MyList = ({id, myList}: ButtonInterfaces) => {
     );
 };
 
-const GroupWatch = ({id}: ButtonInterfaces) => {
-    const dispatch = useSetRecoilState(InformDisplayContext);
+const GroupWatch = ({id, type}: ButtonInterfaces) => {
+    const router = useRouter();
+    const isMounted = useIsMounted();
+    const {genRoom, connected} = useGroupWatch(true);
+
+    useEffect(() => {
+        if (connected && isMounted() && type === 'MOVIE')
+            router.push('watch?id=' + id);
+    }, [connected, type])
 
     return (
-        <button title={'GroupWatch'} className={styles.roundGuys} onClick={() => dispatch({
-            type: "error",
-            heading: 'Function not available',
-            message: 'The GroupWatch feature is currently under development'
-        })}>
+        <button title={'GroupWatch'} className={styles.roundGuys} onClick={() => genRoom()}>
             <svg viewBox="0 0 24 24">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -280,6 +292,12 @@ const Rating = ({id, review, myRating}: ButtonInterfaces) => {
 }
 
 const InfoButton = ({id, name, type}: ButtonInterfaces) => {
+    const {disconnect} = useGroupWatch();
+
+    useEffect(() => {
+       return () => disconnect();
+    }, [])
+
     return (
         <Link href={'/info?id=' + id} as={'/' + type + '=' + name?.replace(/\s/g, '+')}>
             <button className={`${styles.trailerButton} ${styles.noFill}`}>
@@ -296,15 +314,18 @@ const InfoButton = ({id, name, type}: ButtonInterfaces) => {
 
 const BackButton = ({response}: { response?: SpringPlay }) => {
     const router = useRouter();
+    const {disconnect} = useGroupWatch();
 
-    const routeOut = async () => {
+    const routeOut = async (ev: any) => {
+        ev.stopPropagation();
+        await disconnect();
         if (response) {
             const url = '/' + (response.episodeName ? 'show' : 'movie') + '=' + response.name.replace(/\s/g, '+');
             document.body.removeAttribute('style');
             await router.push('/info?id=' + response.mediaId, url);
 
         } else await router.back();
-        await mutate('/api/load/continue')
+        await mutate('/api/load/continue');
     }
 
     return (
@@ -337,22 +358,22 @@ const Template = ({id, type, name, onClick, onHover}: ButtonInterfaces) => {
                 <polyline points="23 4 23 10 17 10"/>
                 <polyline points="1 20 1 14 7 14"/>
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg> : type === 'edit' ?  <svg viewBox="0 0 24 24">
+            </svg> : type === 'edit' ? <svg viewBox="0 0 24 24">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg> : type === 'add' ? <svg viewBox="0 0 409.6 409.6">
-                    <g>
-                        <path
-                            d="M392.533,187.733H221.867V17.067C221.867,7.641,214.226,0,204.8,0s-17.067,7.641-17.067,17.067v170.667H17.067
+                <g>
+                    <path
+                        d="M392.533,187.733H221.867V17.067C221.867,7.641,214.226,0,204.8,0s-17.067,7.641-17.067,17.067v170.667H17.067
                                 C7.641,187.733,0,195.374,0,204.8s7.641,17.067,17.067,17.067h170.667v170.667c0,9.426,7.641,17.067,17.067,17.067
                                 s17.067-7.641,17.067-17.067V221.867h170.667c9.426,0,17.067-7.641,17.067-17.067S401.959,187.733,392.533,187.733z"
-                        />
-                    </g>
-                </svg> : type === 'none' ? null : <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>}
+                    />
+                </g>
+            </svg> : type === 'none' ? null : <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>}
             {id !== 2 && name}
         </button>
     )

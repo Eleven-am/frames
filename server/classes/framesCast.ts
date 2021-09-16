@@ -58,4 +58,46 @@ export default class FramesCast {
         return null;
     }
 
+    /**
+     * @desc adds a generated room to the database
+     * @param roomKey
+     * @param auth
+     * @param userId
+     */
+    async createModRoom(roomKey: string, auth: string, userId: string) {
+        const authFile = await prisma.view.findUnique({where: {auth}});
+        const user = await prisma.user.findUnique({where: {userId}});
+        if (authFile && user && user.role !== 'GUEST') {
+            await prisma.room.upsert({
+                create: {auth, roomKey},
+                update: {auth},
+                where: {roomKey}
+            });
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @desc gets a room from the room key provided
+     * @param roomKey
+     * @param userId
+     */
+    async decryptRoom(roomKey: string, userId: string): Promise<SpringPlay | null>  {
+        const user = await prisma.user.findUnique({where: {userId}});
+        const frame = await prisma.room.findUnique({
+            where: {roomKey},
+            include: {view: {include: {video: {include: {media: true, episode: true}}}}}
+        });
+
+        if (frame && user) {
+            const id = frame.view.video.episode ? frame.view.video.episode.id : frame.view.video.media.id;
+            const episode = !!frame.view.video.episode;
+            return await spring.playMedia(id, userId, episode);
+        }
+
+        return null;
+    }
 }

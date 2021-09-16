@@ -3,9 +3,16 @@ import Trending from "../../next/components/trending/trending";
 import HomeSections from "../../next/components/homeSection/homeSections";
 import {useNavBar} from "../../next/utils/customHooks";
 import {Banner} from "../../server/classes/springboard";
+import {useEffect} from "react";
+import useCast from "../../next/utils/castContext";
 
 export default function Index({banner, segments}: { banner: Banner[], segments: string[] }) {
     useNavBar('home', 1);
+    const {sendMessage} = useCast();
+
+    useEffect(() => {
+        sendMessage({action: 'home'});
+    }, [])
 
     return (
         <HomeLayout>

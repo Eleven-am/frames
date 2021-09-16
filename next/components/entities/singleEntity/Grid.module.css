@@ -5,6 +5,18 @@
     padding: 0;
 }
 
+.collectionHolder {
+    width: 240px;
+    height: 416px;
+    margin: 0;
+    padding: 0;
+}
+
+.collectionImgHolder {
+    position: relative;
+    height: 350px;
+}
+
 .gridDivHolder {
     position: relative;
     height: 169px;
@@ -22,7 +34,19 @@
     cursor: pointer;
 }
 
-.gridDivHolder:hover .gridBackdrop {
+.collectionImg {
+    position: absolute;
+    width: 235px;
+    height: 350px;
+    object-fit: cover;
+    transition: all 0.2s ease-in-out;
+    border-radius: 5px;
+    box-shadow: 2px 12px 12px -12px #000000;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.gridDivHolder:hover .gridBackdrop, .collectionImg:hover {
     box-shadow: 2px 12px 8px -6px #000000;
     border: 2px solid rgba(217, 238, 255, 0.9);
     transform: scale(1.01);

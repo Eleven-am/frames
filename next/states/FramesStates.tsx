@@ -7,6 +7,9 @@ import useUser from "../utils/userTools";
 import {pFetch} from "../utils/baseFunctions";
 import {SpringPlay} from "../../server/classes/springboard";
 import {useIsMounted} from "../utils/customHooks";
+import useGroupWatch, {Message} from "../utils/groupWatch";
+import {InformDisplayContext} from "../components/misc/inform";
+import {useRouter} from "next/router";
 
 export interface FramesSubs {
     language: string;
@@ -45,6 +48,16 @@ export const shareOver = atom({
     default: false
 });
 
+export const GWMOver = atom({
+    key: 'GWMOver',
+    default: false
+});
+
+export const DownOver = atom({
+    key: 'DownOver',
+    default: false
+});
+
 export const UpNextURL = atom({
     key: 'UpNextURLAtom',
     default: ''
@@ -65,46 +78,9 @@ export const volumeAtom = atom<number>({
     default: 1
 });
 
-export const volumeWidth = selector<string>({
-    key: 'volumeWidth',
-    get: ({get}) => {
-        const event = get(CastEventAtom);
-        const frame = get(volumeAtom);
-
-        const vol = event?.volume || frame;
-        return (vol * 100) + '%';
-    }
-});
-
 export const bufferingAtom = atom({
     key: 'bufferingAtom',
     default: true
-});
-
-export const bufferingSelector = selector({
-    key: 'bufferingSelector',
-    get: ({get}) => {
-        const event = get(CastEventAtom);
-        const frames = get(bufferingAtom);
-
-        if (event && event.connected)
-            return event.buffering;
-
-        else return frames;
-    }
-});
-
-export const mutedSelector = selector({
-    key: 'mutedSelector',
-    get: ({get}) => {
-        const event = get(CastEventAtom);
-        const frames = get(mutedAtom);
-
-        if (event && event.connected)
-            return event.muted;
-
-        else return frames;
-    }
 });
 
 export const playVideoAtom = atom<boolean | null>({
@@ -112,91 +88,9 @@ export const playVideoAtom = atom<boolean | null>({
     default: null
 });
 
-export const playingSelector = selector({
-    key: 'playingSelector',
-    get: ({get}) => {
-        const event = get(CastEventAtom);
-        const frames = get(playVideoAtom);
-
-        if (event && event.connected)
-            return !event.paused;
-
-        else return frames;
-    }
-});
-
 export const displayInfoAtom = atom({
     key: 'displayInfoAtom',
     default: false
-});
-
-export const timeStampsAtom = selector({
-    key: 'timeStampsAtom',
-    get: ({get}) => {
-        const event = get(VideoStateAtom);
-        const frame = get(currentDuration);
-
-        const current = event?.time || frame.current;
-        const duration = event?.duration || frame.duration;
-
-        const durationDate = new Date(0);
-        durationDate.setSeconds(current);
-        let valid = (new Date(durationDate)).getTime() > 0;
-        const timeViewed = !valid ? '00:00' : (current >= 3600) ? durationDate.toISOString().substr(12, 7) : durationDate.toISOString().substr(14, 5);
-
-        const totalSecondsRemaining = duration - current;
-        const time = new Date(0);
-        time.setSeconds(totalSecondsRemaining);
-        valid = (new Date(time)).getTime() > 0;
-        const timeRemaining = !valid ? '00:00' : totalSecondsRemaining >= 3600 ? time.toISOString().substr(12, 7) : time.toISOString().substr(14, 5);
-        return {timeViewed, timeRemaining};
-    }
-});
-
-export const playWidthAtom = selector({
-    key: 'playWidthAtom',
-    get: ({get}) => {
-        const event = get(VideoStateAtom);
-        const frame = get(currentDuration);
-
-        const current = event?.time || frame.current;
-        const duration = event?.duration || frame.duration;
-
-        return ((current / duration) * 100) + '%';
-    }
-});
-
-const FramesInformAtom = selector({
-    key: 'FramesInformAtom',
-    get: ({get}) => {
-        const event = get(VideoStateAtom);
-        const frame = get(currentDuration);
-
-        const current = event?.time || frame.current;
-        const duration = event?.duration || frame.duration;
-
-        return {current, duration};
-    }
-});
-
-export const bufferedAtom = selector({
-    key: 'bufferedAtom',
-    get: ({get}) => {
-        const {current, buffered, duration} = get(currentDuration);
-        let buffer: number | string | null = null;
-        if (buffered)
-            for (let i = 0; i < buffered.length; i++) {
-                const startX = buffered.start(i);
-                const endX = buffered.end(i);
-                if (startX < current && current < endX) {
-                    buffer = endX;
-                    break;
-                }
-            }
-
-        const temp = buffer || current;
-        return ((temp / duration) * 100) + '%';
-    }
 });
 
 export const displaySidesAtom = atom<boolean>({
@@ -234,17 +128,126 @@ export const VideoStateAtom = atom<VideoState | null>({
     default: null
 })
 
+export const volumeWidth = selector<string>({
+    key: 'volumeWidth',
+    get: ({get}) => {
+        const event = get(CastEventAtom);
+        const frame = get(volumeAtom);
+
+        const vol = event?.volume || frame;
+        return (vol * 100) + '%';
+    }
+});
+
+export const bufferingSelector = selector({
+    key: 'bufferingSelector',
+    get: ({get}) => {
+        const event = get(CastEventAtom);
+        const frames = get(bufferingAtom);
+
+        if (event?.connected)
+            return event.buffering;
+
+        else return frames;
+    }
+});
+
+export const mutedSelector = selector({
+    key: 'mutedSelector',
+    get: ({get}) => {
+        const event = get(CastEventAtom);
+        const frames = get(mutedAtom);
+
+        if (event?.connected)
+            return event.muted;
+
+        else return frames;
+    }
+});
+
+export const playingSelector = selector({
+    key: 'playingSelector',
+    get: ({get}) => {
+        const event = get(CastEventAtom);
+        const frames = get(playVideoAtom);
+
+        if (event?.connected)
+            return !event.paused;
+
+        else return frames;
+    }
+});
+
+export const timeStampsAtom = selector({
+    key: 'timeStampsAtom',
+    get: ({get}) => {
+        const {current, duration} = get(FramesInformAtom);
+        const durationDate = new Date(0);
+        durationDate.setSeconds(current);
+        let valid = (new Date(durationDate)).getTime() > 0;
+        const timeViewed = !valid ? '00:00' : (current >= 3600) ? durationDate.toISOString().substr(12, 7) : durationDate.toISOString().substr(14, 5);
+
+        const totalSecondsRemaining = duration - current;
+        const time = new Date(0);
+        time.setSeconds(totalSecondsRemaining);
+        valid = (new Date(time)).getTime() > 0;
+        const timeRemaining = !valid ? '00:00' : totalSecondsRemaining >= 3600 ? time.toISOString().substr(12, 7) : time.toISOString().substr(14, 5);
+        return {timeViewed, timeRemaining};
+    }
+});
+
+export const playWidthAtom = selector({
+    key: 'playWidthAtom',
+    get: ({get}) => {
+        const {current, duration} = get(FramesInformAtom);
+        return ((current / duration) * 100) + '%';
+    }
+});
+
+export const FramesInformAtom = selector({
+    key: 'FramesInformAtom',
+    get: ({get}) => {
+        const event = get(VideoStateAtom);
+        const frame = get(currentDuration);
+
+        const current = event?.time || frame.current;
+        const duration = event?.duration || frame.duration;
+
+        return {current, duration};
+    }
+});
+
+export const bufferedAtom = selector({
+    key: 'bufferedAtom',
+    get: ({get}) => {
+        const {current, buffered, duration} = get(currentDuration);
+        let buffer: number | string | null = null;
+        if (buffered)
+            for (let i = 0; i < buffered.length; i++) {
+                const startX = buffered.start(i);
+                const endX = buffered.end(i);
+                if (startX < current && current < endX) {
+                    buffer = endX;
+                    break;
+                }
+            }
+
+        const temp = buffer || current;
+        return ((temp / duration) * 100) + '%';
+    }
+});
+
 export const SubtitlesAtom = selector({
     key: 'SubtitlesAtom',
     get: ({get}) => {
+        let {current} = get(FramesInformAtom);
         const activeSub = get(activeSubs);
         const playing = get(playVideoAtom);
         const move = get(moveSubsAtom);
-        const timeUpdate = get(currentDuration);
         const subtitles = get(framesSubtitles);
 
-        if (timeUpdate.current > 0 && subtitles.length) {
-            const current = (timeUpdate.current * 1000) - 50;
+        if (current > 0 && subtitles.length) {
+            current = (current * 1000) - 50;
             const sub = subtitles.find(e => e.language === activeSub);
             if (sub) {
                 const display = sub.data.find(e => e.start <= current && current <= e.end);
@@ -257,11 +260,17 @@ export const SubtitlesAtom = selector({
     }
 });
 
-export default function usePlayback() {
+export default function usePlayback(inform = true) {
+    const {sendMessage: send} = useGroupWatch();
     const {connected, playPause: playPauseCast, seek: seekCast, muteUnmute, setCastVolume} = useCast();
-    const [state, setState] = useRecoilState(VideoStateAtom)
+    const [state, setState] = useRecoilState(VideoStateAtom);
     const videoState = useRecoilValue(CastEventAtom);
     const frames = useRecoilValue(framesPlayer);
+
+    const sendMessage = useCallback((message: Message) => {
+        if (inform)
+            send(message);
+    }, [inform, send])
 
     useEffect(() => {
         if (frames) {
@@ -279,29 +288,45 @@ export default function usePlayback() {
         }
     }, [connected, frames])
 
-    const playPause = useCallback(async () => {
+    const playPause = useCallback(async (action?: boolean) => {
         const video = (document.getElementById('frames-player') as HTMLVideoElement | null);
-        if (video && !connected) {
-            if (video.paused)
-                await video.play();
+        if (action !== undefined) {
+            if (connected)
+                playPauseCast();
 
             else
-                video.pause();
-        } else if (connected)
-            playPauseCast()
-    }, [connected])
+                action ? await video?.play() : await video?.pause();
 
-    const seekVideo = useCallback((current: number, add = true) => {
+        } else if (video && !connected) {
+            if (video.paused) {
+                await video.play();
+                sendMessage({action: "playing", data: true});
+            } else {
+                video.pause();
+                sendMessage({action: "playing", data: false});
+            }
+
+        } else if (connected) {
+            playPauseCast()
+            sendMessage({action: "playing", data: videoState?.paused});
+        }
+
+    }, [connected, sendMessage])
+
+    const seekVideo = useCallback((current: number, add: boolean | null = true) => {
         if (frames) {
             if (!connected) {
-                frames.currentTime = add ? frames.currentTime + current : frames.duration * current;
+                frames.currentTime = add === null ? current : add ? frames.currentTime + current : frames.duration * current;
+                sendMessage({action: "skipped", data: frames.currentTime});
 
             } else {
-                const pos = add ? (state?.time || 0) + current : frames.duration * current;
+                const pos = add === null ? current : add ? (state?.time || 0) + current : frames.duration * current;
+                sendMessage({action: "skipped", data: pos});
                 seekCast(pos);
             }
         }
-    }, [frames, connected, state])
+
+    }, [frames, connected, state, sendMessage])
 
     const setVolume = useCallback((current: number, add = true) => {
         if (frames) {
@@ -328,12 +353,87 @@ export default function usePlayback() {
     return {frames, playPause, seekVideo, muteUnmuteVideo, setVolume}
 }
 
+export function GroupWatchListener() {
+    const dispatch = useSetRecoilState(InformDisplayContext);
+    const setNext = useSetRecoilState(nextHolder);
+    const {playPause, seekVideo} = usePlayback(false);
+    const {message, setLeader, sendMessage} = useGroupWatch();
+    const {current} = useRecoilValue(FramesInformAtom);
+    const router = useRouter();
+
+    useEffect(() => {
+        switch (message?.action) {
+            case "joined":
+                message?.self !== true && dispatch({
+                    type: "warn",
+                    heading: "New client added",
+                    message: `${message?.client} joined the room`
+                })
+                break;
+            case "left":
+                dispatch({
+                    type: "warn",
+                    heading: "Someone left the room",
+                    message: `${message?.client} left the room`
+                })
+                break;
+            case "playing":
+                playPause(message?.data as boolean);
+                break;
+            case 'declare':
+                sendMessage({action: 'inform', data: current});
+                break;
+            case 'skipped':
+                !message?.self && seekVideo(message?.data as number, null);
+                break;
+            case "says":
+                !message?.self && dispatch({
+                    type: "warn",
+                    heading: `${message?.client} says`,
+                    message: `${message?.data}`
+                })
+                break;
+            case "inform":
+                !message?.self && seekVideo(message?.data as number, null);
+                break;
+            case "next":
+                message?.self !== true && router.push(message?.data as string);
+                break;
+            case "leader":
+                setLeader(true);
+                dispatch({
+                    type: message?.self ? "warn": "alert",
+                    heading: "Promoted to host",
+                    message: message?.self ? 'You are the only client in this session': `The previous host ${message?.client}, has left the GroupWatch session`
+                })
+                break;
+            case "buffering":
+                if (message?.self !== true){
+                    playPause(!message?.data as boolean);
+                    dispatch({
+                        type: message?.data ? "error" : "alert",
+                        heading: `${message?.data ? 'Poor' : 'Established'} session connection`,
+                        message: `${message?.client} ${message?.data ? 'is trying to reconnect' : 'has reconnected'}`
+                    })
+                }
+                break;
+            case 'nextHolder':
+                setNext(message?.upNext || null);
+                break;
+        }
+    }, [message])
+
+    return null;
+}
+
 export function InformAndAuth({response}: { response: SpringPlay }) {
     const [pos, setPos] = useState(0);
+    const [sent, setSent] = useState(false);
     const {current, duration} = useRecoilValue(FramesInformAtom);
     const {disconnect} = useCast();
     const [diff, setDiff] = useRecoilState(differance);
     const isMounted = useIsMounted();
+    const {sendNext} = useGroupWatch();
     const {signOut} = useUser();
 
     const inform = useCallback(async (current: number, duration: number) => {
@@ -342,7 +442,7 @@ export function InformAndAuth({response}: { response: SpringPlay }) {
             disconnect();
         }
 
-        if (response.inform) {
+        else if (response.inform) {
             setPos(current);
             const position = (current / duration) * 1000;
             await pFetch({auth: response.location, position}, '/api/stream/inform');
@@ -353,11 +453,17 @@ export function InformAndAuth({response}: { response: SpringPlay }) {
         if (response.inform && (pos + 60 < current || current < pos || current === 300) && isMounted())
             inform(current, duration)
 
-        if (duration - current < 60 && duration - current !== 0 && isMounted())
+        if (((current / duration) * 100 > 94) && duration - current < 60 && isMounted()) {
             setDiff(Math.ceil(duration - current) + 's');
+            if (!sent) {
+                sendNext();
+                setSent(true);
+            }
 
-        else if (diff && isMounted())
+        } else if (diff && isMounted()) {
             setDiff(null);
+            setSent(false);
+        }
 
     }, [current, response, duration])
 
@@ -384,6 +490,8 @@ export const resetFrames = () => {
     const qOver = useResetRecoilState(CastEventAtom);
     const rOver = useResetRecoilState(VideoStateAtom);
     const sOver = useResetRecoilState(differance);
+    const uOver = useResetRecoilState(GWMOver);
+    const vOver = useResetRecoilState(DownOver);
 
     return () => {
         aSubs();
@@ -405,5 +513,7 @@ export const resetFrames = () => {
         qOver();
         rOver();
         sOver();
+        uOver();
+        vOver();
     }
 }

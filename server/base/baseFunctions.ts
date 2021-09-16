@@ -37,9 +37,16 @@ declare global {
          * @desc helps searches the database for an array entries returned from TMDB, returning a smaller array of objects that do exist
          * @param array2 the host database
          * @param type to be accepted
+         */
+        collapse<S>(array2: Array<S>, type: MediaType): Array<S>;
+
+        /**
+         * @desc helps searches the database for an array entries returned from TMDB, returning a smaller array of objects that do exist
+         * @param array2 the host database
+         * @param type to be accepted
          * @param keepKey useful for saving specific keys || optional
          */
-        collapse<S>(array2: Array<S>, type: MediaType, keepKey?: string): Array<S>;
+        collapse<S, B extends keyof T>(array2: Array<S>, type: MediaType, keepKey: B): Array<S & Pick<T, B>>;
 
         /**
          * @param length length of new array

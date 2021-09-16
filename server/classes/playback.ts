@@ -1,4 +1,4 @@
-import {MediaType, Role} from "@prisma/client";
+import {MediaType, Role, UseCase} from "@prisma/client";
 import {create_UUID, parseTime} from "../base/baseFunctions";
 import {pageTwo} from "../base/tmdb_hook";
 import Episode from "./episode";
@@ -9,6 +9,7 @@ import got from "got";
 import {MediaSection} from "./media";
 import {SpringLoad} from "./springboard";
 import {Subtitles as SubClass} from "./update";
+import User from "./auth";
 
 export interface VideoPos {
     position: number;
@@ -42,6 +43,9 @@ export interface UpNextHolder {
     mediaId: number;
     episodeName?: string;
 }
+
+const user = new User();
+const episodeClass = new Episode();
 
 export default class Playback {
 
@@ -81,16 +85,15 @@ export default class Playback {
                     let lastSeenIndex = episodes.findIndex(item => item.id === lastSeen.episodeId);
                     let nextEpisode = lastSeenIndex >= 0 && lastSeenIndex <= episodes.length - 2 ? episodes[lastSeenIndex + 1] : null;
                     if (nextEpisode) {
+                        if (lastSeen.finished === 2)
+                            await prisma.view.updateMany({
+                                where: {
+                                    userId,
+                                    video: {mediaId}
+                                }, data: {finished: 1}
+                            })
+
                         let video = result.find(e => e.episodeId === nextEpisode!.id);
-
-                        if (result.every(e => e.finished === 2) && episodes.length)
-                            return {
-                                position: 0,
-                                id: episodes[0].id,
-                                videoId: episodes[0].videoId,
-                                found: false,
-                            }
-
                         return {
                             position: video && video.position < 920 ? video.position : 0,
                             id: nextEpisode.id,
@@ -220,7 +223,7 @@ export default class Playback {
                 logo: episode.media.logo,
                 backdrop: episode.media.backdrop,
                 episodeName: /^Episode \d+/.test(info.name) ? `${episode.media.name}: S${info.seasonId}, E${info.episode}` : `S${info.seasonId}, E${info.episode}: ${info.name}`,
-                name: episode.media.name, overview: info.overview || episode.media.poster, poster: episode.media.poster,
+                name: episode.media.name, overview: info.overview || episode.media.overview
             };
         }
 
@@ -373,6 +376,29 @@ export default class Playback {
     }
 
     /**
+     * @desc adds a view auth to download, available for 5 hours
+     * @param auth
+     * @param authKey
+     * @param userId
+     */
+    async addFileForDownload(auth: string, authKey: string, userId: string) {
+        const file = await prisma.view.findFirst({where: {auth}, select: {video: true}});
+        const valid = await user.validateAuthKey(authKey);
+        if (valid === 0 && file) {
+            await user.utiliseAuthKey(authKey, userId, UseCase.DOWNLOAD, auth);
+            const location = create_UUID();
+            await prisma.download.create({
+                data: {
+                    location, auth, userId
+                }
+            });
+            return location;
+        }
+
+        return null;
+    }
+
+    /**
      * @param userId user to be processed
      * @returns the suggestions of a specific user
      */
@@ -422,11 +448,11 @@ export default class Playback {
         let episode = new Episode();
         let result: MediaSection[] = [];
         for await (let item of data) {
-            if (result.length < 13) {
+            if (result.length < 11) {
                 if (item.type === MediaType.SHOW) {
                     let e = await this.getNextEpisode(item.id, userId);
                     if (e && e.found) {
-                        let f = await episode.getEpisode(e!.id);
+                        let f = await episode.getEpisode(e.id);
                         item.position = e.position;
                         item.backdrop = f?.backdrop || item.backdrop;
                         result.push(item);
@@ -526,15 +552,24 @@ export default class Playback {
      * @param res
      */
     async playFile(auth: string, req: NextApiRequest, res: NextApiResponse) {
-        if (req.headers.range) {
-            const file = await prisma.view.findFirst({where: {auth}, select: {video: true}});
-            if (file)
+        const file = await prisma.view.findFirst({where: {auth}, select: {video: true}});
+        const down = await prisma.download.findFirst({
+            where: {location: auth},
+            select: {created: true, view: {select: {auth: true, video: true}}}
+        });
+
+        if (file)
+            if (req.headers.range)
                 await drive.streamFile(file.video.location, res, req.headers.range);
 
-            else
-                res.status(404).json('file not found');
+            else res.status(400).json('no range provided');
 
-        } else res.status(400).json('no range provided');
+        else if (down && (new Date(down.created).getTime() + (1000 * 60 * 60 * 2) > Date.now())) {
+            const {location, name} = await this.getName(down.view.auth);
+            await drive.rawDownload(location, name, res);
+
+        } else
+            res.status(404).json('file not found');
     }
 
     /**
@@ -614,5 +649,33 @@ export default class Playback {
         }
 
         return null;
+    }
+
+    /**
+     * @desc returns the name and location of the file requested
+     * @param auth file identification
+     */
+    async getName(auth: string): Promise<{ location: string, name: string }> {
+        const view = await prisma.view.findFirst({
+            where: {auth},
+            include: {video: {include: {media: true, episode: true}}}
+        });
+
+        if (view) {
+            const location = view.video.location;
+            if (view.video.media.type === MediaType.MOVIE)
+                return {location, name: view.video.media.name};
+
+            else if (view.video.episode) {
+                const episode = await episodeClass.getEpisode(view.video.episode.id);
+                if (episode)
+                    return {
+                        location,
+                        name: view.video.media.name + (/^Episode \d+/.test(episode.name) ? ` Season ${episode.seasonId} - Episode ${episode.episode}` : ` S${episode.seasonId} - E${episode.episode}: ${episode.name}`)
+                    }
+            }
+        }
+
+        return {location: '', name: ''};
     }
 }

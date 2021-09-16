@@ -1,7 +1,6 @@
 .sc {
     position: fixed;
     bottom: 9vh;
-    left: 2vw;
     width: 20vw;
     padding: 2vmin 2vmax;
     box-shadow: 0 3px 4px 0 rgba(1, 16, 28, 0.24), 0 1vh 4.5vh 0 rgba(1, 16, 28, 0.19);
@@ -29,7 +28,6 @@
     height: 25px;
     background: rgba(1, 16, 28, 0.1);
     border-radius: 10px;
-    color: #fff;
     text-align: center;
     transition: all 0.2s ease-in-out;
     align-items: center;
@@ -37,7 +35,7 @@
     color: rgba(255, 255, 255, .2);
 }
 
-.sl{
+.sl {
     list-style: none;
     display: flex;
     justify-content: space-around;
@@ -46,24 +44,24 @@
     margin: 5px 0 0 0;
 }
 
-.sl li{
+.sl li {
     width: 50%;
     padding: 4px 0;
     cursor: pointer;
     transition: all .2s ease-in-out;
 }
 
-.sl li:hover{
+.sl li:hover {
     color: #d9eeff;
     background: rgba(144, 197, 240, .3);
     box-shadow: 0 3px 4px 0 rgba(1, 16, 28, 0.24), 0 1vh 4.5vh 0 rgba(1, 16, 28, 0.19);
 }
 
-.accept{
+.accept {
     border-right: 1px solid rgba(217, 238, 255, .9);
 }
 
-.reject{
+.reject {
     border-left: 1px solid rgba(217, 238, 255, .9);
 }
 
@@ -82,7 +80,7 @@
 
 .diffSvg {
     stroke: rgba(144, 197, 240, .7);
-    fill: rgba(0,0,0,0);
+    fill: rgba(0, 0, 0, 0);
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -101,9 +99,9 @@
     transition: all .4s ease-in-out;
 }
 
-.ch .cHold svg{
+.ch .cHold svg {
     stroke: rgba(144, 197, 240, .7);
-    fill: rgba(0,0,0,0);
+    fill: rgba(0, 0, 0, 0);
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -112,8 +110,26 @@
     width: auto;
 }
 
-.ch .cHold ul{
+.ch .cHold ul {
     list-style: none;
     margin: 0 10px 0 0;
     padding: 0;
+}
+
+.gwm {
+    width: 95%;
+    height: 30px;
+    outline: 0;
+    background: rgba(1, 16, 28, 0.1);
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, .2);
+    color: #fff;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    align-items: center;
+    margin: 10px 0 0 0;
+}
+
+.gwm:hover, .gwm:focus {
+    border: 2px solid #fff;
 }

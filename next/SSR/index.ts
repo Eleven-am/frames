@@ -44,12 +44,14 @@ export const playFromPlaylist = async (play: number, userId: string) => await sp
 export const playMedia = async (media_id: number, user_id: string, episode?: boolean) => await spring.playMedia(media_id, user_id, episode || false);
 export const findAuth = async (auth: string, user_id: string) => await spring.findByAuth(auth, user_id);
 export const findFrame = async (frame: string, user_id: string) => await frames.decryptCipher(frame, user_id);
+export const findRoom = async (roomKey: string, user_id: string) => await frames.decryptRoom(roomKey, user_id)
 
 export const getProd = async (companyId: string) => await spring.getCompanyDetails(companyId);
 export const findProd = async (name: string) => await spring.findCompanyByName(name);
 
 export const getPerson = async (id: number) => await spring.getPersonInfo(id);
 export const findPerson = async (name: string) => await spring.findByName(name);
+export const getCollection = async (collectionId: number) => await spring.getCollection(collectionId);
 
 export const convertUrl = (mediaId: string) => {
     mediaId = mediaId.replace(/\+/g, ' ').replace(/\?.*clid[^"]+/, "");

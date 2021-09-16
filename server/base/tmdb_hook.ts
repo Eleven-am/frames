@@ -20,6 +20,7 @@ export interface tmdbMedia {
     number_of_seasons: number;
     number_of_episodes: number;
     backdrop_path: string;
+    poster_path: string;
     networks?: { logo_path: string | null, id: number, name: string }[]
     production_companies: { logo_path: string | null, id: number, name: string }[]
 }
@@ -99,6 +100,7 @@ export interface tmdbPerson {
     title?: string,
     name?: string;
     job: string;
+    character: string;
     popularity: number;
     backdrop_path: string;
     overview: string | null;
@@ -430,7 +432,7 @@ const trending = async (limit: number, dBase: any[], forDownload?: boolean): Pro
  * @desc returns the trending items of right now
  * @returns {Promise<{movies: (*|*[]|{}), tv: (*|*[]|{})}>}
  */
-const slimTrending = async (): Promise<{ movies: (any | any[] | {}); tv: (any | any[] | {}); }> => {
+const slimTrending = async (): Promise<{movies: tmdbMedia[]; tv: tmdbMedia[];}> => {
     let movies = await get<any>(base + "trending/movie/week?api_key=" + apiKey);
     let tv = await get<any>(base + "trending/tv/week?api_key=" + apiKey);
     return {movies: movies.results, tv: tv.results};

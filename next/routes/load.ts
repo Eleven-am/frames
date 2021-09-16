@@ -1,16 +1,15 @@
 import type {NextApiRequest, NextApiResponse} from 'next';
-import Playback from "../../../../server/classes/playback";
-import Springboard from "../../../../server/classes/springboard";
-import {ListEditors} from "../../../../server/classes/listEditors";
+
 import {MediaType} from '@prisma/client';
-import {confirmContext} from "../auth";
+import {ListEditors} from "../../server/classes/listEditors";
+import Playback from "../../server/classes/playback";
+import Springboard from "../../server/classes/springboard";
 
 const playback = new Playback();
 const spring = new Springboard();
 const list = new ListEditors();
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-    let {userId} = confirmContext(req.cookies);
+export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
 
     if (req.method === 'POST'){
         res.status(400).json('Invalid request method');
@@ -18,6 +17,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let body = {...req.body, ...req.query};
+    body.type = body.type[1];
     let response: any = {};
 
     if (body.type === 'added')
@@ -67,6 +67,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     else if (body.type === 'library') {
         let type = body.value === 'movies' ? MediaType.MOVIE: MediaType.SHOW;
         response = await spring.libraryTrending(type);
+    }
+
+    else if (body.type === 'collection') {
+        let page = !Array.isArray(body.page)? body.page: body.page[0];
+        if (page === 'default')
+            response = await spring.getTrendingCollections();
+
+        else if (!isNaN(+(page)))
+            response = await spring.getCollections(+(page));
     }
 
     else if (body.type === 'search') {

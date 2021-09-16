@@ -26,13 +26,13 @@
 .nf {
     width: 25px;
     height: 25px;
-    margin-right: 10px !important;
+    margin: 0 5px !important;
 }
 
 .f {
     width: 35px;
     height: 35px;
-    margin-right: 10px !important;
+    margin: 0 5px !important;
 }
 
 .nf svg {
@@ -118,12 +118,8 @@
 
 .center {
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
-}
-
-.center button {
-    margin-right: 15px !important;
 }
 
 .c {

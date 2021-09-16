@@ -114,32 +114,31 @@ function General({state}: { state: EditMedia }) {
         response: data,
         abort: dataAbort
     } = useFetcher<{ file: string, found: boolean } | false>('/api/update/getMedia?value=' + tmdbI + '&lib=' + (type === 'MOVIE' ? 'movie' : 'show'));
+    const {
+        response: firstState,
+        abort: firstAbort
+    } = useFetcher<{ file: drive_v3.Schema$File | null, tmdbId: number } | null>('/api/update/getMediaFile?id=' + state.media?.id)
 
-    const getFile = async (ac: AbortController) => {
-        if (state.media) {
-            const res = await fetch('/api/update/getMediaFile?id=' + state.media.id, {signal: ac.signal});
-            const data: { file: drive_v3.Schema$File | null, tmdbId: number } | null = await res.json();
-            if (data) {
-                data.file && setFile(data.file);
-                setTmdb(data.tmdbId);
-                setName(state.media.name);
-                setType(state.media.type)
-            }
-        } else if (state.unScan) {
+    useEffect(() => {
+        if (state.media && firstState) {
+            firstState.file && setFile(firstState.file);
+            setTmdb(firstState.tmdbId);
+            setName(state.media.name);
+            setType(state.media.type)
+        }
+    }, [firstState])
+
+    useEffect(() => {
+        if (state.unScan){
+            firstAbort.cancel();
             setFile(state.unScan.file);
-            setType(state.unScan.type)
+            setType(state.unScan.type);
             if (state.unScan.res.length === 1) {
                 setFound(state.unScan.available);
                 setTmdb(state.unScan.res[0].tmdbId);
                 setName(state.unScan.res[0].name);
             }
         }
-    }
-
-    useEffect(() => {
-        const ac = new AbortController();
-        getFile(ac)
-        return () => ac.abort();
     }, [state])
 
     useEffect(() => {

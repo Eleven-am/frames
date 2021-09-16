@@ -185,10 +185,11 @@ function Create() {
 function Pick() {
     const {oauthAuth, confirmMail} = useUser();
     const picker = useRecoilValue(AuthPicker);
-    const {data, connected, disconnect, sendData} = useWeSocket<SocketResponse>(SOCKET);
+    const {connect, data, connected, disconnect, sendData} = useWeSocket<SocketResponse>(SOCKET);
     const win = useRef<Window | null>(null);
     const dispatch = useSetRecoilState(AuthContextHandler);
     const {auth, setAuth, authError, valid} = useAuth();
+    const [message, setMessage] = useState<string | null>(null);
 
     const attemptAuth = async () => {
         if (data?.user) {
@@ -197,7 +198,8 @@ function Pick() {
             const res = await confirmMail(email);
             if (res === 'password')
                 await oauthAuth(user_name, oauthPass, email);
-        }
+        } else if (data?.message)
+            setMessage(data.message.connectionId);
     }
 
     useEventListener('keyup', event => {
@@ -213,13 +215,12 @@ function Pick() {
     const handleClicks = async (type: string) => {
         dispatch({fade: true})
         setTimeout(() => {
-            if (type === 'email') {
+            if (type === 'email')
                 dispatch({process: 'email'});
-            } else {
-                if (data?.message) {
-                    let url = ENDPOINT + type + '&state=' + (data.message.connectionId.replace('=', '%%%'));
-                    win.current = window.open(url, '_blank');
-                }
+
+            else if (message) {
+                let url = ENDPOINT + type + '&state=' + (message.replace('=', '%%%'));
+                win.current = window.open(url, '_blank');
             }
         }, 400)
     }
@@ -249,6 +250,7 @@ function Pick() {
     }, [connected])
 
     useEffect(() => {
+        connect();
         return () => disconnect();
     }, [])
 

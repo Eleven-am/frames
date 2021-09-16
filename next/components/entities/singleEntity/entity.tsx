@@ -1,8 +1,8 @@
-import Link from "next/link";
 import {MediaType} from '@prisma/client';
 import {EditMedia, MediaSection} from "../../../../server/classes/media";
 import {useSetRecoilState} from "recoil";
 import {EditMediaContext} from "../../misc/editMedia";
+import {FramesLink as Link} from "../../misc/Loader";
 
 export default function Entity({poster, id, type, name, background}: MediaSection) {
     const dispatch = useSetRecoilState(EditMediaContext);

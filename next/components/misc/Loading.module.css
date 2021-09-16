@@ -30,6 +30,11 @@
     animation-delay: 1.5s;
 }
 
+.anchor {
+    color: inherit;
+    text-decoration: none;
+}
+
 @keyframes rotate {
     to {
         transform: rotate(360deg);

@@ -190,7 +190,7 @@ export class Subtitles {
                                     if (subs[item])
                                         returnSubs.push({
                                             language: item,
-                                            url: '/api/stream/subtitles?auth=' + auth + '&language=' + subs[item]
+                                            url: '/api/stream/subtitles?auth=' + auth + '&language=' + item
                                         })
                         }
                     }
@@ -288,6 +288,13 @@ export class Update {
                     previous = {seasonId, episode: eID};
 
                     await mediaClass.addEpisode(show.id, file, eID, seasonId);
+
+                    await prisma.view.updateMany({
+                        where: {
+                            finished: 2,
+                            video: {mediaId: show.id}
+                        }, data: {finished: 1}
+                    });
 
                     if (!thoroughScan)
                         await prisma.media.update({

@@ -1,6 +1,6 @@
 import {Role} from '@prisma/client';
 import {atom, useRecoilState, useSetRecoilState} from 'recoil';
-import {useIsMounted, useLoadEffect} from "./customHooks";
+import {useLoadEffect} from "./customHooks";
 import {pFetch} from "./baseFunctions";
 import {AuthContextErrorAtom, AuthFade, AuthPicker} from "../states/authContext";
 import {ManageAuthKey} from "../../server/classes/auth";
@@ -26,13 +26,12 @@ const Loading = atom({
     default: true
 })
 
-export default function useUser(frames = false) {
+export default function useUser(frames = false, confirm = false) {
     const [loading, setLoading] = useRecoilState(Loading);
     const setError = useSetRecoilState(AuthContextErrorAtom);
     const setPicker = useSetRecoilState(AuthPicker);
     const setFade = useSetRecoilState(AuthFade);
     const [user, setUser] = useRecoilState(UserContext);
-    const mounted = useIsMounted();
 
     const confirmMail = async (user: string) => {
         let info: boolean = await pFetch({process: 'confirmEmail', email: user}, '/api/auth');
@@ -135,11 +134,12 @@ export default function useUser(frames = false) {
     }
 
     useLoadEffect(() => {
-        if (loading) {
+        console.log({confirm, loading, frames})
+        if (loading && confirm) {
             if (frames)
                 getFrameUser();
 
-            else if (!user && mounted())
+            else if (!user)
                 confirmAuth();
 
             else

@@ -62,7 +62,7 @@ export default function InfoDetails ({response, loadTrailer}: InfoType) {
                 <Shuffle id={response.id} type={response.type}/>
                 <MyList id={response.id} myList={response.myList}/>
                 <Seen id={response.id} seen={response.seen}/>
-                <GroupWatch id={response.id}/>
+                <GroupWatch id={response.id} type={response.type}/>
                 {user?.role === Role.ADMIN ?
                     <>
                         <Template id={2} type={'edit'} name={'edit ' + response.name} onClick={handleEdit}/>

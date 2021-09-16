@@ -1,22 +1,23 @@
 import type {NextApiRequest, NextApiResponse} from 'next';
-import {confirmContext} from "../auth";
-import Springboard from "../../../../server/classes/springboard";
-import {ListEditors} from "../../../../server/classes/listEditors";
 import {MediaType} from '@prisma/client';
-import {convertUrl} from "../../../../next/SSR";
+import {convertUrl} from "../SSR";
+import {ListEditors} from "../../server/classes/listEditors";
+import Springboard from "../../server/classes/springboard";
+import User from "../../server/classes/auth";
 
 const spring = new Springboard();
 const list = new ListEditors();
+const user = new User();
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-    let {userId} = confirmContext(req.cookies);
-
+export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
     if (req.method === 'POST'){
         res.status(400).json('Invalid request method');
         return;
     }
 
     let body = {...req.query};
+    body.type = body.type[1];
+
     let response: any = {};
     if (body.type === 'find') {
         let type = body.media === 'MOVIE' ? MediaType.MOVIE: MediaType.SHOW;
@@ -26,7 +27,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     else if (body.type === 'get') {
         let mediaId = +(body.id);
-        userId = userId === 'unknown' ? 'b4dd90c0-b611-433a-a141-141ab5705766': userId;
+        userId = userId === 'unknown' ? await user.getGuest(): userId;
         response = await spring.getInfo(mediaId, userId, false);
     }
 
@@ -72,6 +73,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         response = null;
         if (userId !== 'unknown')
         response = await spring.createPersonPlaylist(personId, userId);
+    }
+
+    else if (body.type === 'collectionPlaylist') {
+        let personId = +(body.id);
+        response = null;
+        if (userId !== 'unknown')
+            response = await spring.createCollectionPlaylist(personId, userId);
     }
 
     res.json(response)

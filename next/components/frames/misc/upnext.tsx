@@ -11,15 +11,22 @@ import Media from "../../entities/singleEntity/media";
 import {SpringPlay} from "../../../../server/classes/springboard";
 import {DetailedEpisode} from "../../../../server/classes/episode";
 import {UpNextHolder as UPNXT} from "../../../../server/classes/playback";
+import useGroupWatch from "../../../utils/groupWatch";
 
 export default function UpNextHolder ({response}: {response: SpringPlay}) {
     const diff = useRecoilValue(differance);
     const data = useRecoilValue(nextHolder);
     const url = useRecoilValue(UpNextURL);
+    const {pushNext} = useGroupWatch();
     const router = useRouter();
 
+    const nextHandler = async () => {
+        await pushNext(url);
+        await router.push(url);
+    }
+
     if (diff === '1s')
-        router.replace(url);
+       nextHandler();
 
     if (data)
         return (
@@ -60,11 +67,11 @@ export function UpNextMini({response}: {response: SpringPlay}) {
 
         else {
             if (upNext) {
-                if (response.playlistId)
+                if (upNext.playlistId)
                     setUrl('/watch?next=x' + upNext.playlistId);
 
                 else
-                    setUrl('/watch?next=' +(upNext.type === MediaType.MOVIE ? '' : 'e') + upNext.id);
+                    setUrl('/watch?next=' + (upNext.type === MediaType.MOVIE ? '' : 'e') + upNext.id);
             }
 
             setUpNext(data || null);

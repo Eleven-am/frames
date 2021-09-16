@@ -4,7 +4,7 @@ import HomeLayout, {MetaTags} from "../../next/states/navigation";
 import {useIsMounted, useNavBar} from "../../next/utils/customHooks";
 import Info from "../../next/components/info/info";
 import {useEffect, useState} from "react";
-import { Router } from 'next/router';
+import {Router} from 'next/router';
 import NProgress from "nprogress";
 import {Loading} from "../../next/components/misc/Loader";
 import {SpringMediaInfo} from "../../server/classes/springboard";
@@ -15,7 +15,7 @@ export default function InfoPage({meta, response}: { meta: MetaTags, response: S
     const [loading, setLoading] = useState(false);
     const isMounted = useIsMounted();
     const {sendMessage} = useCast();
-    useNavBar(response.type === MediaType.SHOW? 'tv shows': 'movies', 1);
+    useNavBar(response.type === MediaType.SHOW ? 'tv shows' : 'movies', 1);
     const reset = resetInfo();
 
     useEffect(() => {

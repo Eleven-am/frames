@@ -1,13 +1,15 @@
 import ss from '../misc.module.css';
-import sv from '../misc.module.css';
 import style from './misc.module.css';
+
 import {BackButton} from "../../buttons/Buttons";
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {
     bufferingSelector,
     differance,
     displayInfoAtom,
-    framesPlayer,
+    DownOver,
+    FramesInformAtom,
+    GWMOver,
     moveSubsAtom,
     playingSelector,
     shareOver
@@ -19,6 +21,8 @@ import {useCallback, useEffect, useRef} from "react";
 import useCast from "../../../utils/castContext";
 import cd from "../frames.module.css";
 import {InformDisplayContext} from "../../misc/inform";
+import useGroupWatch from "../../../utils/groupWatch";
+import {useAuth, useEventListener} from "../../../utils/customHooks";
 
 export const Toppers = ({response}: { response: SpringPlay }) => {
     return (
@@ -34,6 +38,12 @@ export const Toppers = ({response}: { response: SpringPlay }) => {
 
 export const Buffer = () => {
     const buffer = useRecoilValue(bufferingSelector);
+    const {sendMessage} = useGroupWatch();
+
+    useEffect(() => {
+        sendMessage({action: "buffering", data: buffer});
+    }, [buffer])
+
     return (
         <div className={ss.vd} style={buffer ? {visibility: "visible"} : {visibility: "hidden"}}>
             <div className={ss.buffer}>Loading...</div>
@@ -61,7 +71,7 @@ export const Overview = ({response}: { response: SpringPlay }) => {
 export const ShareFrame = ({location}: { location: string }) => {
     const [value, setValue] = useRecoilState(shareOver);
     const dispatch = useSetRecoilState(InformDisplayContext);
-    const video = useRecoilValue(framesPlayer);
+    const {current, duration} = useRecoilValue(FramesInformAtom);
     const response = useRef<string>();
     const base = typeof Window !== "undefined" ? window.location.protocol + '//' + window.location.host + '/frame=' : '';
 
@@ -90,18 +100,17 @@ export const ShareFrame = ({location}: { location: string }) => {
     const sendZero = async (inform: boolean) => {
         await copy();
         let position = 0;
-        if (video && inform) {
-            const current = video.currentTime;
-            const duration = video.duration;
+
+        if (inform)
             position = (current / duration) * 1000;
-        }
 
         await pFetch({cypher: response.current, position, auth: location}, '/api/stream/genCypher');
         response.current = generateKey(1, 13);
     }
 
     return (
-        <div className={style.sc} style={value ? {visibility: "visible"} : {opacity: 0, visibility: "hidden"}}
+        <div className={style.sc}
+             style={value ? {left: '2vw', visibility: "visible"} : {left: '2vw', opacity: 0, visibility: "hidden"}}
              onClick={e => e.stopPropagation()}>
             <div className={style.sm}>
                 <span>Share from current position ?</span>
@@ -110,6 +119,76 @@ export const ShareFrame = ({location}: { location: string }) => {
             <ul className={style.sl} onClick={() => setValue(false)}>
                 <li className={style.accept} onClick={() => sendZero(true)}>yes</li>
                 <li className={style.reject} onClick={() => sendZero(false)}>no</li>
+            </ul>
+        </div>
+    )
+}
+
+export function GroupWatchMessage() {
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const [value, setValue] = useRecoilState(GWMOver);
+    const {sendMessage} = useGroupWatch();
+
+    useEventListener('keyup', event => {
+        if (event.code === 'Enter')
+            handleClick();
+    })
+
+    const handleClick = () => {
+        setValue(false);
+        const state = inputRef.current?.value;
+        sendMessage({action: 'says', data: state});
+        if (inputRef.current)
+            inputRef.current.value = '';
+    }
+
+    return (
+        <div className={style.sc}
+             style={value ? {right: '2vw', visibility: "visible"} : {right: '2vw', opacity: 0, visibility: "hidden"}}
+             onClick={e => e.stopPropagation()}>
+            <div className={style.sm}>
+                <span>Message the GroupWatch session</span>
+                <input className={style.gwm} maxLength={280} ref={inputRef}/>
+            </div>
+            <ul className={style.sl} onClick={() => setValue(false)}>
+                <li className={style.accept} onClick={handleClick}>send</li>
+                <li className={style.reject}>dismiss</li>
+            </ul>
+        </div>
+    )
+}
+
+export const DownloadHandler = ({response}: { response: SpringPlay }) => {
+    const [value, setValue] = useRecoilState(DownOver);
+    const {auth, setAuth, authError, valid, error} = useAuth();
+
+    useEventListener('keyup', event => {
+        if (event.code === 'Enter')
+            handleClick();
+    })
+
+    const handleClick = async () => {
+        if (valid) {
+            setAuth('');
+            setValue(false);
+            const path: {location: string|null} = await pFetch({auth: response.location, authKey: auth}, '/api/stream/getDown');
+            if (path.location)
+                window.location.href = response.cdn + path.location;
+        }
+    }
+
+    return (
+        <div className={style.sc}
+             style={value ? {left: '10vw', visibility: "visible"} : {left: '10vw', opacity: 0, visibility: "hidden"}}
+             onClick={e => e.stopPropagation()}>
+            <div className={style.sm}>
+                <span style={error? {color: "rgba(245, 78, 78, .9)"}: {}}>{error? error: !valid ? 'enter an auth key': 'auth key accepted'}</span>
+                <input style={valid ? {borderColor: "#3cab66d0"} : authError ? {borderColor: "rgba(245, 78, 78, .9)"} : {}}
+                    className={style.gwm} value={auth} maxLength={23} onChange={e => setAuth(e.currentTarget.value)}/>
+            </div>
+            <ul className={style.sl} onClick={() => setValue(false)}>
+                <li className={style.accept} onClick={handleClick}>download</li>
+                <li className={style.reject}>dismiss</li>
             </ul>
         </div>
     )
@@ -137,7 +216,7 @@ export function CastHolder({response}: { response: SpringPlay }) {
                             <span>Currently casting to: {device}</span>
                         </div> :
                         <div className={style.cHold} style={move ? {bottom: '12vh'} : {}}>
-                            <div className={sv.ci}>
+                            <div className={ss.ci}>
                                 {response?.logo ? <img src={response?.logo || ''} alt={response?.name}/> :
                                     <span>{response?.name}</span>}
                             </div>

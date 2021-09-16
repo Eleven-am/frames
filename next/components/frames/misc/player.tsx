@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from "react";
-import {
+import usePlayback, {
     bufferingAtom,
     currentDuration,
     differance,
@@ -11,6 +11,7 @@ import {
 import {useRecoilValue, useSetRecoilState} from "recoil";
 import cd from "../frames.module.css";
 import {SpringPlay} from "../../../../server/classes/springboard";
+import useGroupWatch from "../../../utils/groupWatch";
 
 function playing(video: HTMLVideoElement) {
     return (video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 3);
@@ -18,6 +19,8 @@ function playing(video: HTMLVideoElement) {
 
 export default function FramesPlayer({response, showInfo}: { response: SpringPlay, showInfo: (() => void) }) {
     const player = useRef<HTMLVideoElement>(null);
+    const [playback, setPLayBack] = useState(false);
+    const {seekVideo} = usePlayback();
     const setCurrent = useSetRecoilState(currentDuration);
     const setVolume = useSetRecoilState(volumeAtom);
     const setMute = useSetRecoilState(mutedAtom);
@@ -25,9 +28,14 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
     const [ready, setReady] = useState(false);
     const setPlay = useSetRecoilState(playVideoAtom);
     const diff = useRecoilValue(differance);
+    const {sendMessage} = useGroupWatch();
     const setFrames = useSetRecoilState(framesPlayer);
 
     useEffect(() => setFrames(player.current), [player.current])
+    useEffect(() => {
+        if (playback)
+            sendMessage({action: 'declare'});
+    }, [playback])
 
     const volumeChange = useCallback(() => {
         if (player.current) {
@@ -46,6 +54,10 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
 
             if (playing(video))
                 setBuffer(false);
+
+            let tracks = player.current.textTracks;
+            for (let track of tracks)
+                track.mode = "hidden";
         }
     }, [player.current])
 
@@ -54,12 +66,13 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
             const current = player.current.currentTime = (response.position / 1000) * player.current.duration;
             setCurrent({current, duration: player.current.duration, buffered: player.current.buffered});
             player.current.autoplay = true;
-
-            let tracks = player.current.textTracks;
-            for (let track of tracks)
-                track.mode = "hidden";
         }
     }, [player.current])
+
+    const handleSeeked = useCallback(() => {
+        if (player.current)
+            seekVideo(player.current.currentTime);
+    },[player.current])
 
     const playVideo = async (action: boolean) => {
         if (player.current) {
@@ -83,6 +96,7 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
     const playPause = (bool: boolean) => {
         showInfo();
         setPlay(bool);
+        bool && ready && setPLayBack(true);
     }
 
     return (
@@ -95,6 +109,7 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
                 onDurationChange={durationChange}
                 onVolumeChange={volumeChange}
                 onTimeUpdate={handleUpdate}
+                //onSeeked={handleSeeked}
                 onWaiting={() => setBuffer(true)}
                 onPlay={() => playPause(true)}
                 onPause={() => playPause(false)}/>

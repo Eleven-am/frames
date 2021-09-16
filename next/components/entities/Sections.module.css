@@ -273,6 +273,11 @@
     justify-content: center;
 }
 
+.right {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .left svg {
     width: 50px;
     height: 60px;

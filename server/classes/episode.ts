@@ -216,7 +216,13 @@ export default class Episode {
             showId, videoId: video.id,
         }
 
-        await prisma.episode.deleteMany({where: {videoId: video.id}});
+        await prisma.episode.deleteMany({
+            where: {
+                AND: [{videoId: video.id}, {
+                    NOT: {AND: [{showId}, {seasonId}, {episode: episode_number}]}
+                }]
+            }
+        });
 
         await prisma.episode.upsert({
             create: {...episode},

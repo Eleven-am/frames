@@ -1,6 +1,6 @@
 import {GetServerSidePropsContext} from "next";
 import HomeLayout, {addressAtom, MetaTags} from "../../next/states/navigation";
-import Frames from "../../next/components/frames/frames";
+import Frames, {Listeners} from "../../next/components/frames/frames";
 import {SpringPlay} from "../../server/classes/springboard";
 import {useEffect, useState} from "react";
 import {useNavBar} from "../../next/utils/customHooks";
@@ -9,11 +9,13 @@ import {useRouter} from "next/router";
 import {Loading} from "../../next/components/misc/Loader";
 import {useSetRecoilState} from "recoil";
 import useCast from "../../next/utils/castContext";
+import useGroupWatch from "../../next/utils/groupWatch";
 
-export default function FramesPlayer({meta, response}: { response: SpringPlay, meta: MetaTags }) {
+export default function FramesPlayer({meta, response, room}: { room?: string, response: SpringPlay, meta: MetaTags }) {
     const [loading, setLoading] = useState(false);
     const setAddress = useSetRecoilState(addressAtom);
     const {sendMessage} = useCast();
+    const {updateRoom, setRoom, connect} = useGroupWatch(true);
     useNavBar('watch', 1);
     const router = useRouter();
 
@@ -30,17 +32,25 @@ export default function FramesPlayer({meta, response}: { response: SpringPlay, m
         }
     }, [router])
 
-    useEffect(() => {
-        async function doStuff() {
-            setLoading(false);
-            !response.frame && await router.replace('/watch=' + response.location, undefined, {shallow: true});
+    async function doStuff() {
+        setLoading(false);
+        !response.frame && room === undefined && await router.replace('/watch=' + response.location, undefined, {shallow: true});
+        await updateRoom(response.location);
+        if (room) {
+            connect();
+            setRoom(room);
         }
+    }
 
+    useEffect(() => {
         doStuff();
     }, [response])
 
     useEffect(() => {
-        if (response.playlistId)
+        if (room)
+            setAddress('/room=' + room);
+
+        else if (response.playlistId)
             setAddress('/watch?next=x' + response.playlistId);
 
         else
@@ -56,6 +66,7 @@ export default function FramesPlayer({meta, response}: { response: SpringPlay, m
     return (
         <HomeLayout meta={meta} frame={response.frame}>
             <Frames response={response}/>
+            <Listeners response={response}/>
         </HomeLayout>
     )
 }
@@ -69,8 +80,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const check = await import('../../next/SSR').then(mod => mod.confirmUser(userId));
     userId = !check ? await import('../../next/SSR').then(mod => mod.getGuest()) : userId;
 
-    let holder = pathname.frame ? pathname.frame : pathname.shuffle ? pathname.shuffle : pathname.next ? pathname.next : pathname.id ? pathname.id : pathname.episode ? pathname.episode : pathname.media;
-    if (holder && pathname.frame) {
+    let holder = pathname.roomKey ? pathname.roomKey : pathname.frame ? pathname.frame : pathname.shuffle ? pathname.shuffle : pathname.next ? pathname.next : pathname.id ? pathname.id : pathname.episode ? pathname.episode : pathname.media;
+    if (holder && pathname.roomKey) {
+        const response = await import('../../next/SSR').then(mod => mod.findRoom(holder as string, userId));
+        const meta = response ? await import('../../next/SSR').then(mod => mod.metaTags('watch', response.location!)) : null;
+        if (meta && response)
+            return {props: {meta: {...meta, link: link + response.location}, response, room: holder as string}};
+
+    } else if (holder && pathname.frame) {
         const response = await import('../../next/SSR').then(mod => mod.findFrame(holder as string, userId));
         const meta = response ? await import('../../next/SSR').then(mod => mod.metaTags('frame', response.location!)) : null;
         if (meta && response)
@@ -114,16 +131,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     } else if (pathname.media) {
         const auth = Array.isArray(holder) ? holder[0] : holder;
         const response = await import('../../next/SSR').then(mod => mod.findAuth(auth!, userId));
-        let meta = null
-        if (response) {
-            meta = {
-                link: link + response.location,
-                overview: response.overview!,
-                poster: response.poster || '',
-                name: response.episodeName || response.name,
-            }
-        }
-
+        const meta = response ? await import('../../next/SSR').then(mod => mod.metaTags('watch', response.location!)) : null;
         if (meta && response)
             return {props: {meta: {...meta, link: link + response.location}, response}};
     }

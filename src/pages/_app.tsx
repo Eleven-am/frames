@@ -6,6 +6,8 @@ import '../../public/nprogress.css';
 import {useEffect} from "react";
 import {CastContextProvider} from "../../next/utils/castContext";
 import {Information} from "../../next/components/misc/inform";
+import {BeforeExit} from "../../next/components/misc/Loader";
+import {GroupWatchProvider} from "../../next/utils/groupWatch";
 
 export default function MyApp({Component, pageProps}: AppProps) {
     NProgress.configure({trickleSpeed: 1200, showSpinner: false, easing: 'ease-in-out', speed: 500});
@@ -25,9 +27,12 @@ export default function MyApp({Component, pageProps}: AppProps) {
 
     return (
         <RecoilRoot>
-            <Information/>
             <CastContextProvider>
-                <Component {...pageProps} />
+                <Information/>
+                <GroupWatchProvider>
+                    <BeforeExit/>
+                    <Component {...pageProps} />
+                </GroupWatchProvider>
             </CastContextProvider>
         </RecoilRoot>
     )

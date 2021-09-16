@@ -5,12 +5,16 @@ import {RecoilState, useRecoilState, useRecoilValue, useSetRecoilState} from "re
 import {NavSectionAndOpacity} from "../states/navigation";
 import NProgress from "nprogress";
 import {GridOnScreenAtom} from "../states/gridLibraryContext";
-import {SystemMaximised} from "../states/miscStates";
+import {SystemMaximised, SystemMPip} from "../states/miscStates";
 import useUser from "./userTools";
-import {AuthContextErrorAtom, AuthErrors, AuthKeyAtom} from "../states/authContext";
+import {AuthContextErrorAtom, AuthContextHandler, AuthErrors, AuthKeyAtom} from "../states/authContext";
+import {Role} from "@prisma/client";
 
 declare global {
     interface Document {
+        pictureInPictureElement?: HTMLElement;
+        pictureInPictureEnabled?: boolean;
+        exitPictureInPicture: () => void;
         mozCancelFullScreen?: () => Promise<void>;
         msExitFullscreen?: () => Promise<void>;
         webkitExitFullscreen?: () => Promise<void>;
@@ -24,6 +28,7 @@ declare global {
         mozRequestFullscreen?: () => Promise<void>;
         webkitRequestFullscreen?: () => Promise<void>;
         webkitShowPlaybackTargetPicker?: () => Promise<void>;
+        requestPictureInPicture: () => void;
     }
 
     interface Window {
@@ -54,6 +59,19 @@ export function useFetcher<S>(key: string, config?: SWRConfiguration) {
 export function useFullscreen(string: string): [boolean, (arg0: boolean) => void] {
     const [maximised, setMaximised] = useRecoilState(SystemMaximised);
 
+    useEventListener('fullscreenchange', () => {
+        setMaximised(!!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement);
+    });
+    useEventListener('msfullscreenchange', () => {
+        setMaximised(!!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement);
+    });
+    useEventListener('mozfullscreenchange', () => {
+        setMaximised(!!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement);
+    });
+    useEventListener('webkitfullscreenchange', () => {
+        setMaximised(!!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement);
+    });
+
     const toggleFS = useCallback(async (maximised: boolean) => {
         const holder = document.getElementById(string) as HTMLDivElement | null;
         if (holder) {
@@ -69,8 +87,6 @@ export function useFullscreen(string: string): [boolean, (arg0: boolean) => void
 
                 else if (holder.mozRequestFullscreen)
                     await holder.mozRequestFullscreen();
-
-                setMaximised(true);
             } else {
                 if (document.exitFullscreen)
                     await document.exitFullscreen();
@@ -83,8 +99,6 @@ export function useFullscreen(string: string): [boolean, (arg0: boolean) => void
 
                 else if (document.mozCancelFullScreen)
                     await document.mozCancelFullScreen();
-
-                setMaximised(false);
             }
         }
     }, [string])
@@ -92,7 +106,33 @@ export function useFullscreen(string: string): [boolean, (arg0: boolean) => void
     return [maximised, toggleFS];
 }
 
-export function useEventListener<T extends Element>(eventName: string, handler: (ev: any) => void, element?: T) {
+export function usePip(video: HTMLVideoElement | null): [boolean, (arg0: boolean) => void] {
+    const [pip, setPip] = useRecoilState(SystemMPip);
+
+    useEventListener('enterpictureinpicture', () => {
+        setPip(true);
+    }, video)
+
+    useEventListener('leavepictureinpicture', () => {
+        setPip(false);
+    }, video)
+
+    const togglePip = useCallback((bool: boolean) => {
+        if (video){
+            if (document.pictureInPictureElement && !bool) {
+                document.exitPictureInPicture();
+            } else {
+                if (document.pictureInPictureEnabled && bool) {
+                    video.requestPictureInPicture();
+                }
+            }
+        }
+    }, [video])
+
+    return [pip, togglePip];
+}
+
+export function useEventListener<T extends Element>(eventName: string, handler: (ev: any) => void, element?: T|null) {
     const savedHandler = useRef<(ev: any) => void>(handler);
 
     savedHandler.current = handler;
@@ -104,9 +144,25 @@ export function useEventListener<T extends Element>(eventName: string, handler: 
         }
         myElement.addEventListener(eventName, eventListener);
         return () => {
-            document.removeEventListener(eventName, eventListener);
+            myElement.removeEventListener(eventName, eventListener);
         };
     }, [eventName, element]);
+}
+
+export function useWindowListener<T extends Element>(eventName: string, handler: (ev: any) => void) {
+    const savedHandler = useRef<(ev: any) => void>(handler);
+
+    savedHandler.current = handler;
+
+    useEffect(() => {
+        const eventListener = (event: any) => {
+            return savedHandler.current(event);
+        }
+        window.addEventListener(eventName, eventListener);
+        return () => {
+            window.removeEventListener(eventName, eventListener);
+        };
+    }, []);
 }
 
 export function useLocalStorage<S>(key: string, initialValue: S): [S, (arg0: S) => void] {
@@ -183,7 +239,6 @@ export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backd
             setTimeout(() => {
                 player.current = null;
                 document.getElementById('playerTwo')?.remove();
-                setTimeout(() => setDone(true), 600)
             }, 400)
         }
     }
@@ -213,10 +268,9 @@ export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backd
 
 export function useWeSocket<S>(SOCKET: string) {
     const isMounted = useIsMounted();
+    const [data, setData] = useState<S>();
     const socket = useRef<WebSocket | null>(null);
     const [connected, setConnected] = useState(false);
-
-    const [data, setData] = useState<S>();
 
     const connect = useCallback(() => {
         if (typeof window !== 'undefined' && socket.current?.readyState !== WebSocket.OPEN) {
@@ -228,6 +282,7 @@ export function useWeSocket<S>(SOCKET: string) {
 
                 socket.current.onmessage = ev => {
                     const data = JSON.parse(ev.data);
+                    setConnected(true);
                     setData(data);
                 }
 
@@ -238,10 +293,6 @@ export function useWeSocket<S>(SOCKET: string) {
         }
     }, []);
 
-    useEffect(() => {
-        connect();
-    }, [])
-
     const sendData = useCallback((value: S) => {
         if (socket.current?.readyState === WebSocket.OPEN)
             try {
@@ -250,7 +301,7 @@ export function useWeSocket<S>(SOCKET: string) {
     }, [])
 
     const disconnect = () => socket.current?.close();
-    return {disconnect, connected, data, sendData}
+    return {disconnect, connected, data, sendData, connect}
 }
 
 export function useIsMounted() {
@@ -351,38 +402,47 @@ export function useInfiniteScroll<S>(type: string, value: string) {
 }
 
 export function useAuth() {
-    const {confirmAuthKey} = useUser();
+    const {user, confirmAuthKey} = useUser();
     const [lAuth, setLAuth] = useState(false);
     const [valid, setValid] = useState(false);
     const [auth, setAuth] = useRecoilState(AuthKeyAtom);
     const {authError} = useRecoilValue(AuthErrors);
+    const {error} = useRecoilValue(AuthContextHandler);
     const setError = useSetRecoilState(AuthContextErrorAtom);
 
     const confirmKey = async () => {
         const res = await confirmAuthKey(auth);
         if (res !== 0) {
-            const error = res === -1 ? 'invalid auth key' : 'this auth key has already been used';
+            const error = res === -1 ? 'invalid auth key': 'this auth key has already been used';
             setError(error);
             setLAuth(true);
         } else
             setValid(true);
     }
 
-    useEffect(() => {
+    const manageAuth = async (auth: string) => {
         if (auth.length === 23)
-            confirmKey()
+            await confirmKey()
 
-        else {
-            if (auth === 'homeBase')
+        else if (auth === 'homeBase') {
+            if (user?.role === Role.ADMIN)
                 setValid(true);
 
-            else
-                setValid(false);
+            else {
+                setError('invalid auth key')
+                setLAuth(true);
+            }
+        }
 
+        else {
             setError(null);
             setLAuth(false);
         }
+    }
+
+    useEffect(() => {
+        manageAuth(auth);
     }, [auth])
 
-    return {authError: authError || lAuth, auth, setAuth, valid}
+    return {authError: authError || lAuth, auth, setAuth, valid, error}
 }

@@ -49,9 +49,14 @@ export const InfoEpisodesContext = selector({
             return {seasons: defSeasons, section};
 
         else {
-            const res = await fetch(`/api/media/episodes?id=${media}&season=${season}`);
-            const seasons: DetailedEpisode[] = await res.json();
-            return {seasons, section};
+            try {
+                const res = await fetch(`/api/media/episodes?id=${media}&season=${season}`);
+                const seasons: DetailedEpisode[] = await res.json();
+                return {seasons, section};
+            } catch (e) {
+                console.log(e);
+                return {section, seasons: []};
+            }
         }
     }
 })

@@ -1,5 +1,5 @@
 import {MediaType} from '@prisma/client';
-import Link from "next/link";
+import {FramesLink as Link} from "../misc/Loader";
 import {useRouter} from 'next/router';
 import styles from "./List.module.css";
 import {useFetcher, useNavBar} from "../../utils/customHooks";
@@ -13,8 +13,8 @@ export default function LibraryList() {
     const type = router.asPath.includes('movies') ? 'movies' : 'tv shows';
     const unit = router.asPath.includes('movies') ? 'movies' : 'shows';
     const reset = useGridReset();
-
     const setGridInfo = useSetRecoilState(GridSelector);
+
     const {
         response,
         error

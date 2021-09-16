@@ -12,7 +12,7 @@ export default function GridEntity(obj: MediaLibrary) {
     useEffect(() => setOnScreen(isVisible), [isVisible]);
 
     return (
-        <div className={styles.gridEntityHolder} ref={setIsVisible} onClick={e => e.preventDefault()}>
+        <div className={styles.gridEntityHolder} ref={setIsVisible}>
             <Media media={true} data={obj} />
             <div className={styles.gridName}>{obj.name}</div>
         </div>

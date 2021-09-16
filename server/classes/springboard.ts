@@ -33,7 +33,6 @@ export interface SpringLoad {
     backdrop: string;
     name: string;
     episodeName?: string;
-    poster?: string;
 }
 
 export interface SpringPlay extends SpringLoad {
@@ -136,8 +135,8 @@ export default class Springboard extends Media {
                 id: true
             }
         });
-        let moviesData: Med[] = movies.collapse(dBase, MediaType.MOVIE, 'popularity');
-        let tvData: Med[] = tv.collapse(dBase, MediaType.SHOW, 'popularity');
+        let moviesData = movies.collapse(dBase, MediaType.MOVIE, 'popularity');
+        let tvData = tv.collapse(dBase, MediaType.SHOW, 'popularity');
         dBase = moviesData.concat(tvData).map(e => {
             let {id, overview, backdrop, name, logo, type, trailer} = e;
             return {id, overview, backdrop, name, logo, type, trailer}
@@ -214,32 +213,25 @@ export default class Springboard extends Media {
     async authImages(app = false): Promise<string[]> {
         let dBase = await prisma.media.findMany({select: {id: true, poster: true, type: true, tmdbId: true}});
         let {movies, tv} = await slimTrending();
-        let moviesData: Med[] = movies.collapse(dBase, MediaType.MOVIE, 'popularity');
-        let tvData: Med[] = tv.collapse(dBase, MediaType.SHOW, 'popularity');
+        let moviesData = movies.collapse(dBase, MediaType.MOVIE, 'popularity');
+        let tvData = tv.collapse(dBase, MediaType.SHOW, 'popularity');
         dBase = moviesData.concat(tvData).sortKey('popularity', false);
 
         if (!app)
             return dBase.map(e => {
-            return e.poster
-        }).slice(0, 10);
+                return e.poster
+            }).slice(0, 10);
 
         else {
-            moviesData = movies.collapse(dBase, MediaType.MOVIE, 'poster_path');
-            tvData = tv.collapse(dBase, MediaType.SHOW, 'poster_path');
-
-            let poster: any[] = moviesData.concat(tvData);
-            const response: string[] = [];
+            let moviesData = movies.collapse(dBase, MediaType.MOVIE, 'poster_path');
+            let tvData = tv.collapse(dBase, MediaType.SHOW, 'poster_path');
+            let poster = moviesData.concat(tvData);
             poster = poster.map(e => {
                 e.poster_path = 'https://image.tmdb.org/t/p/original' + e.poster_path;
                 return e;
             });
 
-            for (let item of dBase) {
-                const file = poster.find(e => e.id === item.id);
-                response.push(file.poster_path || item.poster);
-            }
-
-            return response.slice(0, 10);
+            return poster.map(e => e.poster_path || e.poster);
         }
     }
 
@@ -374,7 +366,7 @@ export default class Springboard extends Media {
         return {
             overview: 'Frames is a streaming service that offers a wide variety of TV shows, movies, anime, documentaries, and more on thousands straight to your browser',
             name: 'Frames - Watch FREE TV Shows and Movies Online',
-            poster: '/api/images/meta'
+            poster: '/meta.png'
         }
     }
 
@@ -384,15 +376,18 @@ export default class Springboard extends Media {
      * @param search REGEX |! Levenshtein
      */
     async search(searchValue: string, search: boolean): Promise<search[]> {
-        if (search)
-            return (await prisma.media.findMany({
+        if (search) {
+            const media = (await prisma.media.findMany({
                 select: {name: true, backdrop: true, logo: true, type: true, id: true},
                 where: {name: {contains: searchValue}},
             })).map(e => {
                 return {...e, length: e.name.length}
-            }).sortKey('length', true).slice(0, 16);
+            }).sortKey('length', true);
 
-        else {
+            const begins = media.filter(e => e.name.toLowerCase().startsWith(searchValue.toLowerCase()));
+            return begins.concat(media).uniqueID('id').slice(0, 16);
+
+        } else {
             let data: search[] = await prisma.media.findMany({
                 select: {name: true, type: true, id: true},
                 orderBy: {name: 'asc'}
@@ -429,7 +424,6 @@ export default class Springboard extends Media {
                         position: playback.position,
                         overview: media.overview,
                         logo: media.logo,
-                        poster: media.poster,
                         backdrop: media.backdrop,
                         name: media.name
                     }
@@ -444,7 +438,6 @@ export default class Springboard extends Media {
                             position: playback.position,
                             overview: episode.overview || media.overview,
                             logo: media.logo,
-                            poster: media.poster,
                             backdrop: media.backdrop,
                             name: media.name,
                             episodeName: /^Episode \d+/.test(episode.name) ? `${media.name}: S${episode.seasonId}, E${episode.episode}` : `S${episode.seasonId}, E${episode.episode}: ${episode.name}`
@@ -479,8 +472,9 @@ export default class Springboard extends Media {
     /**
      * @desc gets the next video in a playlist queue for playback
      * @param playlistId identifier of present video on playlist queue
+     * @param userId
      */
-    async upNextPlaylist(playlistId: number): Promise<DetailedEpisode | null> {
+    async upNextPlaylist(playlistId: number, userId: string): Promise<DetailedEpisode | null> {
         const next = await playlist.retrieveNextVideo(playlistId);
         if (next) {
             const video = await prisma.video.findUnique({
@@ -504,6 +498,33 @@ export default class Springboard extends Media {
                     }
                 }
             }
+        }
+
+        else {
+            const database = await prisma.media.findMany();
+            const playlist = await prisma.playlistVideos.findUnique({where: {id: playlistId}, select: {video: {select: {media: true}}}});
+            if (playlist) {
+                const video = playlist.video;
+                let info = (await this.getRecommendation(video.media.id, video.media.tmdbId, database, video.media.type)).recommendations;
+                let pos = Math.floor(Math.random() * info.length);
+                let index = info[pos];
+
+                if (index.type === MediaType.MOVIE) {
+                    let {overview, name, backdrop, logo} = index;
+                    let video = await prisma.video.findFirst({where: {mediaId: index.id}});
+                    if (video)
+                        return {overview, name, backdrop, logo, id: index.id, type: MediaType.MOVIE};
+
+                } else {
+                    let episode = await play.getNextEpisode(index.id, userId);
+                    if (episode) {
+                        let info = await this.getEpisode(episode.id);
+                        if (info)
+                            return {...info, type: MediaType.SHOW, id: episode.id}
+                    }
+                }
+            }
+
         }
 
         return null;
@@ -532,7 +553,7 @@ export default class Springboard extends Media {
     }
 
     /**
-     * @desc plays the first video file in an playlist queue
+     * @desc plays the first video file in a playlist queue
      * @param playlistId string identifier for playlist queue
      * @param userId
      */
@@ -545,31 +566,23 @@ export default class Springboard extends Media {
     }
 
     /**
-     * @desc returns the name and location of the file requested
+     * @desc returns the name and location of the file requested with the option to stream or download
      * @param auth file identification
      */
-    async getName(auth: string): Promise<{ location: string, name: string }> {
-        const view = await prisma.view.findFirst({
-            where: {auth},
-            include: {video: {include: {media: true, episode: true}}}
+    async getName(auth: string): Promise<{ location: string, name: string, download: boolean }> {
+        const file = await prisma.view.findFirst({where: {auth}, select: {video: true}});
+        const down = await prisma.download.findFirst({
+            where: {location: auth},
+            select: {created: true, view: {select: {auth: true, video: true}}}
         });
 
-        if (view) {
-            const location = view.video.location;
-            if (view.video.media.type === MediaType.MOVIE)
-                return {location, name: view.video.media.name};
+        if (file)
+            return {location: file.video.location, name: '', download: false}
 
-            else if (view.video.episode) {
-                const episode = await this.getEpisode(view.video.episode.id);
-                if (episode)
-                    return {
-                        location,
-                        name: view.video.media.name + /^Episode \d+/.test(episode.name) ? ` Season ${episode.seasonId}, Episode ${episode.episode}` : ` S${episode.seasonId}, E${episode.episode}: ${episode.name}`
-                    }
-            }
-        }
+        else if (down && (new Date(down.created).getTime() + (1000 * 60 * 60 * 2) > Date.now()))
+            return {...(await play.getName(down.view.auth)), download: true}
 
-        return {location: '', name: ''};
+        return {location: '', name: '', download: false};
     }
 
     /**
@@ -590,26 +603,7 @@ export default class Springboard extends Media {
             e.date = new Date(e.release).getTime();
             return e;
         }).sortKey('date', true).map(e => e.id);
-        const videos: any[] = await prisma.video.findMany({
-            where: {
-                mediaId: {in: mediaIds}
-            }, include: {episode: true}
-        })
-
-        let videoIds: number[] = [];
-        for (let item of mediaIds)
-            videoIds = videoIds.concat(videos.filter(e => e.mediaId === item).map(e => {
-                if (e.episode) {
-                    e.seasonId = e.episode.seasonId;
-                    e.episodeId = e.episode.episode;
-                }
-
-                return e;
-            }).sortKeys('seasonId', 'episodeId', true, true).map(e => e.id));
-
-        const identifier = await playlist.createPlaylists(videoIds, companyId, userId, Generator.FRAMES);
-        const response = await playlist.findFirstVideo(identifier);
-        return response?.id || null;
+        return await this.genPlaylist(mediaIds, '' + companyId, userId);
     }
 
     /**
@@ -620,7 +614,31 @@ export default class Springboard extends Media {
     async createPersonPlaylist(personId: number, userId: string) {
         const person = await this.getPersonInfo(personId) as FramesPerson;
         const mediaIds = person.production.concat(person.tv_cast).concat(person.movie_cast).sortKey('id', true).map(e => e.id);
+        return await this.genPlaylist(mediaIds, person.name, userId);
+    }
 
+    /**
+     * @desc creates a playlist from a collection
+     * @param collectionId
+     * @param userId
+     */
+    async createCollectionPlaylist(collectionId: number, userId: string) {
+        const media: any[] = await prisma.media.findMany({where: {collectionId}});
+        const mediaIds: number[] = media.map(e => {
+            e.date = new Date(e.release).getTime();
+            return e;
+        }).sortKey('date', true).map(e => e.id);
+        return await this.genPlaylist(mediaIds, '' + collectionId, userId);
+    }
+
+    /**
+     * @desc generates a playlist from a given list of media ids
+     * @param mediaIds
+     * @param name
+     * @param userId
+     * @private
+     */
+    private async genPlaylist(mediaIds: number[], name: string, userId: string) {
         const videos: any[] = await prisma.video.findMany({
             where: {
                 mediaId: {in: mediaIds}
@@ -638,8 +656,8 @@ export default class Springboard extends Media {
                 return e;
             }).sortKeys('seasonId', 'episodeId', true, true).map(e => e.id));
 
-        const identifier = await playlist.createPlaylists(videoIds, person.name, userId, Generator.FRAMES);
-        const response = await playlist.findFirstVideo(identifier);
+        const identifier = await playlist.createPlaylists(videoIds, name, userId, Generator.FRAMES);
+        const response = await playlist.findFirstVideo(identifier, userId);
         return response?.id || null;
     }
 

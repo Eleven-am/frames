@@ -1,32 +1,21 @@
-import {useRouter} from "next/router";
 import styles from './Sections.module.css'
-import {useRecoilValue, useSetRecoilState} from "recoil";
+import {useRecoilValue} from "recoil";
 import {NavConTextAtom} from "../../../states/navigation";
-import {InformDisplayContext} from "../../misc/inform";
+import {FramesLink as Link} from "../../misc/Loader";
 
 export default function Sections() {
-    const navContext = useRecoilValue(NavConTextAtom)
-    const setInform = useSetRecoilState(InformDisplayContext);
-    const sections = ["home", "movies", "tv shows", "genres", "decades", "playlists",];
-    const paths = ["/", "/movies", "/shows", "/genres", "/decades", "/playlist"];
-    const history = useRouter();
-
-    async function routeOut(index: number) {
-        if (index !== 5)
-            await history.push(paths[index]);
-
-        else setInform({
-            type: "error",
-            heading: 'feature not available',
-            message: 'The playlist feature is currently under development'
-        })
-    }
+    const navContext = useRecoilValue(NavConTextAtom);
+    const sections = ["home", "movies", "tv shows", "genres", "decades", "collections",];
+    const paths = ["/", "/movies", "/shows", "/genres", "/decades", "/collections"];
 
     return (
         <div className={styles.navSections}>
             {sections.map((item, v) => {
                 return (
-                    <span key={v} className={item === navContext ? styles.activeSection : styles.passiveSections} onClick={() => routeOut(v)}>{item}</span>
+                    <Link key={v} href={paths[v]}>
+                        <span
+                            className={item === navContext ? styles.activeSection : styles.passiveSections}>{item}</span>
+                    </Link>
                 );
             })}
         </div>

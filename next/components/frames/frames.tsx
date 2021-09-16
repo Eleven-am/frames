@@ -5,67 +5,97 @@ import usePlayback, {
     activeSubs,
     differance,
     displayInfoAtom,
-    displaySidesAtom,
-    framesSubtitles,
+    displaySidesAtom, DownOver, framesPlayer,
+    framesSubtitles, GWMOver,
     InformAndAuth,
     moveSubsAtom,
     resetFrames,
-    shareOver
+    shareOver, UpNextURL
 } from "../../states/FramesStates";
 import {useRecoilValue, useSetRecoilState} from "recoil";
-import {Buffer, CastHolder, Overview, ShareFrame, Toppers} from "./misc/misc";
+import {Buffer, CastHolder, DownloadHandler, GroupWatchMessage, Overview, ShareFrame, Toppers} from "./misc/misc";
 import Controls from "./controls/controls";
 import Progress from "./controls/progress";
 import ss from './frames.module.css'
-import {useEventListener, useFullscreen, useIsMounted, useNavBar} from "../../utils/customHooks";
+import {useEventListener, useFullscreen, useIsMounted, useNavBar, usePip} from "../../utils/customHooks";
 import {SubDisplay, Subtitles} from "./misc/subtitles";
 import {SpringPlay} from "../../../server/classes/springboard";
 import {useRouter} from "next/router";
+import useGroupWatch from "../../utils/groupWatch";
 
 function Listener({response, showInfo}: { response: SpringPlay, showInfo: (() => void) }) {
-    const {seekVideo, muteUnmuteVideo, setVolume, playPause} = usePlayback()
+    const {seekVideo, muteUnmuteVideo, setVolume, playPause} = usePlayback();
     const [max, toggleFullscreen] = useFullscreen('frames-container');
     const setActiveSub = useSetRecoilState(activeSubs);
     const subs = useRecoilValue(framesSubtitles);
+    const frames = useRecoilValue(framesPlayer);
+    const speak = useRecoilValue(GWMOver);
+    const down = useRecoilValue(DownOver);
+    const [pip, togglePip] = usePip(frames);
+    const url = useRecoilValue(UpNextURL);
+    const {pushNext} = useGroupWatch();
     const router = useRouter();
 
-    useEventListener('keyup', event => {
-        if (event.code === 'Space')
-            playPause()
+    const nextHandler = async () => {
+        await pushNext(url);
+        await router.push(url);
+    }
 
-        if (event.code === 'ArrowLeft')
-            seekVideo(-30);
+    useEventListener('keyup', async event => {
+        if (!speak && !down){
+            if (event.code === 'Space')
+                await playPause()
 
-        if (event.code === 'ArrowRight')
-            seekVideo(+30);
+            if (event.code === 'ArrowLeft')
+                seekVideo(-30);
 
-        if (event.code === 'KeyM')
-            muteUnmuteVideo()
+            if (event.code === 'ArrowRight')
+                seekVideo(+30);
 
-        if (event.code === 'KeyS')
-            setActiveSub(activeSub => {
-                const temp = ['none'].concat(subs.map(e => e.language));
-                const index = temp.findIndex(e => e === activeSub);
-                return 0 <= index && index <= temp.length - 2 ? temp[index + 1] : temp[0];
-            })
+            if (event.code === 'KeyM')
+                muteUnmuteVideo();
 
-        if (event.code === 'KeyF')
-            toggleFullscreen(!max);
+            if (event.code === 'KeyP')
+                togglePip(!pip);
 
-        if (event.code === "Escape" && response)
-            router.push('/info?id=' + response.mediaId, '/' + (response.episodeName ? 'show' : 'movie') + '=' + response.name.replace(/\s/g, '+'));
+            if (event.code === 'KeyN')
+                await nextHandler();
 
-        if (event.code === 'ArrowUp')
-            setVolume(+0.1)
+            if (event.code === 'KeyS')
+                setActiveSub(activeSub => {
+                    const temp = ['none'].concat(subs.map(e => e.language));
+                    const index = temp.findIndex(e => e === activeSub);
+                    return 0 <= index && index <= temp.length - 2 ? temp[index + 1] : temp[0];
+                })
 
-        if (event.code === 'ArrowDown')
-            setVolume(-0.1)
+            if (event.code === 'KeyF')
+                toggleFullscreen(!max);
 
+            if (event.code === "Escape" && response)
+                await router.push('/info?id=' + response.mediaId, '/' + (response.episodeName ? 'show' : 'movie') + '=' + response.name.replace(/\s/g, '+'));
 
-        showInfo();
+            if (event.code === 'ArrowUp')
+                setVolume(+0.1)
+
+            if (event.code === 'ArrowDown')
+                setVolume(-0.1)
+
+            showInfo();
+        }
     })
 
     return null;
+}
+
+export function Listeners ({response}: { response: SpringPlay }) {
+    return(
+        <>
+            <GroupWatchMessage/>
+            <InformAndAuth response={response}/>
+            <DownloadHandler response={response}/>
+            <ShareFrame location={response.location}/>
+        </>
+    )
 }
 
 export default function Frames({response}: { response: SpringPlay }) {
@@ -139,8 +169,6 @@ export default function Frames({response}: { response: SpringPlay }) {
                 </>
             }
 
-            <InformAndAuth response={response}/>
-            <ShareFrame location={response.location!}/>
             <Listener response={response} showInfo={showInfo}/>
         </div>
     )
