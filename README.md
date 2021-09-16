@@ -172,4 +172,3 @@ Start the server
 
 ## Upcoming features
 * Creating and sharing your playlists with others
-* Ability to download a video if you have a valid auth key
