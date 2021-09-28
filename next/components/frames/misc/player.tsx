@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from "react";
-import usePlayback, {
+import {
     bufferingAtom,
     currentDuration,
     differance,
@@ -12,6 +12,7 @@ import {useRecoilValue, useSetRecoilState} from "recoil";
 import cd from "../frames.module.css";
 import {SpringPlay} from "../../../../server/classes/springboard";
 import useGroupWatch from "../../../utils/groupWatch";
+import useCast from "../../../utils/castContext";
 
 function playing(video: HTMLVideoElement) {
     return (video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 3);
@@ -20,7 +21,6 @@ function playing(video: HTMLVideoElement) {
 export default function FramesPlayer({response, showInfo}: { response: SpringPlay, showInfo: (() => void) }) {
     const player = useRef<HTMLVideoElement>(null);
     const [playback, setPLayBack] = useState(false);
-    const {seekVideo} = usePlayback();
     const setCurrent = useSetRecoilState(currentDuration);
     const setVolume = useSetRecoilState(volumeAtom);
     const setMute = useSetRecoilState(mutedAtom);
@@ -29,9 +29,11 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
     const setPlay = useSetRecoilState(playVideoAtom);
     const diff = useRecoilValue(differance);
     const {sendMessage} = useGroupWatch();
+    const {seek} = useCast();
     const setFrames = useSetRecoilState(framesPlayer);
 
     useEffect(() => setFrames(player.current), [player.current])
+
     useEffect(() => {
         if (playback)
             sendMessage({action: 'declare'});
@@ -70,9 +72,11 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
     }, [player.current])
 
     const handleSeeked = useCallback(() => {
-        if (player.current)
-            seekVideo(player.current.currentTime);
-    },[player.current])
+        if (player.current) {
+            sendMessage({action: "skipped", data: player.current.currentTime});
+            seek(player.current.currentTime);
+        }
+    }, [player.current])
 
     const playVideo = async (action: boolean) => {
         if (player.current) {
@@ -104,15 +108,18 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
             <video
                 id='frames-player'
                 ref={player} className={diff ? cd.count : cd.frames} preload="metadata"
-                src={response.cdn + response.location}
                 onLoadedMetadata={startPlayback}
                 onDurationChange={durationChange}
                 onVolumeChange={volumeChange}
                 onTimeUpdate={handleUpdate}
-                //onSeeked={handleSeeked}
+                onSeeked={handleSeeked}
                 onWaiting={() => setBuffer(true)}
                 onPlay={() => playPause(true)}
-                onPause={() => playPause(false)}/>
+                onPause={() => playPause(false)}>
+                <source type="video/mp4" src={response.cdn + response.location}/>
+                {response.subs.map((e, v) => <track key={v} kind="subtitles" label={e.label} srcLang={e.lang}
+                                                    src={`/api/stream/pureSub?auth=${response.location}&language=${e.language}`}/>)}
+            </video>
             <img style={ready ? {display: "none"} : {display: "block"}} className={cd.pf}
                  src={response.backdrop} alt={response.name}/>
         </>

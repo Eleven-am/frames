@@ -238,7 +238,7 @@ export default class Media extends Episode {
      */
     async getDecade(decade: number, page: number): Promise<SearchInterface> {
         let res = await prisma.media.findMany();
-        let data: MediaSection[] = res.map(item => {
+        let data = res.map(item => {
             return {
                 type: item.type,
                 id: item.id, logo: item.logo,
@@ -295,9 +295,9 @@ export default class Media extends Episode {
         });
 
         let data = medias.filter(e => e.collectionId !== null).map(e => e.collectionId) as number[];
-        page = 20 * (page - 1);
-        let pages = Math.floor(data.length / 20) + 1;
-        data = data.length > page ? data.slice(page, page + 20) : [];
+        page = 30 * (page - 1);
+        let pages = Math.floor(data.length / 30) + 1;
+        data = data.length > page ? data.slice(page, page + 30) : [];
 
         const response: CollectionFace[] = [];
         for await (let item of data) {
@@ -835,7 +835,6 @@ export default class Media extends Episode {
                 const folder = await prisma.folder.findFirst({where: {showId: media.id}});
                 if (folder)
                     location = folder.location;
-
             }
 
             await this.addMedia(data, location);
@@ -853,16 +852,18 @@ export default class Media extends Episode {
             const moviesData = collection.parts.collapse(media, MediaType.MOVIE, 'popularity');
             const showsData = collection.parts.collapse(media, MediaType.SHOW, 'popularity');
 
-            const movies: (MediaSection & Required<{ poster: string }>)[] = moviesData.map(e => {
+            const movies: (MediaSection & Required<{ poster: string, popularity: number }>)[] = moviesData.map(e => {
                 return {
                     poster: e.poster,
+                    popularity: e.popularity,
                     name: e.name, type: e.type,
                     id: e.id, background: e.background
                 }
             });
-            const shows: (MediaSection & Required<{ poster: string }>)[] = showsData.map(e => {
+            const shows: (MediaSection & Required<{ poster: string, popularity: number }>)[] = showsData.map(e => {
                 return {
                     poster: e.poster,
+                    popularity: e.popularity,
                     name: e.name, type: e.type,
                     id: e.id, background: e.background
                 }

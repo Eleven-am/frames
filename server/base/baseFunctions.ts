@@ -7,7 +7,7 @@ declare global {
          * @desc returns all duplicates in ar array of objects using the property of the object needle
          * @param needle
          */
-        uniqueID(needle: string): Array<T>;
+        uniqueID<K extends keyof T>(needle: K): Array<T>;
 
         /**
          * @desc helps to filter an array by another array
@@ -22,7 +22,7 @@ declare global {
          * @param key
          * @param asc
          */
-        sortKey(key: string, asc: boolean): Array<T>;
+        sortKey<K extends keyof T>(key: K, asc: boolean): Array<T>;
 
         /**
          * @desc sorts an array based on 2 keys in the array and the 2 rules, 1 for each key
@@ -31,7 +31,7 @@ declare global {
          * @param asc1
          * @param asc2
          */
-        sortKeys(key1: string, key2: string, asc1: boolean, asc2: boolean): Array<T>
+        sortKeys<A extends keyof T, B extends keyof T>(key1: A, key2: B, asc1: boolean, asc2: boolean): Array<T>
 
         /**
          * @desc helps searches the database for an array entries returned from TMDB, returning a smaller array of objects that do exist
@@ -55,14 +55,6 @@ declare global {
          * @returns an int length array with random items from database: excluding the values listed
          */
         randomiseDB(length: number, id: number, type?: MediaType): Array<T>;
-
-        /**
-         * @desc takes a second array and adds it to the first array increasing the resulting rep in the process
-         * @param array2
-         * @param rep
-         * @constructor
-         */
-        expand(array2: any[], rep: number): Array<T>;
     }
 
     interface String {
@@ -215,7 +207,7 @@ Array.prototype.collapse = function (array2: any[], type: MediaType, keepKey?: s
     return array;
 }
 
-Array.prototype.uniqueID = function (needle: string): any[] {
+Array.prototype.uniqueID = function<T, K extends keyof T>(needle: K): T[] {
     let a = this.concat();
     for (let i = 0; i < a.length; ++i) {
         for (let j = i + 1; j < a.length; ++j) {
@@ -275,30 +267,6 @@ Array.prototype.sortKeys = function (key1, key2, asc1, asc2): any[] {
         else
             return asc1 ? ((a1 < b1) ? -1 : ((a1 > b1) ? 1 : 0)) : ((a1 > b1) ? -1 : ((a1 < b1) ? 1 : 0));
     });
-}
-
-Array.prototype.expand = function (array2: any[], rep: number): any[] {
-    array2 = array2.map(item => {
-        return {
-            name: item.title === undefined ? item.name : item.title,
-            id: item.id,
-            tmdbId: item.id,
-            rep,
-            poster: 'https://image.tmdb.org/t/p/original' + item.backdrop_path,
-            type: item.title === undefined ? 0 : 1,
-        };
-    });
-    let array = [];
-    if (this.length) {
-        for (let i = this.length - 1; i >= 0; i -= 1) {
-            let res = array2.find(item => item.tmdbId === this[i].tmdbId && item.type === this[i].type);
-            if (res !== undefined)
-                this[i].rep = res.rep > this[i].rep ? res.rep + 1 : this[i].rep + 1;
-            array.push(this[i]);
-        }
-    }
-
-    return array.concat(array2).sortKey('rep', false).uniqueID('tmdbId');
 }
 
 String.prototype.Levenshtein = function (string: string, val?: number): any {

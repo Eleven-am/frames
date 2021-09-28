@@ -266,7 +266,7 @@ export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backd
     return {done, start, loadTrailer};
 }
 
-export function useWeSocket<S>(SOCKET: string) {
+export function useWebSocket<S>(SOCKET: string) {
     const isMounted = useIsMounted();
     const [data, setData] = useState<S>();
     const socket = useRef<WebSocket | null>(null);
@@ -416,27 +416,35 @@ export function useAuth() {
             const error = res === -1 ? 'invalid auth key': 'this auth key has already been used';
             setError(error);
             setLAuth(true);
-        } else
+
+        } else {
             setValid(true);
+            setError(null);
+            setLAuth(false);
+        }
     }
 
     const manageAuth = async (auth: string) => {
         if (auth.length === 23)
-            await confirmKey()
+            await confirmKey();
 
         else if (auth === 'homeBase') {
-            if (user?.role === Role.ADMIN)
+            if (user?.role === Role.ADMIN) {
+                setError(null);
+                setLAuth(false);
                 setValid(true);
 
-            else {
+            } else {
                 setError('invalid auth key')
                 setLAuth(true);
+                setValid(false);
             }
         }
 
         else {
             setError(null);
             setLAuth(false);
+            setValid(false);
         }
     }
 

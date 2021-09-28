@@ -10,7 +10,7 @@ import {
     AuthPicker,
     useReset
 } from "../../states/authContext";
-import {useAuth, useEventListener, useWeSocket} from "../../utils/customHooks";
+import {useAuth, useEventListener, useWebSocket} from "../../utils/customHooks";
 import useUser from "../../utils/userTools";
 
 const ENDPOINT = 'https://frameshomebase.vercel.app/api/oauth?type=';
@@ -185,7 +185,7 @@ function Create() {
 function Pick() {
     const {oauthAuth, confirmMail} = useUser();
     const picker = useRecoilValue(AuthPicker);
-    const {connect, data, connected, disconnect, sendData} = useWeSocket<SocketResponse>(SOCKET);
+    const {connect, data, connected, disconnect, sendData} = useWebSocket<SocketResponse>(SOCKET);
     const win = useRef<Window | null>(null);
     const dispatch = useSetRecoilState(AuthContextHandler);
     const {auth, setAuth, authError, valid} = useAuth();

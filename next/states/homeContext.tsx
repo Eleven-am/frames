@@ -70,7 +70,7 @@ export const useLoop = (initialState: {start: number, end: number}) => {
         return () => interval?.current && clearInterval(interval.current);
     }, [trailer, state])
 
-    return state.start;
+    return {current: state.start, prev: state.start === 0 ? state.end: state.start - 1};
 }
 
 export function useReset() {

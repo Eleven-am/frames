@@ -1,4 +1,4 @@
-export async function pFetch(data: any, location: string) {
+export async function pFetch(data: any, location: RequestInfo) {
     return await fetch(location, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},

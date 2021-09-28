@@ -88,7 +88,7 @@ export function Header({meta}: { meta: MetaTags }) {
             <link rel="shortcut icon" href="/favicon.ico"/>
             <meta name="msapplication-TileColor" content="#da532c"/>
             <meta name="msapplication-config" content="/favicons/browserconfig.xml"/>
-            <meta name="theme-color" content="#ffffff"/>
+            <meta name="theme-color" content="#01101c"/>
 
             <title>{meta.name}</title>
             <meta key="name" name="title" content={meta.name}/>

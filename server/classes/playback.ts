@@ -44,6 +44,15 @@ export interface UpNextHolder {
     episodeName?: string;
 }
 
+export interface PlayBackInterface {
+    frame: boolean,
+    guest: boolean,
+    inform: boolean,
+    location: string,
+    subs: { language: string, url: string, label: string, lang: string }[],
+    cdn: string
+}
+
 const user = new User();
 const episodeClass = new Episode();
 
@@ -122,7 +131,7 @@ export default class Playback {
      * @param userId user identifier
      * @returns auth identifier uuid string
      */
-    async generatePlayback(videoId: number, userId: string): Promise<{ frame: boolean, guest: boolean, inform: boolean, location: string, subs: { language: string, url: string }[], cdn: string } | null> {
+    async generatePlayback(videoId: number, userId: string): Promise<PlayBackInterface | null> {
         const subtitle = new SubClass();
         let video: { [p: string]: any } | null = await prisma.video.findFirst({where: {id: videoId}});
         let user = await prisma.user.findFirst({where: {userId}});
@@ -134,15 +143,19 @@ export default class Playback {
                 episodeId: episode ? episode.id : null, finished: 0
             };
 
-            let tempSubs = ['english', 'french', 'german'].map(e => {
+            let keys = ['en', 'fr', 'de'];
+            let labels = ['English', 'Français', 'Deutsch'];
+            let tempSubs = ['english', 'french', 'german'].map((e, v) => {
                 if (video && video.hasOwnProperty(e) && video[e] !== null && video[e] !== '')
                     return {
                         language: e,
+                        lang: keys[v],
+                        label: labels[v],
                         url: '/api/stream/subtitles?auth=' + obj.auth + '&language=' + e
                     }
             })
 
-            let subs: { language: string, url: string }[] = [];
+            let subs = [];
             for (let item of tempSubs) {
                 if (item !== undefined)
                     subs.push(item);
@@ -150,7 +163,7 @@ export default class Playback {
 
             let info = await prisma.view.create({data: obj});
             if (subs.length < 1)
-                subs = await subtitle.getSub(videoId);
+                await subtitle.getSub(videoId);
 
             return {
                 frame: false,
@@ -237,7 +250,7 @@ export default class Playback {
      */
     async getSeen(userId: string): Promise<SectionInterface> {
         let seen = await prisma.seen.findMany({where: {userId}, include: {media: true}});
-        let database: MediaSection[] = seen.map(item => {
+        let database = seen.map(item => {
             return {
                 id: item.media.id,
                 background: item.media.background,
@@ -404,7 +417,7 @@ export default class Playback {
      */
     async getSuggestions(userId: string): Promise<SectionInterface> {
         let data = await prisma.suggestion.findMany({where: {userId}, include: {media: true}});
-        let info: MediaSection [] = data.map(item => {
+        let info = data.map(item => {
             return {
                 rep: item.rep, background: item.media.background,
                 id: item.mediaId, name: item.media.name,
@@ -448,7 +461,7 @@ export default class Playback {
         let episode = new Episode();
         let result: MediaSection[] = [];
         for await (let item of data) {
-            if (result.length < 11) {
+            if (result.length < 9) {
                 if (item.type === MediaType.SHOW) {
                     let e = await this.getNextEpisode(item.id, userId);
                     if (e && e.found) {
@@ -576,8 +589,9 @@ export default class Playback {
      * @desc gets the SRT|VTT and converts them to frames Subtitles
      * @param auth
      * @param language
+     * @param pure
      */
-    async getSub(auth: string, language: string): Promise<Subtitles | null> {
+    async getSub(auth: string, language: string, pure?: boolean): Promise<Subtitles | string | null> {
         const file: { video: { [key: string]: any } } | null = await prisma.view.findFirst({
             where: {auth},
             select: {video: true}
@@ -593,25 +607,70 @@ export default class Playback {
             }
 
             if (res) {
-                res = res.replace(/\r\n|\r|\n/g, '\n');
-                const subtitle: Subtitles = [];
-                const sections = res.split('\n\n');
-                for (let item of sections) {
-                    let section = item.split('\n');
-                    if (section.length > 2) {
-                        const id = +(section[0]);
-                        const range = section[1].split(' --> ');
-                        if (range.length > 1) {
-                            const start = parseTime(range[0]);
-                            const end = parseTime(range[1]);
-                            const diff = end - start;
-                            const text = section.slice(2).join(' ');
-                            subtitle.push({id, start, end, diff, text});
+                if (pure) {
+                    let result = '';
+                    let index = 0;
+                    const srt = res.replace(/^\s+|\s+$|\r+/g, '');
+                    const cueList = srt.split('\n\n');
+                    if (cueList.length > 0) {
+                        result += "WEBVTT\n\n";
+                        while (index < cueList.length) {
+                            const caption = cueList[index];
+                            let cue = "";
+                            const s = caption.split(/\n/);
+                            while (s.length > 3) {
+                                for (let i = 3; i < s.length; i++) {
+                                    s[2] += "\n" + s[i]
+                                }
+                                s.splice(3, s.length - 3);
+                            }
+
+                            let line = 0;
+                            if (!s[0].match(/\d+:\d+:\d+/) && s[1].match(/\d+:\d+:\d+/)) {
+                                cue += s[0].match(/\w+/) + "\n";
+                                line++;
+                            }
+
+                            if (s[line].match(/\d+:\d+:\d+/)) {
+                                const m = s[1].match(/(\d+):(\d+):(\d+)(?:,(\d+))?\s*--?>\s*(\d+):(\d+):(\d+)(?:,(\d+))?/);
+                                if (m) {
+                                    cue += m[1] + ":" + m[2] + ":" + m[3] + "." + m[4] + " --> "
+                                        + m[5] + ":" + m[6] + ":" + m[7] + "." + m[8] + "\n";
+                                    line += 1;
+
+                                } else return "";
+                            } else return "";
+                            if (s[line])
+                                cue += s[line] + "\n\n";
+
+                            result += cue;
+                            index++;
                         }
                     }
-                }
 
-                return subtitle;
+                    return result;
+
+                } else {
+                    res = res.replace(/\r\n|\r|\n/g, '\n');
+                    const subtitle: Subtitles = [];
+                    const sections = res.split('\n\n');
+                    for (let item of sections) {
+                        let section = item.split('\n');
+                        if (section.length > 2) {
+                            const id = +(section[0]);
+                            const range = section[1].split(' --> ');
+                            if (range.length > 1) {
+                                const start = parseTime(range[0]);
+                                const end = parseTime(range[1]);
+                                const diff = end - start;
+                                const text = section.slice(2).join(' ');
+                                subtitle.push({id, start, end, diff, text});
+                            }
+                        }
+                    }
+
+                    return subtitle;
+                }
             }
         }
 

@@ -6,7 +6,7 @@ import {Banner} from "../../../server/classes/springboard";
 
 export default function Trending({response}: { response: Banner[] }) {
     const reset = useReset();
-    const current = useLoop({start: 0, end: response.length});
+    const {current, prev} = useLoop({start: 0, end: response.length});
 
     useEffect(() => {
         return () => reset();
@@ -14,22 +14,13 @@ export default function Trending({response}: { response: Banner[] }) {
 
     return (
         <div>
-            {response.map((item, index) => {
-                return (
+            {response.map((item, index) =>
+                index === current || index === prev ?
                     <div key={index} className={index === current ? styles.active : styles.slide}>
-                        {index !== current ? (
-                            current === 0 && index === response.length - 1 ? (
-                                <Backdrop key={item.id} data={item}/>
-                            ) : index === current - 1 ? (
-                                <Backdrop key={item.id} data={item}/>
-                            ) : null
-                        ) : null}
-                        {index === current ? (
-                            <Backdrop key={item.id} data={item}/>
-                        ) : null}
-                    </div>
-                );
-            })}
+                        <Backdrop key={item.id} data={item}/>
+                    </div> :
+                    null
+            )}
         </div>
     );
 }

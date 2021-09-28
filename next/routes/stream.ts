@@ -81,7 +81,16 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
     if (body.type === 'subtitles') {
         let auth = Array.isArray(body.auth) ? body.auth[0] : body.auth;
         let language = Array.isArray(body.language) ? body.language[0] : body.language;
-        response = await play.getSub(auth, language)
+        response = await play.getSub(auth, language);
+    }
+
+    if (body.type === 'pureSub') {
+        let auth = Array.isArray(body.auth) ? body.auth[0] : body.auth;
+        let language = Array.isArray(body.language) ? body.language[0] : body.language;
+        response = await play.getSub(auth, language, true);
+        res.setHeader('Content-type', 'text/vtt');
+        res.status(200).end(response);
+        return;
     }
 
     if (body.type === 'worker') {

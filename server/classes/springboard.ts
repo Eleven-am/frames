@@ -2,7 +2,7 @@ import Media, {MediaInfo, MediaSection} from "./media";
 import {Generator, Media as Med, MediaType} from "@prisma/client";
 import {create_UUID, takeFive} from "../base/baseFunctions";
 import {FramesPerson, slimTrending, trending} from "../base/tmdb_hook";
-import Playback, {SectionInterface} from "./playback";
+import Playback, {SectionInterface, PlayBackInterface} from "./playback";
 import {prisma} from '../base/utils';
 import {Playlist} from "./listEditors";
 import {DetailedEpisode} from "./episode";
@@ -35,13 +35,9 @@ export interface SpringLoad {
     episodeName?: string;
 }
 
-export interface SpringPlay extends SpringLoad {
-    inform: boolean;
-    frame: boolean
-    location: string
-    cdn: string;
-    guest: boolean;
-    subs: ({ language: string, url: any })[]
+type MEDIAN = SpringLoad & PlayBackInterface;
+
+export interface SpringPlay extends MEDIAN {
     playlistId?: number;
 }
 
@@ -137,10 +133,7 @@ export default class Springboard extends Media {
         });
         let moviesData = movies.collapse(dBase, MediaType.MOVIE, 'popularity');
         let tvData = tv.collapse(dBase, MediaType.SHOW, 'popularity');
-        dBase = moviesData.concat(tvData).map(e => {
-            let {id, overview, backdrop, name, logo, type, trailer} = e;
-            return {id, overview, backdrop, name, logo, type, trailer}
-        }).filter(e => e.logo !== '').sortKey('popularity', false);
+        dBase = moviesData.concat(tvData).filter(e => e.logo !== '').sortKey('popularity', false);
         return takeFive(dBase, 7).result;
     }
 
@@ -211,25 +204,25 @@ export default class Springboard extends Media {
      * @returns Promise<string[]> posters of the Trending images at the moment
      */
     async authImages(app = false): Promise<string[]> {
-        let dBase = await prisma.media.findMany({select: {id: true, poster: true, type: true, tmdbId: true}});
+        const dBase = await prisma.media.findMany({select: {id: true, poster: true, type: true, tmdbId: true}});
         let {movies, tv} = await slimTrending();
         let moviesData = movies.collapse(dBase, MediaType.MOVIE, 'popularity');
         let tvData = tv.collapse(dBase, MediaType.SHOW, 'popularity');
-        dBase = moviesData.concat(tvData).sortKey('popularity', false);
+        const data = moviesData.concat(tvData).sortKey('popularity', false);
 
         if (!app)
-            return dBase.map(e => {
+            return data.map(e => {
                 return e.poster
             }).slice(0, 10);
 
         else {
-            let moviesData = movies.collapse(dBase, MediaType.MOVIE, 'poster_path');
-            let tvData = tv.collapse(dBase, MediaType.SHOW, 'poster_path');
+            let moviesData = movies.collapse(data, MediaType.MOVIE, 'poster_path');
+            let tvData = tv.collapse(data, MediaType.SHOW, 'poster_path');
             let poster = moviesData.concat(tvData);
             poster = poster.map(e => {
                 e.poster_path = 'https://image.tmdb.org/t/p/original' + e.poster_path;
                 return e;
-            });
+            }).sortKey('popularity', false).slice(0, 10);
 
             return poster.map(e => e.poster_path || e.poster);
         }

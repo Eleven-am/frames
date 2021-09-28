@@ -1,5 +1,5 @@
 import {createContext, ReactNode, useCallback, useContext, useEffect} from "react";
-import {useWeSocket} from "./customHooks";
+import {useWebSocket} from "./customHooks";
 import useUser from "./userTools";
 import {atom, useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {InformDisplayContext} from "../components/misc/inform";
@@ -55,7 +55,7 @@ const GroupWatchContext = createContext<GroupWatchContextInterface>({
 });
 
 export function GroupWatchProvider({children}: { children: ReactNode }) {
-    const {connect, connected, data, sendData, disconnect} = useWeSocket<GroupWatchMessage>(SOCKET);
+    const {connect, connected, data, sendData, disconnect} = useWebSocket<GroupWatchMessage>(SOCKET);
 
     return (
         <GroupWatchContext.Provider value={{connected, connect, disconnect, data, sendData}}>
@@ -127,7 +127,7 @@ export default function useGroupWatch(join = false) {
     const updateRoom = useCallback(async (auth: string) => {
         if (leader && connected)
             await pFetch({auth, roomKey: room}, '/api/stream/groupWatch')
-    }, [leader, connected])
+    }, [leader, connected, room])
 
     const pushNext = useCallback((data: string) => {
         if (leader && connected)
@@ -139,7 +139,7 @@ export default function useGroupWatch(join = false) {
         sendMessage({action: "left"});
         setLeader(false);
         disconnectFromSocket();
-    }, [sendMessage])
+    }, [])
 
     const genRoom = useCallback(async (auth?: string) => {
         if (!connected) {
@@ -162,12 +162,12 @@ export default function useGroupWatch(join = false) {
             })
             disconnect();
         }
-    }, [connected])
+    }, [connected, user])
 
     const sendNext = useCallback(() => {
         if (leader && upNext)
             sendMessage({action: 'nextHolder', upNext})
-    }, [upNext, leader])
+    }, [upNext, leader, sendMessage])
 
     return {
         connect,

@@ -2,7 +2,7 @@ import ss from './Loading.module.css';
 import Link from "next/link";
 import {ReactNode} from "react";
 import useGroupWatch from "../../utils/groupWatch";
-import {useWindowListener} from "../../utils/customHooks";
+import {useEventListener, useWindowListener} from "../../utils/customHooks";
 import useUser from "../../utils/userTools";
 import {Role} from "@prisma/client";
 import useCast from "../../utils/castContext";
@@ -36,6 +36,15 @@ export function BeforeExit() {
         disconnect();
         castDisconnect();
         user?.role === Role.GUEST && signOut();
+    })
+
+    useWindowListener('dragstart', (ev) => {
+        ev.preventDefault();
+        return false;
+    })
+
+    useEventListener('contextmenu', (ev) => {
+        ev.preventDefault();
     })
 
     return null;

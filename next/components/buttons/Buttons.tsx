@@ -294,13 +294,9 @@ const Rating = ({id, review, myRating}: ButtonInterfaces) => {
 const InfoButton = ({id, name, type}: ButtonInterfaces) => {
     const {disconnect} = useGroupWatch();
 
-    useEffect(() => {
-       return () => disconnect();
-    }, [])
-
     return (
         <Link href={'/info?id=' + id} as={'/' + type + '=' + name?.replace(/\s/g, '+')}>
-            <button className={`${styles.trailerButton} ${styles.noFill}`}>
+            <button className={`${styles.trailerButton} ${styles.noFill}`} onClick={disconnect}>
                 <svg viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
