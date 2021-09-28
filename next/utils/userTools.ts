@@ -88,26 +88,22 @@ export default function useUser(frames = false, confirm = false) {
 
     const confirmAuth = async () => {
         let res: ServerResponse = await pFetch({process: 'confirmAuth'}, '/api/auth');
-        if (res.error) {
-            setUser(null);
-            setLoading(false);
-
-        } else if (res.context) {
+        if (res.error)
+            setError(res.error);
+        else if (res.context)
             setUser(res.context);
-            setLoading(false);
-        }
+
+        setLoading(false);
     }
 
     const getFrameUser = async () => {
         let res: ServerResponse = await pFetch({process: 'framedUser'}, '/api/auth');
-        if (res && res.context) {
+        if (res.error)
+            setError(res.error);
+        else if (res.context)
             setUser(res.context);
-            setLoading(false);
 
-        } else {
-            setUser(null);
-            setLoading(false);
-        }
+        setLoading(false);
     }
 
     const generateAuthKey = async (): Promise<{ authKey?: string, error?: string }> => {

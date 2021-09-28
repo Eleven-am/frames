@@ -83,11 +83,13 @@ Start the server
   ![](art/6.png)
   ![](art/7.png)
 
-* You can see all the genres for the medias available in your library. Your library can also be sorted by decades depending on when they were released or first aired.
+* You can see all genres for the media available in your library. Your library can also be sorted by decades depending on when they were released or first aired.
   ![](art/8.png)
   ![](art/9.png)
 
-* #### The playlist feature is still in development
+* Frames has the collection page that shows you default collection for media in your library
+  ![](art/41.png)
+  ![](art/42.png)
 
 * Here's how a media's metadata is displayed on frames
   ![](art/12.png)
@@ -97,7 +99,7 @@ Start the server
 
 * Media produced by a specific company can be seen by simply clicking on the company's name in the details pane
   ![](art/14.png)
-    * Clicking on the company's logo begins playback of all the media produce by the company in the order they were made available by said company
+    * Clicking on the company's logo begins playback of all the media produced by the company in the order they were made available by said company
 
 * Media a specific actor or director took part in creating are easily viewable by clicking on their name
   ![](art/28.png)
@@ -107,7 +109,7 @@ Start the server
 * Frames supports only mp4 files. These files are streamed securely to the user and your Google credentials are never made available to the client.
   ![](art/player.gif)
     * The left controls include the AirPlay/Cast button (if available). The volume controls
-    * If not logged in as a guest user, there are two additional buttons the download button(not functional yet) and the Share button
+    * If not logged in as a guest user, there are two additional buttons the download button and the Share button
       ![](art/15.png)
       ![](art/18.png)
       ![](art/17.png)
@@ -128,7 +130,7 @@ Start the server
         The join button in the info page
     * When a session is created a link is copied to your clipboard anyone with access to this link can join the session
     ![](art/37.png)
-    * A session spans multiple videos. As lon as all; parties remains connected the session allows you to actually marathon videos together.
+    * A session spans multiple videos. As long as all parties remain connected, the session allows you to actually binge-watch videos together.
     * There's no limit to the amount of people that can join a session
     ![](art/38.png)
     * Users in a session can send a ping to themselves with a maximum of 280 characters. Ping history isn't saved
@@ -146,10 +148,6 @@ Start the server
 
 * The up next UI when the present video is done playing
   ![](art/21.png)
-
-* Frames has the collection page that shows you default collection for media in your library
-  ![](art/41.png)
-  ![](art/42.png)
 
 * Frames allows any non-guest user download video files provided they are given a key from the admin(These links are only valid for 2 hours)
      ![](art/43.png)
@@ -172,4 +170,3 @@ Start the server
 
 ## Upcoming features
 * Creating and sharing your playlists with others
-* Ability to download a video if you have a valid auth key
