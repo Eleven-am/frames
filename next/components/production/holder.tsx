@@ -30,7 +30,7 @@ export function CollectionHolder({response}: {response: FramesCollection}) {
     if (data)
         return (
             <>
-                <Link href={'/watch?next=x'+data}>
+                <Link href={'/watch?id='+data}>
                     <span className={styles.image}>{response.name}</span>
                 </Link>
                 <div className={styles.holder}>

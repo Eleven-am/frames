@@ -1,13 +1,14 @@
 import React, {useEffect, useRef} from "react";
 import {PlayButton, TrailerButton} from "../../buttons/Buttons";
 import styles from "./BACKDROP.module.css";
+import style from "./../Trending.module.css";
 import {useYoutubePLayer} from "../../../utils/customHooks";
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {CurrentBanner, imageAtom, OpacityHomeAtom, pGraphAtom, TrailerAtom} from "../../../states/homeContext";
 import {NavOpacityAtom} from "../../../states/navigation";
 import {Banner} from "../../../../server/classes/springboard";
 
-export default function Backdrop({data}: { data: Banner }) {
+export default function Backdrop({data, index}: {data: Banner, index: boolean | null}) {
     const {id, name, backdrop, logo, overview, trailer: link} = data
     const overviewRef = useRef<HTMLParagraphElement>(null);
     const holder = useRef<HTMLDivElement>(null);
@@ -52,29 +53,31 @@ export default function Backdrop({data}: { data: Banner }) {
     const carousel: number[] = [...Array(current.end).keys()];
 
     return (
-        <div className={styles.banners}>
-            <img
-                className={trailer ? `${styles.bannersBackdrop} ${styles.fade_img}` : styles.bannersBackdrop}
-                ref={backdropRef} src={backdrop} alt={name} style={{opacity: imageOpacity}}/>
-            <div className={styles['bannerObject-holders']}>
-                <div className={styles.bannerHouse} ref={holder} style={{opacity: holderOpacity}}>
-                    <img className={styles.bannersLogo} src={logo!} alt={name}/>
-                    <div className={styles.bannerButtons}>
-                        <PlayButton id={id}/>
-                        <TrailerButton id={id} onClick={loadTrailer} trailer={trailer}/>
+        <div className={index ? style.active : style.slide}>
+            <div className={styles.banners}>
+                <img
+                    className={trailer ? `${styles.bannersBackdrop} ${styles.fade_img}` : styles.bannersBackdrop}
+                    ref={backdropRef} src={backdrop} alt={name} style={{opacity: imageOpacity}}/>
+                <div className={styles['bannerObject-holders']}>
+                    <div className={styles.bannerHouse} ref={holder} style={{opacity: holderOpacity}}>
+                        <img className={styles.bannersLogo} src={logo!} alt={name}/>
+                        <div className={styles.bannerButtons}>
+                            <PlayButton id={id}/>
+                            <TrailerButton id={id} onClick={loadTrailer} trailer={trailer}/>
+                        </div>
+                        <p ref={overviewRef}>{overview}</p>
                     </div>
-                    <p ref={overviewRef}>{overview}</p>
+                    <nav className={styles.carousel} style={{opacity: holderOpacity}}>
+                        {carousel.map((start: number, value: number) => {
+                            return (
+                                <svg viewBox="0 0 24 24" key={value} onClick={() => setCurrent({...current, start})}
+                                     className={current.start === start ? styles.activeCarousel : styles.passiveCarousel}>
+                                    <circle cx="12" cy="12" r="10"/>
+                                </svg>
+                            )
+                        })}
+                    </nav>
                 </div>
-                <nav className={styles.carousel} style={{opacity: holderOpacity}}>
-                    {carousel.map((start: number, value: number) => {
-                        return (
-                            <svg viewBox="0 0 24 24" key={value} onClick={() => setCurrent({...current, start})}
-                                 className={current.start === start ? styles.activeCarousel : styles.passiveCarousel}>
-                                <circle cx="12" cy="12" r="10"/>
-                            </svg>
-                        )
-                    })}
-                </nav>
             </div>
         </div>
     )

@@ -249,7 +249,7 @@ const GroupWatch = ({id, type}: ButtonInterfaces) => {
 
     return (
         <button title={'GroupWatch'} className={styles.roundGuys} onClick={() => genRoom()}>
-            <svg viewBox="0 0 24 24">
+            <svg viewBox="0 0 24 24" style={connected ? {fill: '#3cab66'}: {}}>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>

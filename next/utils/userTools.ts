@@ -140,8 +140,8 @@ export default function useUser(frames = false, confirm = false) {
             else
                 setLoading(false);
         }
-        return () => frames && signOut();
-    }, [])
+        return () => frames && user?.role === Role.GUEST && signOut();
+    }, [user])
 
     return {
         user,

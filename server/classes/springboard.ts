@@ -615,13 +615,12 @@ export default class Springboard extends Media {
      * @param collectionId
      * @param userId
      */
-    async createCollectionPlaylist(collectionId: number, userId: string) {
+    async createCollectionPlaylist(collectionId: number, userId: string): Promise<number> {
         const media: any[] = await prisma.media.findMany({where: {collectionId}});
-        const mediaIds: number[] = media.map(e => {
+        return media.map(e => {
             e.date = new Date(e.release).getTime();
             return e;
-        }).sortKey('date', true).map(e => e.id);
-        return await this.genPlaylist(mediaIds, '' + collectionId, userId);
+        }).sortKey('date', true).map(e => e.id)[0];
     }
 
     /**

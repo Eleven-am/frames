@@ -3,6 +3,7 @@ import {useState} from "react";
 import {useRecoilValue} from "recoil";
 import {SideMenu} from "../../../states/navigation";
 import useUser from "../../../utils/userTools";
+import {FramesLink} from "../../misc/Loader";
 
 export default function AccountInfo() {
     const accountContext = useRecoilValue(SideMenu);
@@ -18,9 +19,11 @@ export default function AccountInfo() {
                     setVisible(false);
                 }, 200)
             }}>
-                <div className={styles.text}>{user.email}</div>
+                <div className={styles.email}>{user.email}</div>
                 <div className={styles.spacer}/>
-                <div className={styles.text}>Account</div>
+                <FramesLink href={'/settings'}>
+                    <div className={styles.text}>Account</div>
+                </FramesLink>
                 <div className={styles.text}>Buy me coffee</div>
                 <div className={styles.text}>Donate to my cause</div>
                 <div className={styles.spacer}/>

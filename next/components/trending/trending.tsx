@@ -1,4 +1,3 @@
-import styles from "./Trending.module.css";
 import Backdrop from "./backdrop/backdrop";
 import {useLoop, useReset} from "../../states/homeContext";
 import {useEffect} from "react";
@@ -15,11 +14,7 @@ export default function Trending({response}: { response: Banner[] }) {
     return (
         <div>
             {response.map((item, index) =>
-                index === current || index === prev ?
-                    <div key={index} className={index === current ? styles.active : styles.slide}>
-                        <Backdrop key={item.id} data={item}/>
-                    </div> :
-                    null
+                <Backdrop key={item.id} data={item} index={index === current || index === prev ? index === current: null}/>
             )}
         </div>
     );

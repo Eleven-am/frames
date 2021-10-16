@@ -83,11 +83,6 @@ export interface CollectionFace {
     collectionPoster: string;
 }
 
-export interface CollectionHomeFace {
-    display: string;
-    data: CollectionFace[]
-}
-
 export default class Media extends Episode {
 
     /**
@@ -781,6 +776,7 @@ export default class Media extends Episode {
             else
                 await magnet.findSeason(item.id, 1);
 
+        await magnet.parseFeed();
         for (let item of dbase)
             if (item.type === MediaType.MOVIE)
                 movieBase.concat(await pageTwo(item.type, item.tmdbId, [], 1, 5, true)).uniqueID('id');

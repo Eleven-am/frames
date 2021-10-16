@@ -205,6 +205,53 @@ export class Subtitles {
 export class Update {
 
     /**
+     * @desc tries to decide between two versions of a media which to keep and which to delete
+     * @param oldMedia
+     * @param newMedia
+     * @param spare
+     * @private
+     */
+    private static async checkAndDelete(oldMedia: string, newMedia: string, spare = false): Promise<boolean> {
+        const oldDrive = await drive.getFile(oldMedia);
+        const newDrive = await drive.getFile(newMedia);
+
+        const deleteFile = async (file: string) => {
+            if (!spare)
+                await drive.deleteFile(file);
+        }
+
+        if (newDrive && !oldDrive)
+            await prisma.video.update({where: {location: oldMedia}, data: {location: newMedia}});
+
+        if (oldDrive && newDrive) {
+            if (oldDrive.name === newDrive.name)
+                if (oldDrive.size! >= newDrive.size!)
+                    await deleteFile(newMedia);
+                else
+                    await deleteFile(oldMedia);
+
+            else {
+                const yts1 = /\[YTS]/.test(oldDrive.name as string);
+                const yts2 = /\[YTS]/.test(newDrive.name as string);
+
+                switch (true) {
+                    case yts1 && !yts2:
+                        await deleteFile(newMedia);
+                        break;
+                    case yts2 && !yts1:
+                        await prisma.video.update({where: {location: oldMedia}, data: {location: newMedia}});
+                        await deleteFile(oldMedia);
+                        break;
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * @desc scans the library for new seasons and episodes
      * @returns {Promise<void>}
      */
@@ -564,8 +611,14 @@ export class Update {
             if (results.length === 1 || backup.length === 1) {
                 let obj = results.length ? results[0] : backup[0];
                 const data = await this.sift(MediaType.MOVIE, obj.tmdbId);
-                if (media.some(e => e.tmdbId === obj.tmdbId && e.type === MediaType.MOVIE))
+                const existing = media.find(e => e.tmdbId === obj.tmdbId && e.type === MediaType.MOVIE)
+                if (existing !== undefined) {
+                    const video = await prisma.video.findFirst({where: {mediaId: existing.id}});
+                    if (video)
+                        await Update.checkAndDelete(video.location, item.id as string, moviesFolder === '' || showsFolder === '');
+
                     continue;
+                }
 
                 if (data)
                     await mediaClass.addMedia(data, item.id!);
@@ -696,15 +749,29 @@ export class Update {
         const showsRes: FrontBit[] = [];
 
         for (let item of films) {
+            let deleted = false;
             const {results, backup} = await this.scanForMedia(item, 'MOVIE');
             let res = results.length ? results : backup;
             const med = media.find(e => e.type === MediaType.MOVIE && e.tmdbId === res[0]?.tmdbId);
+            if (med) {
+                const video = await prisma.video.findFirst({where: {mediaId: med.id}});
+                if (video)
+                    deleted = await Update.checkAndDelete(video.location, item.id as string);
+            }
+
             res = res.map(e => {
                 e.backdrop = "https://image.tmdb.org/t/p/original" + e.backdrop;
                 return e;
             })
 
-            moviesRes.push({file: item, res, type: MediaType.MOVIE, available: !!med, name: med?.name || undefined});
+            if (!deleted)
+                moviesRes.push({
+                    file: item,
+                    res,
+                    type: MediaType.MOVIE,
+                    available: !!med,
+                    name: med?.name || undefined
+                });
         }
 
         for (let item of shows) {

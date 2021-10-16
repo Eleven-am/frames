@@ -1,12 +1,14 @@
 import Deluge from 'deluge-client';
 import env from '../base/env';
-import {get, formatBytes, toBytes} from "../base/baseFunctions";
+import {formatBytes, get, toBytes} from "../base/baseFunctions";
 import {getDetails, getExternalId} from "../base/tmdb_hook";
+import Parser from 'rss-parser';
+
 const NzbGet = require('@jc21/nzbget-jsonrpc-api').Client;
 const environment = env.config
 const usenet = environment.usenet;
 const rarBgApi = require('rarbg-api');
-const Torrent = require('torrent-search-api')
+const Torrent = require('torrent-search-api');
 
 const options = {
     min_seeders: 5,
@@ -54,7 +56,7 @@ export default class Magnet {
     private readonly providers = Torrent.getProviders();
 
     constructor() {
-        if (environment.deluge){
+        if (environment.deluge) {
             this.deluge = new Deluge(environment.deluge.deluge_url, environment.deluge.password, environment.deluge.directory);
             for (let provider of this.providers)
                 if (provider.public)
@@ -71,7 +73,7 @@ export default class Magnet {
         if (this.deluge === null)
             return false;
 
-        let data: {url: string, size: string} | null = null;
+        let data: { url: string, size: string } | null = null;
         const details = await getDetails('MOVIE', tmdb_id);
         const external = await getExternalId(tmdb_id, 'MOVIE');
         if (details && external && external.imdb_id) {
@@ -105,7 +107,7 @@ export default class Magnet {
                 }
             }
 
-            if (data === null){
+            if (data === null) {
                 let movies = options;
                 movies.category = rarBgApi.CATEGORY.MOVIES_X264_1080P;
                 let response: RarBgApi[] = await new Promise(resolve => {
@@ -131,7 +133,7 @@ export default class Magnet {
                     for (let item of response) {
                         let regex = /[sS]\d{2}.*?[eE]\d{2}|[sS]eason|[sS]\d{2}|[sS]eries/
                         let matches = item.title.match(/(?<year>\d{4})/);
-                        const matchYear = matches && matches.groups && matches.groups.year ? matches.groups.year: '0';
+                        const matchYear = matches && matches.groups && matches.groups.year ? matches.groups.year : '0';
                         if (matches !== null && parseInt(matchYear) === year && !regex.test(item.title))
                             resolve.push(item)
                     }
@@ -165,7 +167,7 @@ export default class Magnet {
 
         const details = await getDetails('SHOW', tmdb_id);
         const external = await getExternalId(tmdb_id, 'SHOW');
-        if (details && external && external.imdb_id){
+        if (details && external && external.imdb_id) {
             let allProviders: TorrentApi[] = [];
             if (episode === undefined) {
                 search = details.name + ' S' + (season > 9 ? '' : '0') + season;
@@ -203,7 +205,7 @@ export default class Magnet {
                     title: e.title,
                     seeds: e.seeds,
                     peers: e.peers,
-                    size: e.size ? toBytes(e.size): 0,
+                    size: e.size ? toBytes(e.size) : 0,
                     desc: e.desc,
                     url: e.magnet || '',
                     type: '',
@@ -279,7 +281,7 @@ export default class Magnet {
             resolve = resolve.sortKeys('seeds', 'size', false, false);
 
             if (resolve.length) {
-                const magnet = resolve[0].url !== ''? resolve[0].url: resolve[0].hasOwnProperty('provider') ? await Torrent.getMagnet(resolve[0]): '';
+                const magnet = resolve[0].url !== '' ? resolve[0].url : resolve[0].hasOwnProperty('provider') ? await Torrent.getMagnet(resolve[0]) : '';
                 return await this.download(magnet);
             }
         }
@@ -287,8 +289,24 @@ export default class Magnet {
         return false;
     }
 
+    /**
+     * @desc scans the yts rss feed for files to download
+     */
+    async parseFeed() {
+        if (this.deluge) {
+            let parser = new Parser();
+            const feed = await parser.parseURL('https://yts.mx/rss/0/1080p/all/0/en');
+            for await (const item of feed.items)
+                await this.deluge.add(item.enclosure?.url || '');
+        }
+    }
+
+    delugeActive() {
+        return !!this.deluge
+    }
+
     private async download(magnet: string) {
-        if (this.deluge){
+        if (this.deluge) {
             if (!await this.deluge.isConnected()) {
                 const hosts = await this.deluge.getHosts();
                 if (hosts)
@@ -300,9 +318,5 @@ export default class Magnet {
             await this.deluge.add(magnet);
             return true;
         } else return false;
-    }
-
-    delugeActive() {
-        return !!this.deluge
     }
 }

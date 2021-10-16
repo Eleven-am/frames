@@ -64,10 +64,12 @@ export default function FramesPlayer({meta, response, room}: { room?: string, re
         return <Loading/>;
 
     return (
-        <HomeLayout meta={meta} frame={response.frame}>
-            <Frames response={response}/>
-            <Listeners response={response}/>
-        </HomeLayout>
+        <div id={'frames-container'}>
+            <HomeLayout meta={meta} frame={response.frame}>
+                <Frames response={response}/>
+                <Listeners response={response}/>
+            </HomeLayout>
+        </div>
     )
 }
 
@@ -114,16 +116,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     } else if (holder && pathname.next) {
         holder = Array.isArray(holder) ? holder[0] : holder;
         const type = holder.charAt(0) === 'e';
-        if (holder.charAt(0) === 'x') {
-            holder = holder.replace(/[ex]/, '');
-            const response = await import('../../next/SSR').then(mod => mod.playFromPlaylist(+(holder)!, userId));
-            const meta = response ? await import('../../next/SSR').then(mod => mod.metaTags('watch', response.location!)) : null;
-            if (meta && response)
-                return {props: {meta: {...meta, link: link + response.location}, response}};
-        }
-
+        const playlist = holder.charAt(0) === 'x';
         holder = holder.replace(/[ex]/, '');
-        const response = await import('../../next/SSR').then(mod => mod.playMedia(+(holder)!, userId, type));
+        const response = await import('../../next/SSR').then(mod => playlist ? mod.playFromPlaylist(+(holder)!, userId) : mod.playMedia(+(holder)!, userId, type));
         const meta = response ? await import('../../next/SSR').then(mod => mod.metaTags('watch', response.location!)) : null;
         if (meta && response)
             return {props: {meta: {...meta, link: link + response.location}, response}};

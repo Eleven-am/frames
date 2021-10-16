@@ -18,9 +18,8 @@
     background: rgba(144, 197, 240, .4);
 }
 
-.text {
+.text, .email {
     padding: 6px 4px;
-    cursor: pointer;
     color: white;
     transition: all .2s ease-in-out;
     overflow: hidden;
@@ -29,6 +28,7 @@
 }
 
 .text:hover {
+    cursor: pointer;
     color: var(--nino-blue);
     background: rgba(144, 197, 240, .2);
 }

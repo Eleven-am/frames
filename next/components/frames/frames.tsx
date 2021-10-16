@@ -145,7 +145,7 @@ export default function Frames({response}: { response: SpringPlay }) {
     }, [response])
 
     return (
-        <div id={'frames-container'} style={mouse || diff ? {} : {cursor: "none"}}>
+        <div style={mouse || diff ? {} : {cursor: "none"}}>
             <UpNextHolder response={response}/>
             <FramesPlayer response={response} showInfo={showInfo}/>
             <CastHolder response={response}/>

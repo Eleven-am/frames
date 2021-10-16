@@ -78,7 +78,6 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
     const query = req.query;
     if (req.method === 'GET') {
         if (query.action === 'logout') {
-            await user.validateSession(session);
             await deleteCookie(res, session);
             response = {action: 'logout', session: ''};
         }
@@ -174,7 +173,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
     }
 
     else if (body.process === 'framedUser') {
-        const data = await user.getFramedUser(userId);
+        const data = await user.getFramedUser(userId, session);
         if (data.payLoad)
             await writeCookie(res, data.payLoad, req);
 

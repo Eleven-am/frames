@@ -131,7 +131,9 @@ export default function useGroupWatch(join = false) {
 
     const pushNext = useCallback((data: string) => {
         if (leader && connected)
-            sendMessage({action: "next", data})
+            sendMessage({action: "next", data});
+        else
+            disconnect();
     }, [leader, connected])
 
     const disconnect = useCallback(() => {

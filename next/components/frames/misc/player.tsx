@@ -29,7 +29,6 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
     const setPlay = useSetRecoilState(playVideoAtom);
     const diff = useRecoilValue(differance);
     const {sendMessage} = useGroupWatch();
-    const {seek} = useCast();
     const setFrames = useSetRecoilState(framesPlayer);
 
     useEffect(() => setFrames(player.current), [player.current])
@@ -71,13 +70,6 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
         }
     }, [player.current])
 
-    const handleSeeked = useCallback(() => {
-        if (player.current) {
-            sendMessage({action: "skipped", data: player.current.currentTime});
-            seek(player.current.currentTime);
-        }
-    }, [player.current])
-
     const playVideo = async (action: boolean) => {
         if (player.current) {
             if (action)
@@ -112,7 +104,6 @@ export default function FramesPlayer({response, showInfo}: { response: SpringPla
                 onDurationChange={durationChange}
                 onVolumeChange={volumeChange}
                 onTimeUpdate={handleUpdate}
-                onSeeked={handleSeeked}
                 onWaiting={() => setBuffer(true)}
                 onPlay={() => playPause(true)}
                 onPause={() => playPause(false)}>

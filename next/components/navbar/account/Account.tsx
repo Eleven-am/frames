@@ -1,5 +1,4 @@
 import styles from './Account.module.css';
-import {useRouter} from "next/router";
 import useUser from "../../../utils/userTools";
 import {useSetRecoilState} from "recoil";
 import {SideMenu} from "../../../states/navigation";
@@ -8,14 +7,6 @@ import {Role} from '@prisma/client';
 export default function Account() {
     const {user} = useUser();
     const setAccountContext = useSetRecoilState(SideMenu)
-    const history = useRouter();
-
-    async function handleCLick() {
-        if (!user)
-            await history.push('/auth');
-        else
-            await history.push('/settings');
-    }
 
     return (
         <div className={styles['user-account']} onMouseEnter={() => {
@@ -26,7 +17,7 @@ export default function Account() {
                 setAccountContext(0);
             }, 400)
         }}>
-            <button className={styles["account-image"]} onClick={() => handleCLick()}>
+            <button className={styles["account-image"]}>
                 <svg viewBox="0 0 512 512">
                     <circle className={styles['ac-circle']} cx="256" cy="256" r="256"/>
                     <path style={user && user.role !== Role.GUEST ? {fill: "#3cab66"} : {fill: '#c4c362'}}

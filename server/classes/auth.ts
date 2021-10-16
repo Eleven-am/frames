@@ -446,8 +446,10 @@ export default class User extends Auth {
     /**
      * @desc gets a user's details using frames' framework
      * @param userId
+     * @param session
      */
-    async getFramedUser(userId: string): Promise<AuthInterface> {
+    async getFramedUser(userId: string, session: string): Promise<AuthInterface> {
+        await this.clearSingleSession(session);
         const user = await prisma.user.findUnique({where: {userId}});
         if (user) {
             return {
