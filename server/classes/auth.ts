@@ -195,13 +195,14 @@ export class Auth extends Session {
     /**
      * @desc checks if the auth key is valid or even exists
      * @param authKey
+     * @param context
      */
-    async validateAuthKey(authKey: string): Promise<number> {
+    async validateAuthKey(authKey: string, context: Role): Promise<number> {
         let value = -1;
-        const authFile = await prisma.auth.findUnique({where: {authKey}});
-        if (authKey === 'homeBase')
+        if (authKey === 'homeBase' && (context === Role.ADMIN || context === Role.GUEST))
             value = 0;
 
+        const authFile = await prisma.auth.findUnique({where: {authKey}});
         if (authFile)
             value = authFile.access;
 
@@ -298,7 +299,7 @@ export default class User extends Auth {
         if (user)
             return {error: 'this ' + (user.email === email ? 'email' : 'username') + ' already exists'};
 
-        const validAuth = await this.validateAuthKey(authKey);
+        const validAuth = await this.validateAuthKey(authKey, role);
         if (validAuth !== 0) {
             const error = validAuth === -1 ? 'invalid auth key' : 'this auth key has already been used';
             return {error};

@@ -6,9 +6,12 @@ import {useFullscreen, usePip} from "../../../utils/customHooks";
 import useGroupWatch from "../../../utils/groupWatch";
 import React from "react";
 import {SpringPlay} from "../../../../server/classes/springboard";
+import useUser from "../../../utils/userTools";
+import {Role} from "@prisma/client";
 
 export default function Right({response}: { response: SpringPlay }) {
     const frames = useRecoilValue(framesPlayer);
+    const {user} = useUser();
     const [maximised, maximise] = useFullscreen('frames-container');
     const [pip, togglePip] = usePip(frames);
     const upNext = useRecoilValue(UpNextURL);
@@ -34,14 +37,15 @@ export default function Right({response}: { response: SpringPlay }) {
                         d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                 </svg>
             </button>: null}
-            <button onClick={() => genRoom(response.location)} className={connected ? `${styles.nf} ${styles.con}` : styles.nf}>
+            {user?.role === Role.GUEST ? null : <button onClick={() => genRoom(response.location)}
+                     className={connected ? `${styles.nf} ${styles.con}` : styles.nf}>
                 <svg viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-            </button>
+            </button>}
             <button className={styles.nf}>
                 <svg onClick={() => togglePip(false)} viewBox="0 0 24 24" style={pip ? {display: "block"} : {display: "none"}}>
                     <polyline points="7 13 12 18 17 13"/>
@@ -70,13 +74,13 @@ export default function Right({response}: { response: SpringPlay }) {
                         d="m157.917969 223.359375h-45.722657c-8.285156 0-15 6.71875-15 15 0 8.285156 6.714844 15 15 15h45.722657c8.285156 0 15-6.714844 15-15 0-8.28125-6.714844-15-15-15zm0 0"/>
                 </svg>
             </button>
-            <button className={styles.f} onClick={nextHandler} onMouseEnter={() => nextEnter(true)}
-                    onMouseLeave={() => nextEnter(false)}>
+            {response.frame && user?.role === Role.GUEST ? null :<button className={styles.f} onClick={nextHandler} onMouseEnter={() => nextEnter(true)}
+                     onMouseLeave={() => nextEnter(false)}>
                 <svg viewBox="0 0 24 24">
                     <polyline points="13 17 18 12 13 7"/>
                     <polyline points="6 17 11 12 6 7"/>
                 </svg>
-            </button>
+            </button>}
             <button className={styles.nf}>
                 <svg onClick={() => maximise(true)} style={!maximised ? {display: "block"} : {display: "none"}}
                      viewBox="0 0 24 24">

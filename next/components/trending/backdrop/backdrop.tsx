@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from "react";
-import {PlayButton, TrailerButton} from "../../buttons/Buttons";
+import {PlayButton, Template, TrailerButton} from "../../buttons/Buttons";
 import styles from "./BACKDROP.module.css";
 import style from "./../Trending.module.css";
 import {useYoutubePLayer} from "../../../utils/customHooks";
@@ -7,9 +7,11 @@ import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {CurrentBanner, imageAtom, OpacityHomeAtom, pGraphAtom, TrailerAtom} from "../../../states/homeContext";
 import {NavOpacityAtom} from "../../../states/navigation";
 import {Banner} from "../../../../server/classes/springboard";
+import {FramesLink} from "../../misc/Loader";
+import {MediaType} from "@prisma/client";
 
 export default function Backdrop({data, index}: {data: Banner, index: boolean | null}) {
-    const {id, name, backdrop, logo, overview, trailer: link} = data
+    const {id, name, backdrop, logo, overview, trailer: link, type} = data
     const overviewRef = useRef<HTMLParagraphElement>(null);
     const holder = useRef<HTMLDivElement>(null);
     const backdropRef = useRef<HTMLImageElement>(null);
@@ -51,6 +53,7 @@ export default function Backdrop({data, index}: {data: Banner, index: boolean | 
     }, [])
 
     const carousel: number[] = [...Array(current.end).keys()];
+    const url = "/" + (type === MediaType.MOVIE ? "movie" : "show") + "=" + name.replace(/\s/g, "+");
 
     return (
         <div className={index ? style.active : style.slide}>
@@ -64,6 +67,9 @@ export default function Backdrop({data, index}: {data: Banner, index: boolean | 
                         <div className={styles.bannerButtons}>
                             <PlayButton id={id}/>
                             <TrailerButton id={id} onClick={loadTrailer} trailer={trailer}/>
+                            <FramesLink href={'/info?id=' + id} as={url}>
+                                <Template id={2} name={'see details on ' + name}/>
+                            </FramesLink>
                         </div>
                         <p ref={overviewRef}>{overview}</p>
                     </div>

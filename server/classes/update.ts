@@ -1,4 +1,4 @@
-import {Episode, Media as Med, MediaType, Video} from '@prisma/client';
+import {Episode, Media as Med, MediaType, Sub, Video} from '@prisma/client';
 import {drive, prisma} from "../base/utils";
 import env from "../base/env";
 import rename from 'locutus/php/strings/strtr';
@@ -117,9 +117,9 @@ export class Subtitles {
      * @desc this is a recursive function that handles the subtitles logic
      * @returns {Promise<void>}
      */
-    async getSubs() {
+    async getSubs(sub?: Sub[]) {
         if (this.OpenSubtitles) {
-            const subs = await prisma.sub.findMany();
+            const subs = sub || await prisma.sub.findMany();
 
             while (subs.length) {
                 await this.getSub(subs[0].videoId);
@@ -131,7 +131,7 @@ export class Subtitles {
                 })
             }
 
-            await prisma.sub.deleteMany();
+            sub === undefined && await prisma.sub.deleteMany();
         }
     }
 
@@ -865,6 +865,29 @@ export class Update {
                 return {file: file.name, found: true};
 
             return {file: '' + (media.name || media.title), found: false};
+        }
+
+        return false;
+    }
+
+    /**
+     * @desc scans the subtitles for every element/video in a media
+     * @param obj
+     */
+    async scanMedSub(obj: { type: MediaType, id: number }) {
+        const sub = new Subtitles();
+        const media = await prisma.media.findUnique({where: {id: obj.id}});
+        if (media && media.type === obj.type) {
+            const videos = await prisma.video.findMany({where: {mediaId: obj.id}, select: {id: true}});
+            const subs: Sub[] = videos.map(e => {
+                return {
+                    id: 0,
+                    videoId: e.id
+                }
+            })
+
+            await sub.getSubs(subs);
+            return true;
         }
 
         return false;

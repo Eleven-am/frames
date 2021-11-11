@@ -411,9 +411,19 @@ function Tail({state, close}: { state: EditMedia, close: () => void }) {
         close();
     }
 
+    const initiateScanSubs = async () => {
+        pFetch({type: state.media?.type, id: state.media?.id}, '/api/update/scanSub')
+        setInform({
+            type: "alert",
+            heading: 'Scanning subtitles',
+            message: 'Frames would begin scanning subtitles for '+ state.media?.name
+        })
+    }
+
     return (
         <div className={ss.tail}>
             {found ? <Template id={1} type={'none'} name={'delete this'} onClick={deleteMedia}/> : null}
+            {state.media ? <Template id={1} type={'none'} name={'scan subs'} onClick={initiateScanSubs}/>: null}
             <Template id={1} type={'none'} name={found ? 'replace' : 'submit'} onClick={attemptUpload}/>
         </div>
     )

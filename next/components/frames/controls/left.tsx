@@ -122,13 +122,13 @@ export default function Left({response}: { response: SpringPlay }) {
                     <line x1="12" y1="2" x2="12" y2="15"/>
                 </svg>
             </button> : null}
-            <button className={styles.nf}>
+            {response.frame && user?.role === Role.GUEST ? null : <button className={styles.nf}>
                 <svg viewBox="0 0 24 24">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <line x1="12" y1="8" x2="12" y2="16"/>
                     <line x1="8" y1="12" x2="16" y2="12"/>
                 </svg>
-            </button>
+            </button>}
             <button onClick={muteUnmuteVideo} className={mute ? `${styles.f} ${styles.muted}` : styles.f}>
                 <svg viewBox="0 0 24 24">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>

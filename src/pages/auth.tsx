@@ -44,9 +44,9 @@ export default function Auth({images, auth}: { auth: AuthCP, images: string[] })
     )
 }
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
     const images = await import('../../next/SSR').then(mod => mod.getAuthImages());
     const auth = await import('../../next/SSR').then(mod => mod.getAuthCpRight());
-    return {props: {images, auth}};
+    return {props: {images, auth},  revalidate: 86400};
 }
 

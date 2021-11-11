@@ -8,7 +8,6 @@ import SectionDetails from "./sectiondetails";
 export default function Entities({response, type, section}: { response: any[], type: string, section?: boolean }) {
     const [left, setLeft] = useState(false);
     const [right, setRight] = useState(true);
-    const [direction, setDirection] = useState('');
     const [position, setPosition] = useState(0);
     const entities = useRef<HTMLUListElement>(null);
     const val = type === 'editor' ? 3: 4;
@@ -16,7 +15,6 @@ export default function Entities({response, type, section}: { response: any[], t
     useEffect(() => {
         setLeft(false);
         setPosition(0);
-        setDirection('');
         const children = entities.current ? entities.current.children : [];
         setRight(children.length > val);
 
@@ -27,19 +25,18 @@ export default function Entities({response, type, section}: { response: any[], t
         }
     }, [entities, response])
 
-    useEffect(() => {
+    const scrollEntities = (direction: 'left' | 'right', dbl = false) => {
         let index: number;
         const children = entities.current ? entities.current.children : [];
-
-        if (entities && entities.current && children.length && direction !== '') {
+        if (entities && entities.current && children.length) {
             if (entities.current) entities.current.style.overflow = 'scroll';
 
             if (direction === 'right') {
-                index = position + val;
+                index = dbl? children.length - val : position + val;
                 setLeft(true);
                 setRight(index + val < children.length);
             } else if (direction === 'left') {
-                index = position - val;
+                index = dbl? 0 : position - val;
                 setRight(true)
                 setLeft(index - val >= 0);
             } else index = 0;
@@ -73,14 +70,16 @@ export default function Entities({response, type, section}: { response: any[], t
 
                 setPosition(index);
             }
-            setDirection('');
-            if (entities.current) entities.current.style.overflow = 'hidden';
+
+            if (entities.current)
+                entities.current.style.overflow = 'hidden';
         }
-    }, [direction, entities, position])
+    }
 
     return (
         <div style={type === 'section' ? {alignItems: "normal"} : {}} className={styles.sectionChevronListHolder}>
-            <div style={type === 'section' ? {marginTop: '50px'} : {}} onClick={() => setDirection('left')}
+            <div style={type === 'section' ? {marginTop: '50px'} : {}} onClick={() => scrollEntities('left')}
+                 onDoubleClick={() => scrollEntities('left', true)}
                  className={left ? `${styles.activeChevron} ${styles.sectionChevronDiv} ${styles.leftChevron}` : `${styles.sectionChevronDiv} ${styles.leftChevron}`}>
                 <svg viewBox="0 0 24 24" fill="none" className={styles.chevrons}>
                     <polyline points="15 18 9 12 15 6"/>
@@ -95,7 +94,8 @@ export default function Entities({response, type, section}: { response: any[], t
                             <Editor key={value} data={item}/>)}
                     </ul>
                 </div>}
-            <div style={type === 'section' ? {marginTop: '50px'} : {}} onClick={() => setDirection('right')}
+            <div style={type === 'section' ? {marginTop: '50px'} : {}} onClick={() => scrollEntities('right')}
+                 onDoubleClick={() => scrollEntities('right', true)}
                  className={right ? `${styles.sectionChevronDiv} ${styles.rightChevron} ${styles.activeChevron}` : `${styles.sectionChevronDiv} ${styles.rightChevron}`}>
                 <svg viewBox="0 0 24 24" className={styles.chevrons}>
                     <polyline points="9 18 15 12 9 6"/>

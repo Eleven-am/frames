@@ -396,7 +396,8 @@ export default class Playback {
      */
     async addFileForDownload(auth: string, authKey: string, userId: string) {
         const file = await prisma.view.findFirst({where: {auth}, select: {video: true}});
-        const valid = await user.validateAuthKey(authKey);
+        const userFile = await prisma.user.findUnique({where: {userId}});
+        const valid = await user.validateAuthKey(authKey, userFile?.role || Role.OAUTH);
         if (valid === 0 && file) {
             await user.utiliseAuthKey(authKey, userId, UseCase.DOWNLOAD, auth);
             const location = create_UUID();

@@ -22,9 +22,9 @@ export default function Index({banner, segments}: { banner: Banner[], segments: 
     )
 }
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
     const banner = await import('../../next/SSR').then(mod => mod.banner());
     const segments = await import('../../next/SSR').then(mod => mod.segment());
 
-    return {props: {banner, segments}};
+    return {props: {banner, segments}, revalidate: 86400};
 }

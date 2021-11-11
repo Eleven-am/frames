@@ -1,4 +1,4 @@
-import {getDetails, getEpisode, getSeasonInfo, tmdbEpisode} from "../base/tmdb_hook";
+import {getDetails, getEpisode, getSeasonInfo} from "../base/tmdb_hook";
 import {drive, magnet, prisma} from '../base/utils';
 import {drive_v3} from "googleapis";
 import {MediaType} from '@prisma/client';
@@ -257,7 +257,7 @@ export default class Episode {
                         const season = [...Array(show.number_of_seasons).keys()].map(e => {
                             return {seasonId: e}
                         });
-                        const missingSeason = seasons.filterInFilter<{ seasonId: number }>(season, 'seasonId', 'seasonId');
+                        const missingSeason = seasons.filterInFilter(season, 'seasonId', 'seasonId');
                         missingSeason.forEach(e => {
                             promises.push(magnet.findSeason(media!.tmdbId, e.seasonId))
                         })
@@ -268,7 +268,7 @@ export default class Episode {
                             let seasonEpisodes = episodes.filter(e => e.seasonId === i);
                             const response = await getSeasonInfo({tmdbId: media.tmdbId, seasonId: i});
                             if (response && seasonEpisodes.length < response.episodes.length) {
-                                let missing = seasonEpisodes.filterInFilter<tmdbEpisode>(response.episodes, 'episode', 'episode_number');
+                                let missing = seasonEpisodes.filterInFilter(response.episodes, 'episode', 'episode_number');
                                 let missingEpisodes = missing.filter(e => {
                                     const now = new Date().getTime();
                                     const date = new Date(e.air_date).getTime();

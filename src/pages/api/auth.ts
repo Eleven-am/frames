@@ -56,7 +56,7 @@ const deleteCookie = async (res: NextApiResponse, session: string) => {
 
 export const confirmContext = (cookies: { [p: string]: string }) => {
     let session: string = 'unknown';
-    let auth: boolean = false;
+    let context: Role = Role.GUEST;
     let userId: string = 'unknown';
 
     try {
@@ -64,16 +64,16 @@ export const confirmContext = (cookies: { [p: string]: string }) => {
         if (decoded) {
             userId = decoded.userId;
             session = decoded.session;
-            auth = Role.ADMIN === decoded.context;
+            context = decoded.context;
         }
     } catch (e) {}
 
-    return {session, auth, userId}
+    return {session, context, userId}
 }
 
 export default async function (req: NextApiRequest, res: NextApiResponse) {
     let response: any;
-    let {session, userId} = confirmContext(req.cookies);
+    let {session, userId, context} = confirmContext(req.cookies);
 
     const query = req.query;
     if (req.method === 'GET') {
@@ -88,7 +88,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
         response = await user.validateEmail(body.email);
 
     else if (body.process === 'confirmAuthKey')
-        response = await user.validateAuthKey(body.authKey);
+        response = await user.validateAuthKey(body.authKey, context);
 
     else if (body.process === 'manageKeys')
         response = await user.getKeys(userId);

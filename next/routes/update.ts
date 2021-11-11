@@ -28,6 +28,9 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
                 const obj: { data: UpdateInterface, location: string } = req.body;
                 await spring.addMedia(obj.data, obj.location);
                 response = true;
+            } else if (body.type === 'scanSub') {
+                const obj: { type: MediaType, id: number } = req.body;
+                response = await update.scanMedSub(obj);
             } else if (body.type === 'delete')
                 response = await drive.deleteFile(req.body.file);
 
@@ -51,10 +54,10 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
                     select: {location: true, media: true},
                     where: {showId: obj.id}
                 });
+
                 const episodes = await prisma.episode.findMany({include: {video: true}, where: {showId: obj.id}});
                 if (show)
                     await update.scanShow(obj.thoroughScan, obj.thoroughScan, show, episodes)
-
                 response = true;
             }
         } else if (body.type === 'search') {

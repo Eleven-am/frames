@@ -17,7 +17,7 @@ export default function Account() {
                 setAccountContext(0);
             }, 400)
         }}>
-            <button className={styles["account-image"]}>
+            <button className={styles["account-image"]} onClick={() => setAccountContext(val => val !== 0 ? 0: 1)}>
                 <svg viewBox="0 0 512 512">
                     <circle className={styles['ac-circle']} cx="256" cy="256" r="256"/>
                     <path style={user && user.role !== Role.GUEST ? {fill: "#3cab66"} : {fill: '#c4c362'}}

@@ -15,7 +15,7 @@ declare global {
          * @param key1
          * @param homeKey
          */
-        filterInFilter<S>(array: Array<S>, key1: string, homeKey: string): Array<S>;
+        filterInFilter<S, A extends keyof T, B extends keyof S>(array: Array<S>, key1: A, homeKey: B): Array<S>;
 
         /**
          * @desc sorts an array of objects based on a property of the objects
@@ -234,8 +234,8 @@ Array.prototype.randomiseDB = function (length, id, type) {
     return array;
 }
 
-Array.prototype.filterInFilter = function<S>(array: S[], key1: string, homeKey: string) {
-    const newArray: Array<S> = [];
+Array.prototype.filterInFilter = function(array, key1, homeKey) {
+    const newArray = [];
     for (let item of array) {
         // @ts-ignore
         const temp = this.find(e => e[key1] === item[homeKey]);

@@ -28,6 +28,7 @@
     fill: white;
     border-radius: 6px;
     padding: 10px 30px;
+    height: 53px;
     border: 1px solid white;
     transform: scale(0.97);
     transition: all .2s ease-in-out;
