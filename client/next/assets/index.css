@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Roboto:wght@400;700&display=swap');
+
+body {
+    padding: 0;
+    margin: 0;
+    background: rgba(1, 16, 28, 1);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+:root {
+    --shadow: 2px 2px 8px rgba(1, 16, 28, 0.3);
+    --text: 'Roboto', sans-serif;
+    --nino-blue: #d9eeff;
+}
+
+#player, #playerTwo{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 1;
+    background: #01101c;
+}
+
+#player{
+    height: 95%;
+}
+
+#playerTwo {
+    height: 100%;
+}
+
+.fade_img {
+    animation: fade_img 1s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+.fade_input {
+    animation: fade_img .2s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+.glow_input {
+    animation: glow_input .2s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+.glow_img {
+    animation: glow_img 1s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+@keyframes fade_img {
+    from {
+        opacity: 0.5
+    }
+    to {
+        opacity: 0
+    }
+}
+
+@keyframes glow_img {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 0.5
+    }
+}
+
+@keyframes glow_input {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}

@@ -1,0 +1,290 @@
+import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
+import ss from './MISC.module.css';
+import sss from '../settings/ACCOUNT.module.css';
+import useModify, {DeleteAndLocationAtom, EditFrontMediaAtom, EditModalAtom} from "../../../utils/modify";
+import {useCallback, useEffect, useState} from "react";
+import {MediaType} from "@prisma/client";
+import {useFetcher} from "../../../utils/customHooks";
+import {EpisodeModSettings, FrontEpisodes, FrontMediaSearch} from "../../../../server/classes/modify";
+import {useInfoDispatch} from "./inform";
+import {FrontImages} from "../../../../server/classes/tmdb";
+import {Template} from "../buttons/Buttons";
+import ManagePick from "./editPicks";
+import {ManagePlaylist} from "./editPlaylist";
+
+const General = () => {
+    const setDelete = useSetRecoilState(DeleteAndLocationAtom);
+    const {getMediaInfo} = useModify();
+    const [state, dispatch] = useRecoilState(EditFrontMediaAtom);
+    const [tmdbI, setTmdbI] = useState('');
+    const [search, setSearch] = useState('');
+    const dispatcher = useInfoDispatch();
+    const {
+        response,
+        abort
+    } = useFetcher<FrontMediaSearch[]>(`/api/modify/searchMedia?type=${state.type}&query=${search}`);
+
+    const handleTmdbIChange = async (tmdbI: string) => {
+        if (isNaN(parseInt(tmdbI)))
+            return;
+
+        else {
+            const {media: res, check} = await getMediaInfo(+tmdbI, state.type!);
+            if (res) {
+                const year = new Date(res.release_date || res.first_air_date).getFullYear();
+                const name = res.title || res.name || '';
+                const tmdbId = res.id;
+                dispatch(prev => ({...prev, name, year, tmdbId}))
+            }
+
+            setDelete({location: check?.location || null, del: !!check, name: check?.name || ''})
+        }
+    }
+
+    useEffect(() => {
+        if (search === '')
+            abort.cancel();
+    }, [search]);
+
+    useEffect(() => {
+        handleTmdbIChange(tmdbI);
+    }, [tmdbI]);
+
+    return (
+        <div className={ss.genInput}>
+            <label>fileName</label>
+            <br/>
+            <input type="text" disabled={true} value={state.file?.name || ''}/>
+            <br/>
+            <label>Media Name: {state.name}</label>
+            <br/>
+            <input type="text" onChange={e => setSearch(e.currentTarget.value)} defaultValue={state.name}/>
+            <br/>
+            <label>The Movie Database ID: {state.tmdbId}</label>
+            <input type="text" onChange={e => setTmdbI(e.currentTarget.value)} defaultValue={state.tmdbId}/>
+            <ul className={ss.list}>
+                {response?.map((e, v) => <li key={v} onClick={() => {
+                    if (e.inLibrary) {
+                        dispatcher({
+                            type: 'error',
+                            heading: 'Media already in library',
+                            message: `This media is in your library with name: ${e.libraryName}, you can replace it with this one.`
+                        })
+
+                        setDelete({del: true, location: e.libraryLocation, name: e.libraryName!})
+                    }
+                    dispatch(prev => ({...prev, tmdbId: e.tmdbId, name: e.name, year: e.year}))
+                }
+                }>name: {e.name} date: {e.year}</li>)}
+            </ul>
+        </div>
+    )
+}
+
+const Images = () => {
+    const [state, dispatch] = useRecoilState(EditFrontMediaAtom);
+    const {response} = useFetcher<FrontImages>(`/api/modify/getImages/${state.type}?tmdbId=${state.tmdbId}&name=${state.name}&year=${state.year}`);
+
+    if (response)
+        return (
+            <div className={ss.genInput}>
+                <label>Poster</label>
+                <div className={ss.images}>
+                    {response.posters.map(e => <img title={e.name + ': ' + e.source} alt={e.name} src={e.url}
+                                                    key={e.url}
+                                                    onClick={() => dispatch(prev => ({...prev, poster: e.url}))}/>)}
+                </div>
+                <input type="text" onChange={e => dispatch(prev => ({...prev, poster: e.currentTarget.value}))}
+                       value={state.poster}/>
+                <label>Backdrop</label>
+                <div className={ss.images}>
+                    {response.backdrops.map(e => <img title={e.name + ': ' + e.source} alt={e.name} src={e.url}
+                                                      key={e.url}
+                                                      onClick={() => dispatch(prev => ({...prev, backdrop: e.url}))}/>)}
+                </div>
+                <input type="text" onChange={e => dispatch(prev => ({...prev, backdrop: e.currentTarget.value}))}
+                       value={state.backdrop}/>
+                <label>Logo</label>
+                <div className={ss.images}>
+                    {response.logos.map(e => <img title={e.name + ': ' + e.source} alt={e.name} src={e.url} key={e.url}
+                                                  onClick={() => dispatch(prev => ({...prev, logo: e.url}))}/>)}
+                </div>
+                <input type="text" onChange={e => dispatch(prev => ({...prev, logo: e.currentTarget.value}))}
+                       value={state.logo || ''}/>
+                {state.poster !== '' || state.backdrop !== '' || state.logo !== '' ? <>
+                    <label>Selected</label>
+                    <div className={ss.images}>
+                        <img title={'poster'} src={state.poster} alt={'selected'}/>
+                        <img title={'backdrop'} src={state.backdrop} alt={'selected'}/>
+                        <img title={'logo'} src={state.logo || ''} alt={'selected'}/>
+                    </div>
+                </> : null}
+            </div>
+        )
+
+    else return null;
+}
+
+const Tail = ({close}: { close: () => void }) => {
+    const found = useRecoilValue(DeleteAndLocationAtom);
+    const state = useRecoilValue(EditFrontMediaAtom).stateType;
+    const {modifyMedia, deleteMedia, scanSubs} = useModify();
+
+    const handleDelete = () => deleteMedia(close);
+    const handleSave = () => modifyMedia(close);
+
+    return (
+        <div className={ss.tail}>
+            {found.del ? <Template id={1} type={'none'} name={'delete this'} onClick={handleDelete}/> : null}
+            {state === 'MODIFY' ?
+                <Template id={1} type={'none'} name={'scan subs'} onClick={scanSubs}/> : null}
+            <Template id={1} type={'none'} name={found.del ? 'replace' : 'submit'} onClick={handleSave}/>
+        </div>
+    )
+}
+
+export const Episodes = () => {
+    const [thoroughHover, setThoroughHover] = useState(false);
+    const [quickHover, setQuickHover] = useState(false);
+    const state = useRecoilValue(EditFrontMediaAtom);
+    const {response} = useFetcher<FrontEpisodes | null>(`/api/modify/getEpisodes?mediaId=${state.mediaId}`);
+    const {scanMedia} = useModify();
+
+    return (
+        <div className={ss.epiHolder}>
+            <div className={ss.buttons}>
+                <Template id={0} onClick={() => scanMedia(true)} type={'scan'} name={'thorough scan'}
+                          onHover={setThoroughHover}/>
+                <Template id={1} onClick={() => scanMedia(false)} type={'scan'} name={'quick scan'}
+                          onHover={setQuickHover}/>
+            </div>
+            {thoroughHover || quickHover ?
+                <div
+                    className={ss.info}>{thoroughHover ? 'Only use thorough hover when you have episodes files you wish to replace. The thorough scan takes much longer to complete' : `Ideal for scanning new files you have added to the present show. It's quick and doesn't attempt to fix episodes that has already been scanned`}</div> : null}
+
+            {state.stateType === 'ADD' && <div>To see episodes you need to add this show to your media database</div>}
+            {(response?.seasons || []).map(e => <Season key={e.seasonId} {...e}/>)}
+        </div>
+    )
+}
+
+function Season({seasonId, episodes}: { seasonId: number; episodes: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean })[] }) {
+
+    return (
+        <div style={{marginTop: '10px'}}>
+            <span>Season {seasonId}</span>
+
+            {episodes.map((episode, v) => <Episode episode={episode} key={v}/>)}
+        </div>
+    )
+}
+
+function Episode({episode: obj}: { episode: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean }) }) {
+    const [episode, setEpisode] = useState<EpisodeModSettings>(obj);
+    const [hover, setHover] = useState(false);
+    const {modifyEpisode} = useModify();
+
+    return (
+        <div className={sss.res} style={!obj.found ? {color: 'rgba(245, 78, 78, .9)'} : {}}
+             onClick={() => setHover(true)}
+             onMouseLeave={() => setHover(false)}>
+            {!hover ? <>
+                    <img src={obj.backdrop} style={{marginRight: '10px'}} alt={obj.name} className={sss.resImage}/>
+                    <div className={sss.resDiv}>
+                        <div className={sss.resSpan}>
+                            <span>{obj.name}</span>
+                        </div>
+                        <p>{obj.overview}</p>
+                    </div>
+                </> :
+                <div className={ss.epiOut}>
+                    <div>
+                        <span>{obj.file?.name}</span>
+                        <div className={ss.epi}>
+                            <label className={ss.label}>
+                                Season number
+                                <input type="number"
+                                       onChange={e => setEpisode({...episode, seasonId: +(e.target.value)})}
+                                       value={episode.seasonId}/>
+                            </label>
+
+                            <label className={ss.label}>
+                                Episode number
+                                <input type="number"
+                                       onChange={e => setEpisode({...episode, episode: +(e.target.value)})}
+                                       value={episode.episode}/>
+                            </label>
+                        </div>
+                        <div className={ss.epiSub}>
+                            <Template id={1} type={'none'} name={'submit'}
+                                      onClick={() => modifyEpisode(episode.episodeId, episode)}/>
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+    )
+}
+
+const ManageMedia = () => {
+    const [state, setState] = useRecoilState(EditFrontMediaAtom);
+    const [modal, setModal] = useRecoilState(EditModalAtom);
+    const [select, setSelect] = useState('');
+    const [sides, setSides] = useState<string[]>([]);
+
+    useEffect(() => {
+        setSides(['General', 'Images'].concat((state.type === MediaType.MOVIE ? [] : ['Episodes'])));
+        setSelect('General');
+        setModal(state.stateType !== 'NONE');
+    }, [state.stateType]);
+
+    const close = useCallback(() => {
+        setModal(false);
+        setTimeout(() => {
+            setState(prev => ({...prev, stateType: 'NONE'}));
+        }, 200)
+    }, [])
+
+    if (state.stateType !== 'NONE')
+        return (
+            <>
+                <div className={`${ss.block} ${modal ? ss.o : ss.c}`} onClick={close}>
+                    <div className={ss.container} onClick={e => e.stopPropagation()}>
+                        <img className={ss.bckImg} src={state.backdrop || ''} alt={state.name}/>
+                        <div className={ss.hold}>
+                            <div className={ss.head}>
+                                <div>{(state.stateType === 'MODIFY' ? 'Modify ' : 'Add')} {(state.name || '')}</div>
+                            </div>
+
+                            <div className={ss.body}>
+                                <ul className={ss.side}>
+                                    {sides.map((e, v) => <li key={v} className={e === select ? ss.sel : ss.nSel}
+                                                             onClick={() => setSelect(e)}>{e}</li>)}
+                                </ul>
+
+                                <div>
+                                    {select === 'General' ? <General/> : select === 'Images' ?
+                                        <Images/> : <Episodes/>}
+                                </div>
+                            </div>
+
+                            <Tail close={close}/>
+                        </div>
+                    </div>
+                </div>
+            </>
+        )
+
+    else return null;
+}
+
+export const ManageHolders = () => {
+    return (
+        <>
+            <ManageMedia/>
+            <ManagePick/>
+            <ManagePlaylist/>
+        </>
+    )
+}

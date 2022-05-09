@@ -1,0 +1,22 @@
+.gridHolder {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    justify-items: center;
+    align-items: center;
+    width: 100%;
+    z-index: -1;
+}
+
+.gridHolder::-webkit-scrollbar {
+    display: none;
+}
+
+.bck {
+    position: fixed;
+    width: 100%;
+    height: 10vmax;
+    top: 0;
+    background: rgba(2, 18, 28, 0.9);
+    z-index: 2;
+    display: none;
+}

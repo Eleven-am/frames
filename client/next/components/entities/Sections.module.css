@@ -1,0 +1,370 @@
+.sectionContainer {
+    margin: 0;
+    width: 100vw;
+    height: 220px;
+}
+
+.editorContainer {
+    margin: 0;
+    width: 100vw;
+    height: 270px;
+    z-index: 10;
+}
+
+.sectionName {
+    margin: 0 40px;
+    font-family: var(--text);
+    color: var(--nino-blue);
+    text-shadow: var(--shadow);
+}
+
+.spectorSpanLoading {
+    height: 15px;
+    width: 200px;
+}
+
+.loading {
+    animation: gradient 1.2s ease-in-out infinite;
+    background: linear-gradient(to right, rgba(1, 16, 28, 0.7) 24%, rgba(1, 16, 28, 0.3) 48%, rgba(217, 238, 255, .5) 52%, rgba(1, 16, 28, 0.3) 76%, rgba(1, 16, 28, 0.7));
+    background-size: 400% 400%;
+}
+
+@keyframes gradient {
+    0% {
+        background-position: right;
+    }
+    100% {
+        background-position: left;
+    }
+}
+
+.sectionChevronListHolder {
+    display: flex;
+    align-items: center;
+}
+
+.sectionList, .editorList {
+    overflow-x: hidden;
+}
+
+.leftChevron {
+    left: 0;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.rightChevron {
+    right: 0;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.sectionChevronDiv {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 100px;
+    border: 1px white;
+    background: rgba(1, 16, 28, 0.5);
+    transition: all .2s ease-in-out;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 4;
+}
+
+.activeChevron {
+    visibility: visible;
+    opacity: 1;
+}
+
+.activeChevron:hover {
+    background: rgba(1, 16, 28, .8);
+}
+
+.activeChevron:hover svg {
+    stroke-width: 3;
+    stroke: rgba(217, 238, 255, .8);
+}
+
+.chevrons {
+    stroke-width: 2;
+    height: 30px;
+    width: 30px;
+    stroke: rgba(144, 197, 240, .5);
+    transition: all .2s ease-in-out;
+    fill: none;
+}
+
+.sectionHolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 98vw;
+    height: 178px;
+    margin: 0 20px;
+    padding: 2px;
+    list-style: none;
+}
+
+.editorHolder {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 98vw;
+    height: 229px;
+    margin: 0 20px;
+    padding: 2px;
+    list-style: none;
+}
+
+.sectionHolderLoading {
+    height: 140px;
+    margin: 20px;
+}
+
+.sectionHolder::-webkit-scrollbar, .sectionList::-webkit-scrollbar {
+    display: none;
+}
+
+.sectionHolder li img {
+    width: 260px;
+    height: 146px;
+    transition: all 0.2s ease-in-out;
+    border-radius: 5px;
+    box-shadow: 2px 12px 12px -12px #000000;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.editorLidDiv {
+    position: relative;
+}
+
+.editorHolder .backdrop {
+    object-fit: cover;
+    transition: all 0.2s ease-in-out;
+    border-radius: 5px;
+    box-shadow: 2px 12px 12px -12px #000000;
+    overflow: hidden;
+    width: 350px;
+    height: 197px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.sectionHolder li:hover img, .editorHolder li:hover .backdrop {
+    box-shadow: 2px 12px 8px -6px #000000;
+    border: 2px solid rgba(217, 238, 255, 0.9);
+    transform: scale(1.01);
+}
+
+.editorLogo {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: var(--text);
+    font-weight: bold;
+    width: 160px;
+    left: 15px;
+    bottom: 35px;
+    height: 40px;
+}
+
+.editorLogo div {
+    padding: 8px 5px;
+    background: rgba(1, 16, 28, .4);
+    border-radius: 2px;
+}
+
+.editorLogo img {
+    position: absolute;
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    padding: 8px 5px;
+    background: rgba(1, 16, 28, .4);
+    border-radius: 2px;
+}
+
+.editorGroove {
+    position: absolute;
+    width: 320px;
+    left: 15px;
+    bottom: 18px;
+    height: 5px;
+    border-radius: 5px;
+    background: rgba(144, 197, 240, .2);
+}
+
+.editorFill {
+    height: 100%;
+    border-radius: 5px;
+    background: rgba(144, 197, 240, .8);
+    width: 60%;
+}
+
+.infoCon {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.d {
+    animation: drop .5s forwards;
+}
+
+.p {
+    animation: pull .5s forwards;
+}
+
+.s {
+    top: -100px;
+}
+
+@keyframes drop {
+    0% {
+        top: -100px;
+    }
+    80% {
+        top: 12px;
+    }
+    100% {
+        top: 10px;
+    }
+}
+
+@keyframes pull {
+    0% {
+        top: 10px;
+    }
+    100% {
+        top: -100px;
+    }
+}
+
+.infoHolder, .infoHolder2 {
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+    align-items: center;
+    font-family: var(--text);
+    text-shadow: 2px 2px 2px rgba(1, 16, 28, 0.3);
+    color: white;
+    width: 420px;
+    min-height: 70px;
+    padding: 0 5px 0 0;
+    pointer-events: all;
+}
+
+.infoHolder, .hldr {
+    box-shadow: 2px 12px 12px -12px #000000;
+    border-radius: 5px;
+}
+
+
+.confirmButtons {
+    width: calc(100% - 20px);
+    color: white;
+    height: 37px;
+    margin: 0 10px;
+    padding: 0;
+    box-shadow: 2px 12px 12px -12px #000000;
+    border-top: rgba(255, 255, 255, 0.3) 2px solid;
+    display: flex;
+    pointer-events: all;
+}
+
+.confirmButtons button{
+    width: calc(50% - 1px);
+    height: 90%;
+    border: none;
+    background: none;
+    border-radius: 5px;
+    font-family: var(--text);
+    font-size: 14px;
+    color: white;
+    cursor: pointer;
+}
+
+.spcr {
+    width: 2px;
+    height: 70%;
+    margin: 1% 0;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.left {
+    display: flex;
+    padding: 2px;
+    align-items: center;
+    justify-content: center;
+}
+
+.right {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.left svg {
+    width: 50px;
+    height: 60px;
+    fill: none;
+    stroke: white;
+    stroke-width: 1px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.leftImg {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+}
+
+.w {
+    background: rgba(217, 238, 255, .6);
+}
+
+.w button:hover {
+    background: rgba(1, 16, 28, .2);
+    transition: all 0.2s ease-in-out;
+}
+
+.a {
+    background: rgba(60, 171, 103, .6);
+}
+
+.e {
+    background: rgba(245, 78, 78, .6);
+}
+
+.u {
+    background: rgba(144, 197, 240, .6);
+}
+
+.u button:hover {
+    background: rgba(1, 16, 28, .2);
+    transition: all 0.2s ease-in-out;
+}
+
+.f {
+    background: rgba(1, 16, 28, .6);
+}
+
+.f button:hover {
+    background: rgba(217, 238, 255, .2);
+    transition: all 0.2s ease-in-out;
+}
+
+.nfh {
+    padding: 40px 20px;
+}

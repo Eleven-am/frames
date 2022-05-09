@@ -1,0 +1,156 @@
+.login-img {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 105%;
+    overflow: no-content;
+    background: linear-gradient(rgba(1, 16, 28, 0.8), #01101c);
+    z-index: -1;
+}
+
+.bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+}
+
+.bar::-webkit-scrollbar, .login-img::-webkit-scrollbar {
+    display: none;
+}
+
+.bar2 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    font-family: "Baloo 2", cursive;
+    justify-content: center;
+    align-items: center;
+    color: #d9eeff;
+}
+
+.fade_img {
+    animation: fade_img 1s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+.glow_img {
+    animation: glow_img 1s steps(1000);
+    animation-fill-mode: forwards;
+}
+
+.login-img img {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+@keyframes fade_img {
+    from {
+        opacity: .2
+    }
+    to {
+        opacity: 0
+    }
+}
+
+@keyframes glow_img {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: .2
+    }
+}
+
+.image, .stnImg {
+    position: absolute;
+    object-fit: contain;
+    width: auto;
+    height: 60px;
+    padding: 20px;
+    cursor: pointer;
+    background: rgba(217, 238, 255, 0.2);
+    box-shadow: 2px 2px 8px rgba(1, 16, 28, .8);
+    transition: all .4s ease-in-out;
+    font-family: "Baloo 2", cursive;
+    font-size: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stnImg {
+    top: 40%;
+    left: 50%;
+    color: #d9eeff;
+    transition: all .4s ease-in-out;
+    transform: translate(-50%, -50%);
+}
+
+.image {
+    right: 0;
+    margin: 70px 40px;
+    transition: all .4s ease-in-out;
+    color: rgba(1, 16, 28, .9);
+}
+
+.image:hover, .stnImg:hover {
+    background: rgba(217, 238, 255, 0.5);
+    color: rgba(1, 16, 28, .7);
+}
+
+.stnImg:hover {
+    transform: scale(1.1) translate(-45%, -50%);
+}
+
+.image:hover {
+    transform: scale(1.05);
+}
+
+.holder {
+    position: absolute;
+    top: 200px;
+    left: 0;
+    width: 100%;
+    border-top: 1px solid var(--nino-blue);
+    padding: 20px 0;
+    overflow: scroll;
+}
+
+.bio {
+    margin: 20px 3% 40px 32%;
+    width: 65%;
+    min-height: 300px;
+    color: white;
+    font-size: larger;
+    font-family: var(--text);
+}
+
+.errMsg {
+    color: white;
+    font-size: larger;
+    font-family: var(--text);
+    margin: 20px 4%;
+}
+
+.person {
+    margin: 70px 40px;
+    position: absolute;
+    width: 330px;
+    height: 450px;
+    object-fit: cover;
+    border: 1px solid var(--nino-blue);
+    border-radius: 5px;
+    -webkit-box-shadow: 0 33px 21px -7px rgba(0,0,0,0.75);
+    box-shadow: 0 33px 21px -7px rgba(0,0,0,0.75);
+}
