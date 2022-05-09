@@ -106,7 +106,7 @@ export default class Middleware extends Aggregate {
         return {
             cpRight: 'Copyright © 2021 Roy Ossai.',
             aReserved: 'All rights reserved. No document may be reproduced for commercial use without written approval from the author.',
-            authentication: false
+            authentication: true
         }
     }
 
