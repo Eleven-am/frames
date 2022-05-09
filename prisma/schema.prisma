@@ -1,11 +1,19 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["filterJson"]
+  previewFeatures = ["filterJson", "fullTextSearch"]
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum UseCase {
+  SIGNUP
+  DOWNLOAD
 }
 
 model Session {
@@ -17,11 +25,6 @@ model Session {
   userId   String
   identity UserIdentifier?
   user     User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
-}
-
-enum UseCase {
-  SIGNUP
-  DOWNLOAD
 }
 
 model Auth {
@@ -49,7 +52,7 @@ model UserIdentifier {
   sessionId   String   @unique
   created     DateTime @default(now())
   user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  Session     Session  @relation(fields: [sessionId], references: [session], onDelete: Cascade)
+  session     Session  @relation(fields: [sessionId], references: [session], onDelete: Cascade)
 }
 
 enum PickType {
@@ -71,6 +74,9 @@ model Episode {
   id       Int      @id @default(autoincrement())
   seasonId Int
   episode  Int
+  backdrop String?
+  overview String?
+  name     String?
   showId   Int
   videoId  Int      @unique
   created  DateTime @default(now())
@@ -79,6 +85,7 @@ model Episode {
   video    Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
   View     View[]
 
+  Watched Watched[]
   @@unique(fields: [seasonId, episode, showId], name: "episodeId")
 }
 
@@ -123,7 +130,7 @@ model Rating {
 
 model Seen {
   id      Int      @id @default(autoincrement())
-  rep     Int
+  times   Int
   mediaId Int
   userId  String
   created DateTime @default(now())
@@ -132,12 +139,13 @@ model Seen {
   user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
-model PlaylistVideos {
+model PlaylistVideo {
   id         Int      @id @default(autoincrement())
   videoId    Int
   playlistId String
   video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
   playlist   Playlist @relation(fields: [playlistId], references: [identifier], onDelete: Cascade)
+  views      View[]
 }
 
 enum Generator {
@@ -146,25 +154,21 @@ enum Generator {
 }
 
 model Playlist {
-  id             Int              @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   userId         String
   name           String
-  generator      Generator        @default(FRAMES)
-  identifier     String           @unique
-  isPublic       Boolean          @default(false)
-  user           User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  PlaylistVideos PlaylistVideos[]
-}
-
-model Sub {
-  id      Int   @id @default(autoincrement())
-  videoId Int   @unique
-  videos  Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  overview       String?
+  generator      Generator       @default(FRAMES)
+  identifier     String          @unique
+  isPublic       Boolean         @default(false)
+  user           User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  playlistVideos PlaylistVideo[]
+  created  DateTime @default(now())
 }
 
 model Suggestion {
   id      Int      @id @default(autoincrement())
-  rep     Int
+  times   Int
   mediaId Int
   userId  String
   created DateTime @default(now())
@@ -173,45 +177,65 @@ model Suggestion {
   user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
+model Notification {
+  id         Int      @id @default(autoincrement())
+  opened     Boolean  @default(false)
+  message    String
+  title      String
+  senderId   String
+  receiverId String
+  created    DateTime @default(now())
+  updated    DateTime @updatedAt
+  sender     User     @relation("sender", fields: [senderId], references: [userId], onDelete: Cascade)
+  receiver   User     @relation("receiver", fields: [receiverId], references: [userId], onDelete: Cascade)
+}
+
 enum Role {
   USER
   ADMIN
-  OAUTH
   GUEST
+  OAUTH
 }
 
 model User {
-  id          Int              @id @default(autoincrement())
-  email       String           @unique
-  password    String
-  userId      String           @unique
-  role        Role             @default(USER)
-  username    String?
-  auths       Auth[]
-  session     Session[]
-  frames      Frame[]
-  lists       ListItem[]
-  ratings     Rating[]
-  seen        Seen[]
-  playlist    Playlist[]
-  suggestions Suggestion[]
-  identifiers UserIdentifier[]
-  views       View[]
-  downloads   Download[]
+  id             Int              @id @default(autoincrement())
+  email          String           @unique
+  password       String
+  userId         String           @unique
+  role           Role             @default(USER)
+  inform         Boolean          @default(true)
+  autoplay       Boolean          @default(true)
+  confirmedEmail Boolean          @default(false)
+  defaultLang    String           @default("none")
+  notificationChannel String       @default("global")
+  auths          Auth[]
+  frames         Frame[]
+  lists          ListItem[]
+  ratings        Rating[]
+  seen           Seen[]
+  playlist       Playlist[]
+  suggestions    Suggestion[]
+  identifiers    UserIdentifier[]
+  views          View[]
+  downloads      Download[]
+  watched        Watched[]
+  notifications  Notification[]   @relation("receiver")
+  messages       Notification[]   @relation("sender")
+  Session        Session[]
 }
 
 model Video {
-  id             Int              @id @default(autoincrement())
-  location       String           @unique
+  id             Int             @id @default(autoincrement())
+  location       String          @unique
   english        String?
   french         String?
   german         String?
   mediaId        Int
-  media          Media            @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  media          Media           @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   episode        Episode?
-  subs           Sub?
   views          View[]
-  playlistVideos PlaylistVideos[]
+  playlistVideos PlaylistVideo[]
+  watched        Watched[]
 }
 
 model Room {
@@ -232,22 +256,60 @@ model Download {
 }
 
 model View {
-  id        Int        @id @default(autoincrement())
-  auth      String     @unique
+  id         Int            @id @default(autoincrement())
+  auth       String         @unique
+  userId     String
+  videoId    Int
+  episodeId  Int?
+  playlistId Int?
+  inform     Boolean        @default(true)
+  created    DateTime       @default(now())
+  updated    DateTime       @updatedAt
+  playlist   PlaylistVideo? @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  episode    Episode?       @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  video      Video          @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  frame      Frame[]
+  room       Room[]
+  auths      Auth[]
+  downloads  Download[]
+}
+
+model Watched {
+  id        Int      @id @default(autoincrement())
   userId    String
   videoId   Int
   position  Int
-  finished  Int        @default(0)
-  created   DateTime   @default(now())
-  updated   DateTime   @updatedAt
-  episode   Episode?   @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  user      User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  video     Video      @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  frame     Frame[]
-  room      Room[]
+  mediaId   Int
   episodeId Int?
-  Auth      Auth[]
-  downloads Download[]
+  finished  Int      @default(0)
+  times     Int      @default(0)
+  created   DateTime @default(now())
+  updated   DateTime
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique(fields: [userId, videoId], name: "seenByUser")
+}
+
+enum CastType {
+  ACTOR
+  DIRECTOR
+  WRITER
+  PRODUCER
+}
+
+model CastCrew {
+  id        Int      @id @default(autoincrement())
+  tmdbId    Int
+  name      String
+  job       String?
+  character String?
+  type      CastType
+  mediaId   Int
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 }
 
 enum MediaType {
@@ -257,20 +319,22 @@ enum MediaType {
 
 model Media {
   id           Int          @id @default(autoincrement())
+  urlKey       String       @unique
   name         String
   tmdbId       Int
   poster       String       @db.VarChar(250)
   backdrop     String       @db.VarChar(250)
-  background   String       @default("rgba(0, 0, 0, .5)")
+  background   String       @default("rgba(1, 16, 28, .5)")
   genre        String
-  release      String
+  release      DateTime?
   runtime      String
   vote_average Float?
   overview     String       @db.Text
   rating       String?
-  logo         String       @db.VarChar(250)
+  logo         String?      @db.VarChar(250)
   trailer      String
-  collectionId Int?
+  collection   Json?
+  type         MediaType    @default(MOVIE)
   production   Json
   created      DateTime
   updated      DateTime
@@ -280,9 +344,10 @@ model Media {
   lists        ListItem[]
   ratings      Rating[]
   seen         Seen[]
-  type         MediaType    @default(MOVIE)
   suggestions  Suggestion[]
   videos       Video[]
+  watched      Watched[]
+  castCrews    CastCrew[]
 
   @@unique([tmdbId, type])
 }

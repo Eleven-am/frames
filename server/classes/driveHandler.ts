@@ -1,34 +1,36 @@
 import {NextApiResponse} from "next";
-import environment from "../base/env";
+import {GoogleCred, GoogleToken} from "../lib/environment";
 import {drive_v2, drive_v3, google} from "googleapis";
 
 export default class DriveHandler {
     private readonly drive2: drive_v2.Drive;
     private readonly drive: drive_v3.Drive;
+    private readonly deleteAndRename: boolean;
 
-    constructor() {
-        if (environment.config.token){
-            const {client_secret, client_id, redirect_uris} = environment.credentials.web;
+    constructor(token: GoogleToken | null, credentials: GoogleCred | null, deleteAndRename: boolean) {
+        if (token && credentials) {
+            const {client_secret, client_id, redirect_uris} = credentials;
             const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-            oAuth2Client.setCredentials(environment.config.token);
+            oAuth2Client.setCredentials(token);
             const auth = oAuth2Client;
             this.drive = google.drive({version: 'v3', auth});
             this.drive2 = google.drive({version: 'v2', auth});
+            this.deleteAndRename = deleteAndRename;
         } else
             throw new Error('Incorrect google config')
     }
 
     /**
      * @desc gets every file in a google drive folder
-     * @param folder
-     * @param pageToken
-     * @param trashed
+     * @param folder - the folder to get the files from
+     * @param pageToken - the page token to get the next page of files
+     * @param trashed - if the files should be trashed or not
      */
     readFolder = async (folder: string, trashed = 'false', pageToken?: string): Promise<drive_v3.Schema$File[]> => {
         pageToken = pageToken || "";
         let res = await this.drive.files.list({
             q: `'${folder}' in parents and trashed = ${trashed}`,
-            fields: 'nextPageToken, files(id, name, size, mimeType, trashed)',
+            fields: 'nextPageToken, files(id, name, size, mimeType, trashed, parents)',
             spaces: 'drive',
             orderBy: 'name',
             pageSize: 1000,
@@ -42,8 +44,8 @@ export default class DriveHandler {
 
     /**
      * @desc gets a specific file by name from a specific google drive folder
-     * @param fileName
-     * @param folder
+     * @param fileName - name of file to find
+     * @param folder - the folder to get the file from
      */
     findFile = async (fileName: string, folder: string): Promise<drive_v3.Schema$File | false> => {
         let res = await this.drive.files.list({
@@ -60,11 +62,11 @@ export default class DriveHandler {
 
     /**
      * @desc builds a video header based on specific data requested by the user
-     * @param range
-     * @param video
+     * @param range - HTTP request range to be requested
+     * @param video - the video to build the header for
      */
     buildRange = (range: string, video: drive_v3.Schema$File) => {
-        let videoRes: { mimeType: string, fileSize: number, start: number, end: number, chunkSize: number } = {
+        let videoRes = {
             mimeType: '',
             fileSize: 0,
             start: 0,
@@ -86,14 +88,13 @@ export default class DriveHandler {
 
     /**
      * @desc gets a google drive file's metadata
-     * @param fileId
-     * @returns {Promise<drive_v3.Schema$File>}
+     * @param fileId - id for file to be requested
      */
     getFile = async (fileId: string): Promise<drive_v3.Schema$File | null> => {
         return new Promise(resolve => {
             this.drive.files.get({
                 fileId: fileId,
-                fields: "id, name, size, mimeType, contentHints/thumbnail, videoMediaMetadata, thumbnailLink, explicitlyTrashed"
+                fields: "id, name, size, parents, mimeType, contentHints/thumbnail, videoMediaMetadata, thumbnailLink, explicitlyTrashed"
             }).then(response => resolve(response.data))
                 .catch(() => resolve(null))
         })
@@ -101,20 +102,34 @@ export default class DriveHandler {
 
     /**
      * @desc deletes a google drive file using it's file_id
-     * @param fileId
+     * @param fileId - id for file to be deleted
      */
     deleteFile = async (fileId: string) => {
-        if (environment.config.deleteAndRename)
+        if (this.deleteAndRename)
             return (await this.drive.files.update({fileId, requestBody: {trashed: true}})).status === 200;
         else return false;
     }
 
     /**
-     * @desc returns a 206 morceau response of a video based on the range requested
-     * @param id
-     * @param dest
-     * @param range
-     * @returns {Promise<void>}
+     * @desc gets every file in a Google Drive folder and sub-folders
+     * @param folderId
+     */
+    recursiveReadFolder = async (folderId: string) => {
+        const res = await this.readFolder(folderId);
+        let files = res.filter(file => file.mimeType !== 'application/vnd.google-apps.folder');
+        const folders = res.filter(file => file.mimeType === 'application/vnd.google-apps.folder');
+
+        for await (let folder of folders)
+            files = files.concat(await this.recursiveReadFolder(folder.id!));
+
+        return files;
+    }
+
+    /**
+     * @desc returns a 206 morsel response of a video based on the range requested
+     * @param id - id of file tp be requested
+     * @param dest - destination for stream buffer outbound stream
+     * @param range - HTTP request range requested
      */
     streamFile = async (id: string, dest: NextApiResponse, range: string) => {
         const file = await this.getFile(id);
@@ -138,10 +153,9 @@ export default class DriveHandler {
     }
 
     /**
-     * @desc moves an element by it's google id to the google folder by it's folder id
-     * @param element
-     * @param folder_id
-     * @returns {Promise<void>}
+     * @desc moves an element by its google id to the Google folder by its folder id
+     * @param element - element to be moved
+     * @param folder_id - id of folder to move element to
      */
     moveElement = async (element: string, folder_id: string) => {
         let file = await this.drive.files.get({
@@ -164,7 +178,7 @@ export default class DriveHandler {
 
     /**
      * @desc Restores previously deleted element from trash
-     * @param fileId
+     * @param fileId - id of file to be restored
      */
     restoreFile = async (fileId: string): Promise<boolean> => {
         return new Promise<boolean>(resolve => {
@@ -181,35 +195,34 @@ export default class DriveHandler {
     }
 
     /**
-     * @desc downloads a file from google drive to user
-     * @param file_id
-     * @param name
-     * @param dest
-     * @returns {Promise<void>}
+     * @desc downloads a file from Google Drive to user
+     * @param file_id - id of file to be downloaded
+     * @param name - name of file to be downloaded
+     * @param dest - destination for download outbound stream
      */
     rawDownload = async (file_id: string, name: string, dest: NextApiResponse) => {
-        // @ts-ignore
-        let {mimeType} = await this.getFile(file_id);
-        let value = 'attachment; filename=' + name + ' [frames].mp4';
+        const file = await this.getFile(file_id);
+        if (file){
+            let value = 'attachment; filename=' + name + ' [frames].mp4';
+            let {data} = await this.drive.files.get({
+                fileId: file_id,
+                alt: 'media'
+            }, {responseType: 'stream'});
 
-        let {data} = await this.drive.files.get({
-            fileId: file_id,
-            alt: 'media'
-        }, {responseType: 'stream'});
+            dest.setHeader('Content-disposition', value);
+            dest.setHeader('Content-type', file.mimeType!);
+            data.pipe(dest);
 
-        dest.setHeader('Content-disposition', value);
-        dest.setHeader('Content-type', mimeType);
-        data.pipe(dest);
+        } else dest.status(404).json('file no longer exists');
     }
 
     /**
      * @desc renames a file / folder
-     * @param fileId
-     * @param name
-     * @returns {Promise<*>}
+     * @param fileId - id of file to be renamed
+     * @param name - new name for file
      */
     renameFile = async (fileId: string, name: string) => {
-        if (environment.config.deleteAndRename)
+        if (this.deleteAndRename)
         { // @ts-ignore
             return await this.drive.files.update({
                 'fileId': fileId,
@@ -221,22 +234,30 @@ export default class DriveHandler {
 
     /**
      * @desc creates a folder with the specified name
-     * @param name
-     * @returns {Promise<*>}
+     * @param name - name of folder to be created
+     * @param parent - id of parent folder
      */
-    createFolder = async (name: string) => {
+    createFolder = async (name: string, parent: string) => {
         const fileMetadata = {
             'name': name,
             'mimeType': 'application/vnd.google-apps.folder'
         }
 
-        let res = await this.drive.files.create({
-            // @ts-ignore
-            resource: fileMetadata,
-            fields: 'id'
+        return new Promise<string>(resolve => {
+            this.drive.files.create({
+                // @ts-ignore
+                resource: fileMetadata,
+                fields: 'id',
+                parents: parent
+            }, (err: any, file: { data: { id: string | PromiseLike<string>; }; }) => {
+                if (err) {
+                    console.warn(err);
+                    resolve('');
+                } else {
+                    resolve(file.data.id);
+                }
+            });
         })
-
-        return res.data.id;
     }
 
     /**
@@ -254,10 +275,9 @@ export default class DriveHandler {
 
     /**
      * @dest a beta stream function that handles HLS adaptive streaming
-     * @param filename
-     * @param folder
-     * @param dest
-     * @returns {Promise<void>}
+     * @param filename - name of file requested
+     * @param folder - folder id of file requested
+     * @param dest - destination for download outbound stream
      */
     hlsStream = async (filename: string, folder: string, dest: NextApiResponse) => {
         let file = await this.findFile(filename, folder);

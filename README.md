@@ -15,49 +15,46 @@ The application enables you share this library without compromising the integrit
 It organises the Movies and TV shows on your drive account, providing you with their trailer, HD images and other info
 
 ## Installation
-The process to installing frames is straight forward to begin, visit https://frameshomebase.maix.ovh and follow the setup process.
-A 'frames.env' file would be downloaded once the setup process is complete.
-    
-## Run Locally
-
-Clone the project
+Clone the repository 
 
 ```bash
   git clone https://github.com/Eleven-am/frames.git
 ```
+Install the dependencies
 
-Go to the project directory
+ ```bash
+  npm install
+ ```
+Go to the project directory 
 
 ```bash
   cd frames
 ```
 
-Place frames.env in the directory then rename it to .env
+Open the framesConfig.ts file and configure the parameters
+To do this you need to open the file in your favorite text editor,
+have a Supabase project, a TMDB API key, FANART API key and a Google Drive API credentials and token.
+
+ ```bash
+  vim framesConfig.ts
+ ```
+
+Once you have configured the file, you can generate an environment file with the following command:
+
+ ```bash
+  npm run generate-env
+ ```
+
+Once you have done this, you can build the application with the following command:
 
 ```bash
-  mv frames.env frames/.env
+  npm run setup
 ```
 
-Install dependencies and set up database
-
-```bash
-  npm install && npx prisma db push
-```
-
-Build the server
-
-```bash
-  npm run build
-```
-
-Start the server
-
-```bash
-  npm run start
-```
+The application will be available on http://localhost:3000/
 
 ## How to arrange the files
-* For movies, it is imperative that only the movie file itself is placed directly in the movie folder like so ![](art/22.png)
+* For movies, it is recommended that only the movie file itself is placed directly in the movie folder like so ![](art/22.png) but folders containing the movie file can be placed in the movie folder.
 * For TV shows every Show should be placed in its folder like so ![](art/24.png)
 * When arranging the episodes you have two options
     * Place each episode in its corresponding Season folder, like so (Recommended) ![](art/25.png) ![](art/26.png)
@@ -68,6 +65,7 @@ Start the server
           like so ![](art/23.png)
 
 ## Images and Features
+### Disclaimer: The Social OAUTH feature requires a connection to a Phoenix-Elixir server. I intend to make my private server available to the public in the future.
 * The boarding page includes social authentication methods as well as email. Every user registered must be provided an auth key 
     ![](art/1.png)
     ![](art/2.png)
@@ -79,13 +77,9 @@ Start the server
    ![](art/5.png)
 
 #### The navigation bar
-* All the movies and tv shows available in the library are show in descending order from most recent or trending to less recent
+* All the movies and tv shows available in the library are show in descending order from most recent or trending to less recent. The media can be filtered by genre or decade. just by interacting with the page.
   ![](art/6.png)
   ![](art/7.png)
-
-* You can see all genres for the media available in your library. Your library can also be sorted by decades depending on when they were released or first aired.
-  ![](art/8.png)
-  ![](art/9.png)
 
 * Frames has the collection page that shows you default collection for media in your library
   ![](art/41.png)
@@ -108,20 +102,23 @@ Start the server
 #### Frames(aka the video player)
 * Frames supports only mp4 files. These files are streamed securely to the user and your Google credentials are never made available to the client.
   ![](art/player.gif)
-    * The left controls include the AirPlay/Cast button (if available). The volume controls
-    * If not logged in as a guest user, there are two additional buttons the download button and the Share button
+  ![](art/48.png)
+    * The left controls include, in that order, the AirPlay/Cast button (if available), the share button, the playlist button, the volume controls and download button
+    * If logged in as a guest user, the download button and the Share button are not available
       ![](art/15.png)
       ![](art/18.png)
       ![](art/17.png)
   
-    * On the right side of the controls exists the fullscreen button, the subtitles button and the up-next button.
-      ![](art/32.png)
+    * The right side controls include the player settings button(in development), the groupwatch button, the picture in picture button, the subtitle button, the up next button and the fullscreen button
+  ![](art/32.png)
       * Clicking on the up next button plays the next video as expected. 
 
     * Frames supports only three subtitle languages at this point (English, French, and German)      
       ![](art/33.png)
 
 * GroupWatch: This feature allows you to watch a media with your friends at the same time.
+  ![](art/46.png) 
+  ### Disclaimer: The groupwatch feature requires a connection to a Phoenix-Elixir server. I intend to make my private server available to the public in the future.
     ###### How it works
     * To create a new session click on one of these buttons 
     ![](art/36.png)
@@ -142,7 +139,7 @@ Start the server
     * Obviously frames controls the remote player based on local interactions
     
 #### Miscellaneous 
-* By right clicking on media posters you can modify the information of the media. The images, TMDB ID
+* By clicking on the edit button inside a media page you can modify the information of the media. The images, TMDB ID
   ![](art/20.png)
   ![](art/27.png)
 
@@ -164,9 +161,14 @@ Start the server
     * Adding these editor picks is as easy as visiting the settings page => Mange => manage picks.Here you can modify or create new editor picks to display on the homepage
       ![](art/31.png)
       ![](art/29.png)
+  
+    * You can also delete editor picks by clicking on the delete button
+    * The home page has infinite scrolling, it will load more content as you scroll down based on the amount of content you have and the user's activity
     
 * Admin accounts can create and manage auth keys. These keys are used to create new accounts or download videos
   ![](art/45.png)
 
 ## Upcoming features
 * Creating and sharing your playlists with others
+
+####* Creating a playlist is already supported by Frames but sharing your playlist is not

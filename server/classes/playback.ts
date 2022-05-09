@@ -1,28 +1,30 @@
-import {MediaType, Role, UseCase} from "@prisma/client";
-import {create_UUID, parseTime} from "../base/baseFunctions";
-import {pageTwo} from "../base/tmdb_hook";
-import Episode from "./episode";
-import {drive, prisma} from '../base/utils';
-import environment from "../base/env";
-import {NextApiRequest, NextApiResponse} from "next";
-import got from "got";
-import {MediaSection} from "./media";
-import {SpringLoad} from "./springboard";
-import {Subtitles as SubClass} from "./update";
-import User from "./auth";
+import Media, {SpringMedia} from "./media";
+import {Episode, Media as Med, MediaType, Role, UseCase, Video} from "@prisma/client";
+import {Subtitles} from "./scanner";
+import {SectionPick} from "./listEditors";
+import User, {Base} from "./auth";
 
-export interface VideoPos {
-    position: number;
-    id: number;
+export interface SpringLoad {
     videoId: number;
-    mediaId?: number;
-    found: boolean;
-}
-
-export interface SectionInterface {
-    data: MediaSection[];
-    display: string,
-    type: string
+    mediaId: number;
+    episodeId: number | null;
+    overview: string;
+    logo: string | null;
+    backdrop: string;
+    name: string;
+    poster: string;
+    playlistId: number | null;
+    episodeName: string | null;
+    location: string;
+    inform: boolean;
+    autoPlay: boolean;
+    position: number;
+    guest: boolean;
+    playerId: string;
+    cdn: string;
+    activeSub: string;
+    frame: boolean;
+    subs: { language: string, url: string, label: string, lang: string }[],
 }
 
 export interface Sub {
@@ -31,94 +33,209 @@ export interface Sub {
     end: number;
     text: string;
     diff: number;
+    style: { fontStyle: string, fontWeight: string, textDecoration: string }
 }
 
-export type Subtitles = Sub[];
-
-export interface UpNextHolder {
-    backdrop: string;
-    logo: string;
+export interface WatchHistory {
     overview: string;
+    backdrop: string;
     name: string;
-    mediaId: number;
-    episodeName?: string;
+    watchedId: number;
+    timeStamp: string;
+    position: number;
+    location: string;
 }
 
-export interface PlayBackInterface {
-    frame: boolean,
-    guest: boolean,
-    inform: boolean,
+export interface FrameMediaLite {
+    id: number,
+    poster: string,
+    name: string,
+    type: MediaType,
+    background: string,
+    logo: string | null,
+    overview: string,
+    backdrop: string,
     location: string,
-    subs: { language: string, url: string, label: string, lang: string }[],
-    cdn: string
 }
 
-const user = new User();
-const episodeClass = new Episode();
+export default class PlayBack extends Base {
+    protected readonly mediaClass: Media;
+    protected readonly scanner: Subtitles;
 
-export default class Playback {
+    constructor() {
+        super();
+        this.mediaClass = new Media();
+        this.scanner = new Subtitles();
+    }
 
     /**
-     * @param mediaId media to be processed
-     * @param userId user for which media is being processed
-     * @returns the next sequential episode for playback
+     * @desc gets the videom information for the worker to load
+     * @param auth
      */
-    async getNextEpisode(mediaId: number, userId: string): Promise<VideoPos | null> {
-        let media = await prisma.media.findFirst({
-            where: {id: mediaId},
-            include: {episodes: {orderBy: [{seasonId: 'asc'}, {episode: 'asc'}]}}
+    public async getWorkerInfo(auth: string) {
+        const view = await this.prisma.view.findFirst({
+            where: {auth},
+            include: {video: {include: {media: true, episode: true}}}
         });
 
-        if (media && media.type === MediaType.SHOW) {
-            let episodes = media.episodes;
-            let result = await prisma.view.findMany({
-                where: {
-                    userId,
-                    episode: {showId: mediaId},
-                    position: {gt: 0}
-                }, include: {episode: true},
-                orderBy: [{created: 'desc'}, {updated: 'desc'}, {position: 'desc'}]
-            })
+        const download = await this.prisma.download.findFirst({
+            where: {location: auth},
+            include: {view: {include: {video: {include: {media: true, episode: true}}}}}
+        });
 
-            if (result.length) {
-                let lastSeen = result[0];
-                if (lastSeen.finished === 0) {
-                    return {
-                        position: lastSeen.position,
-                        id: lastSeen.episodeId!,
-                        videoId: lastSeen.videoId,
-                        found: true,
-                    }
+        if (view)
+            return {location: view.video.location, download: false, name: ''};
 
-                } else {
-                    let lastSeenIndex = episodes.findIndex(item => item.id === lastSeen.episodeId);
-                    let nextEpisode = lastSeenIndex >= 0 && lastSeenIndex <= episodes.length - 2 ? episodes[lastSeenIndex + 1] : null;
-                    if (nextEpisode) {
-                        if (lastSeen.finished === 2)
-                            await prisma.view.updateMany({
-                                where: {
-                                    userId,
-                                    video: {mediaId}
-                                }, data: {finished: 1}
-                            })
-
-                        let video = result.find(e => e.episodeId === nextEpisode!.id);
-                        return {
-                            position: video && video.position < 920 ? video.position : 0,
-                            id: nextEpisode.id,
-                            videoId: nextEpisode.videoId,
-                            found: true,
-                        }
-                    }
-                }
+        else if (download && (download.created.getTime() + (1000 * 60 * 60 * 2)) > Date.now()) {
+            let name = download.view.video.media.name;
+            if (download.view.video.episode) {
+                const temp = await this.mediaClass.getEpisode(download.view.video.episode.id);
+                name = temp?.name ?? name;
             }
 
-            if (episodes.length)
+            return {location: download.view.video.location, download: true, name};
+        }
+
+        return {location: '', download: false, name: ''};
+    }
+
+    /**
+     * @desc saves the current position of the video to the database
+     * @param auth - the video location identifier
+     * @param userId - the user identifier
+     * @param position - the current position of the video
+     */
+    public async saveInformation(auth: string, userId: string, position: number): Promise<void> {
+        const user = await this.prisma.user.findFirst({where: {userId}});
+        const view = await this.prisma.view.findFirst({
+            where: {auth},
+            include: {video: {include: {media: true, episode: true}}}
+        });
+
+        if (view && user && user.inform && view.inform) {
+            const video = view.video;
+            const episode = video.episode;
+            const media = video.media;
+            const watched = await this.prisma.watched.findUnique({where: {seenByUser: {userId, videoId: video.id}}});
+
+            const seen = position > 939;
+            position = position > 939 ? 1000 : position;
+            const finished = seen ? 1 : 0;
+            const times = seen ? (watched?.times || 0) + 1 : (watched?.times || 0);
+            await this.prisma.watched.upsert({
+                where: {seenByUser: {userId, videoId: video.id}},
+                update: {
+                    finished, times,
+                    position, updated: new Date()
+                },
+                create: {
+                    mediaId: media.id,
+                    userId, videoId: video.id,
+                    finished, times, position, episodeId: episode?.id,
+                    created: new Date(), updated: new Date()
+                }
+            });
+
+            if (seen && episode) {
+                const newEpisode = await this.mediaClass.getNextEpisode(media.id, episode.id, "next");
+                if (newEpisode)
+                    await this.prisma.watched.upsert({
+                        create: {
+                            mediaId: media.id,
+                            userId, videoId: newEpisode.videoId,
+                            finished: 0, times: 0, position: 0, episodeId: newEpisode.id,
+                            created: new Date(), updated: new Date()
+                        },
+                        update: {updated: new Date()},
+                        where: {seenByUser: {userId, videoId: newEpisode.videoId}}
+                    });
+
+                else
+                    await this.prisma.watched.updateMany({
+                        where: {
+                            userId, mediaId: media.id,
+                        }, data: {finished: 2}
+                    })
+            }
+        }
+    }
+
+    /**
+     * @desc loads the watched information for the user
+     * @param userId - the user identifier
+     */
+    public async getContinue(userId: string): Promise<(Pick<SpringMedia, 'backdrop' | 'logo' | 'name' | 'overview' | 'id'> & { position: number })[]> {
+        const watchedList: (Pick<SpringMedia, 'backdrop' | 'logo' | 'name' | 'overview' | 'id'> & { position: number })[] = [];
+        const watched = await this.prisma.watched.findMany({
+            where: {userId, AND: [{position: {gte: 0}}, {position: {lte: 939}}]},
+            distinct: ["mediaId"],
+            include: {media: true},
+            orderBy: {updated: "desc"},
+            take: 12
+        });
+
+        for (const watchedItem of watched) {
+            const media = await this.mediaClass.getInfoFromVideoId(watchedItem.videoId, true);
+            if (media) {
+                const data: (Pick<SpringMedia, 'backdrop' | 'logo' | 'name' | 'overview' | 'id'> & { location: string, position: number }) = {
+                    logo: media.logo,
+                    overview: media.overview,
+                    backdrop: media.episodeBackdrop || media.backdrop,
+                    name: watchedItem.media.name,
+                    id: watchedItem.mediaId,
+                    position: (watchedItem.position / 10),
+                    location: media.location
+                };
+                watchedList.push(data);
+            }
+        }
+
+        return watchedList;
+    }
+
+    /**
+     * @desc Get the details of a media
+     * @param id - The id of the media
+     * @param userId - The id of the user
+     * @param save - Whether to create a group watch link for this media
+     */
+    public async getMediaLite(id: number, userId: string, save: boolean): Promise<FrameMediaLite | null> {
+        if (isNaN(id)) return null;
+
+        const data = await this.prisma.media.findUnique({
+            where: {id},
+            include: {videos: true, episodes: {include: {video: true}, orderBy: [{seasonId: 'asc'}, {episode: 'asc'}]}}
+        });
+
+        if (data) {
+            if (save) {
+                const videoId = data.episodes && data.episodes.length > 0 ? data.episodes[0].videoId : data.videos.length ? data.videos[0].id : null;
+                if (videoId) {
+                    const playObject = await this.setPlayBack(videoId, userId, false, null);
+                    if (playObject)
+                        return {
+                            id: data.id,
+                            name: data.name,
+                            logo: data.logo,
+                            backdrop: data.backdrop,
+                            overview: data.overview,
+                            poster: data.poster,
+                            type: data.type,
+                            background: data.background,
+                            location: playObject.location,
+                        }
+                }
+            } else
                 return {
-                    position: 0,
-                    id: episodes[0].id,
-                    videoId: episodes[0].videoId,
-                    found: !result.length,
+                    id: data.id,
+                    name: data.name,
+                    type: data.type,
+                    poster: data.poster,
+                    backdrop: data.backdrop,
+                    logo: data.logo,
+                    background: data.background,
+                    overview: data.overview,
+                    location: ''
                 };
         }
 
@@ -126,282 +243,202 @@ export default class Playback {
     }
 
     /**
-     * @description generates and saves an auth instance in view
-     * @param videoId video to be played
-     * @param userId user identifier
-     * @returns auth identifier uuid string
+     * @desc generate and save suggestions for the user based on the watched list, ratings and list of the user
+     * @param userId - the user identifier
      */
-    async generatePlayback(videoId: number, userId: string): Promise<PlayBackInterface | null> {
-        const subtitle = new SubClass();
-        let video: { [p: string]: any } | null = await prisma.video.findFirst({where: {id: videoId}});
-        let user = await prisma.user.findFirst({where: {userId}});
-        let episode = await prisma.episode.findFirst({where: {videoId}})
-        if (video && user) {
-            let obj = {
-                auth: create_UUID(), created: new Date(),
-                userId, position: 0, videoId, updated: new Date(),
-                episodeId: episode ? episode.id : null, finished: 0
-            };
-
-            let keys = ['en', 'fr', 'de'];
-            let labels = ['English', 'Français', 'Deutsch'];
-            let tempSubs = ['english', 'french', 'german'].map((e, v) => {
-                if (video && video.hasOwnProperty(e) && video[e] !== null && video[e] !== '')
-                    return {
-                        language: e,
-                        lang: keys[v],
-                        label: labels[v],
-                        url: '/api/stream/subtitles?auth=' + obj.auth + '&language=' + e
-                    }
-            })
-
-            let subs = [];
-            for (let item of tempSubs) {
-                if (item !== undefined)
-                    subs.push(item);
-            }
-
-            let info = await prisma.view.create({data: obj});
-            if (subs.length < 1)
-                await subtitle.getSub(videoId);
-
-            return {
-                frame: false,
-                inform: true,
-                location: info.auth,
-                subs,
-                cdn: environment.config.cdn,
-                guest: user.role === Role.GUEST
-            };
-        }
-
-        return null;
-    }
-
-    /**
-     * VideoPos {found, position, id}
-     * @param mediaId media to be processed
-     * @param userId user for which media is being processed
-     * @returns the information necessary for playback
-     */
-    async playMedia(mediaId: number, userId: string): Promise<VideoPos | null> {
-        let media = await prisma.media.findFirst({where: {id: mediaId}})
-        if (media && media.type === MediaType.MOVIE) {
-            let video = await prisma.video.findMany({
-                include: {views: {where: {position: {gt: 0}}}},
-                where: {mediaId, views: {some: {userId}}}
-            });
-
-            if (video.length) {
-                let view = video[0].views.filter(e => e.userId === userId).sortKey('updated', false)[0];
-                return {
-                    position: view && view.position < 920 ? view.position : 0,
-                    id: mediaId,
-                    videoId: video[0].id,
-                    found: true
-                }
-            } else {
-                let video = await prisma.video.findMany({where: {mediaId}});
-                if (video.length)
-                    return {
-                        id: mediaId,
-                        videoId: video[0].id,
-                        position: 0,
-                        found: false
-                    }
-            }
-        } else return await this.getNextEpisode(mediaId, userId);
-        return null
-    }
-
-    /**
-     * @desc preps an episode for playback
-     * @param episodeId
-     * @param userId
-     */
-    async playEpisode(episodeId: number, userId: string): Promise<SpringLoad | null> {
-        const episodeClass = new Episode();
-        const info = await episodeClass.getEpisode(episodeId);
-        const episode = await prisma.episode.findFirst({where: {id: episodeId}, select: {media: true, video: true}});
-        let views = await prisma.view.findMany({
-            where: {userId, episodeId, position: {gt: 0}},
-            orderBy: [{updated: 'desc'}, {position: 'desc'}]
-        });
-        if (episode && info) {
-            const view = views.length ? views[0] : null;
-            return {
-                mediaId: episode.media.id,
-                videoId: episode.video.id,
-                position: view && view.position < 920 ? view.position : 0,
-                logo: episode.media.logo,
-                backdrop: episode.media.backdrop,
-                episodeName: /^Episode \d+/.test(info.name) ? `${episode.media.name}: S${info.seasonId}, E${info.episode}` : `S${info.seasonId}, E${info.episode}: ${info.name}`,
-                name: episode.media.name, overview: info.overview || episode.media.overview
-            };
-        }
-
-        return null;
-    }
-
-    /**
-     * @description suggests media for the user to rewatch
-     * @param userId user to be processed
-     * @returns returns seen for specific user
-     */
-    async getSeen(userId: string): Promise<SectionInterface> {
-        let seen = await prisma.seen.findMany({where: {userId}, include: {media: true}});
-        let database = seen.map(item => {
-            return {
-                id: item.media.id,
-                background: item.media.background,
-                tmdbId: item.media.tmdbId,
-                type: item.media.type,
-                poster: item.media.poster,
-                name: item.media.name,
-                rep: item.rep
-            }
-        })
-        let movie = database.randomiseDB(7, 0, MediaType.MOVIE);
-        let shows = database.randomiseDB(5, 0, MediaType.SHOW);
-        return {data: movie.concat(shows).sortKey('rep', false), display: 'watch again', type: 'basic'};
-    }
-
-    /**
-     * @description processes the user's activity to offer suggestions for them to see or watch again
-     * @param userId user to be processed
-     */
-    async loadSuggestion(userId: string) {
-        const seen = await prisma.seen.findFirst({where: {userId}});
-        const suggest = await prisma.suggestion.findFirst({where: {userId}});
-
-        if (seen || suggest) {
-            if (seen) {
-                const check = new Date(new Date(seen.created).getTime() + (1000 * 60 * 60 * 24)) > new Date();
-                if (check)
-                    return;
-            }
-
-            if (suggest) {
-                const check = new Date(new Date(suggest.created).getTime() + (1000 * 60 * 60 * 24)) > new Date();
-                if (check)
-                    return;
-            }
-        }
-
-        let user = await prisma.user.findFirst({
+    public async generateSuggestions(userId: string): Promise<void> {
+        const user = await this.prisma.user.findFirst({
             where: {userId},
             include: {
-                views: {
-                    orderBy: [{created: 'desc'}, {updated: 'desc'}, {position: 'desc'}],
-                    include: {video: {include: {episode: true}}}
-                }, lists: true, ratings: true
+                watched: {include: {media: true}},
+                lists: {include: {media: true}},
+                ratings: {include: {media: true}},
+                seen: {include: {media: true}},
+                suggestions: {include: {media: true}}
             }
         });
 
+        const appeared: Map<number, { times: number, tmdbId: number, type: MediaType }> = new Map();
+        const suggestions: Map<number, { times: number, tmdbId: number, type: MediaType }> = new Map();
+
         if (user) {
-            let database = await prisma.media.findMany();
-            let medias: Array<{ mediaId: number, rep: number }> = [];
-            let response: Array<{ userId: string, mediaId: number, rep: number }> = [];
-            let ratings = user.ratings;
-            let views = user.views;
-            let list = user.lists;
+            const watched = user.watched;
+            const ratings = user.ratings;
+            const lists = user.lists;
+            const seen = user.seen;
+            const suggestion = user.suggestions;
 
-            for (let item of ratings) {
-                let media = medias.find(e => e.mediaId === item.mediaId);
-                if (media) {
-                    media.rep += item.rate > 5 ? item.rate : -item.rate;
-                } else {
-                    medias.push({
-                        mediaId: item.mediaId,
-                        rep: item.rate > 5 ? item.rate : -item.rate
-                    })
+            if (seen.length || suggestion.length) {
+                const seenItem = seen.length ? seen[0] : null;
+                const suggestionItem = suggestion.length ? suggestion[0] : null;
+
+                if (seenItem) {
+                    const check = new Date(new Date(seenItem.created).getTime() + (1000 * 60 * 60 * 24)) > new Date();
+                    if (check)
+                        return;
+                }
+
+                if (suggestionItem) {
+                    const check = new Date(new Date(suggestionItem.created).getTime() + (1000 * 60 * 60 * 24)) > new Date();
+                    if (check)
+                        return;
                 }
             }
 
-            for (let item of list) {
-                let media = medias.find(e => e.mediaId === item.mediaId);
-                if (media) {
-                    media.rep += 20;
-                } else {
-                    medias.push({
-                        mediaId: item.mediaId,
-                        rep: 20
-                    })
-                }
+            for (const watchedItem of watched) {
+                const val = appeared.get(watchedItem.media.id);
+                if (val)
+                    appeared.set(watchedItem.media.id, {
+                        type: watchedItem.media.type,
+                        times: val.times + watchedItem.times,
+                        tmdbId: watchedItem.media.tmdbId
+                    });
+                else
+                    appeared.set(watchedItem.media.id, {
+                        type: watchedItem.media.type,
+                        times: watchedItem.times,
+                        tmdbId: watchedItem.media.tmdbId
+                    });
             }
 
-            for (let item of views) {
-                let media = medias.find(e => e.mediaId === item.video.mediaId);
-                if (media) {
-                    media.rep += Math.ceil((item.position / 100));
-                } else {
-                    medias.push({
-                        mediaId: item.video.mediaId,
-                        rep: Math.ceil((item.position / 100))
-                    })
-                }
+            for (const list of lists) {
+                const val = appeared.get(list.media.id);
+                if (val)
+                    appeared.set(list.media.id, {
+                        type: list.media.type,
+                        times: val.times + 20,
+                        tmdbId: list.media.tmdbId
+                    });
+                else
+                    appeared.set(list.media.id, {type: list.media.type, times: 20, tmdbId: list.media.tmdbId});
             }
 
-            medias = medias.filter(e => e.rep > 10).sortKey('rep', false);
-
-            for (let loki of medias) {
-                let media = database.find(e => e.id === loki.mediaId);
-                if (media) {
-                    let recommendations = await pageTwo(media.type, media.tmdbId, database, 1, 2, false);
-                    for (let item of recommendations) {
-                        let temp = response.find(e => e.mediaId === item.id);
-                        if (temp)
-                            temp.rep += loki.rep;
-                        else
-                            response.push({
-                                mediaId: item.id,
-                                userId, rep: loki.rep
-                            })
-                    }
-                }
+            for (const rating of ratings) {
+                const val = appeared.get(rating.media.id);
+                const rate = (rating.rate > 5 ? rating.rate : -rating.rate) * 2;
+                if (val)
+                    appeared.set(rating.media.id, {
+                        type: rating.media.type,
+                        times: val.times + rate,
+                        tmdbId: rating.media.tmdbId
+                    });
+                else
+                    appeared.set(rating.media.id, {type: rating.media.type, times: rate, tmdbId: rating.media.tmdbId});
             }
 
-            let seen = [];
-            let suggestions = [];
-            for (let item of response) {
-                let res = views.find(e => e.video.mediaId === item.mediaId)
-                if (res && ((res.finished === 2) || (res.finished === 1 && res.video.episode === null))) {
-                    seen.push({
-                        rep: item.rep,
-                        userId, mediaId: item.mediaId,
-                        created: new Date(), updated: new Date
-                    })
-                } else if (res === undefined) {
-                    suggestions.push({
-                        rep: item.rep,
-                        userId, mediaId: item.mediaId,
-                        created: new Date()
-                    })
-                }
+            const sortedDescMap = new Map([...appeared.entries()].sort((a, b) => b[1].times - a[1].times));
+
+            for (const [_, media] of sortedDescMap) {
+                const recon = await this.tmdb?.getRecommendations(media.tmdbId, media.type, 1) || [];
+                const tmdbIds = recon.map(e => e.id).filter(e => e !== media.tmdbId);
+                let recommendations = await this.prisma.media.findMany({
+                    where: {AND: [{tmdbId: {in: tmdbIds}}, {type: media.type}]},
+                    select: {id: true, type: true, tmdbId: true}
+                });
+
+                recommendations.forEach(e => {
+                    const val = suggestions.get(e.id);
+                    if (val)
+                        suggestions.set(e.id, {type: e.type, times: val.times + media.times, tmdbId: e.tmdbId});
+                    else
+                        suggestions.set(e.id, {type: e.type, times: media.times, tmdbId: e.tmdbId});
+                });
             }
 
-            await prisma.seen.deleteMany({where: {userId}});
-            await prisma.suggestion.deleteMany({where: {userId}});
+            const suggestedToArray = [...suggestions.entries()].sort((a, b) => b[1].times - a[1].times);
+            const suggestedMediaId = suggestedToArray.map(item => item[0]);
 
-            await prisma.seen.createMany({data: seen});
-            await prisma.suggestion.createMany({data: suggestions});
+            const seenFinished = await this.prisma.watched.findMany({
+                where: {
+                    OR: [
+                        {
+                            AND: [
+                                {userId: userId},
+                                {mediaId: {in: suggestedMediaId}},
+                                {media: {type: MediaType.MOVIE}},
+                                {position: {gte: 939}}
+                            ]
+                        },
+                        {
+                            AND: [
+                                {userId: userId},
+                                {mediaId: {in: suggestedMediaId}},
+                                {media: {type: MediaType.SHOW}},
+                                {finished: 2}
+                            ]
+                        }
+                    ]
+                },
+                select: {mediaId: true}
+            });
+
+            const suggestedSeen = suggestedToArray.filter(item => seenFinished.some(e => e.mediaId === item[0])).map(x => {
+                return {times: x[1].times, userId, mediaId: x[0]}
+            });
+
+            const notSeen = suggestedToArray.filter(item => !seenFinished.some(e => e.mediaId === item[0])).map(x => {
+                return {times: x[1].times, userId, mediaId: x[0]}
+            });
+
+            await this.prisma.suggestion.deleteMany({where: {userId}});
+            await this.prisma.suggestion.createMany({data: notSeen});
+
+            await this.prisma.seen.deleteMany({where: {userId}});
+            await this.prisma.seen.createMany({data: suggestedSeen});
         }
     }
 
     /**
-     * @desc adds a view auth to download, available for 5 hours
-     * @param auth
-     * @param authKey
-     * @param userId
+     * @desc gets the user's recommendations
+     * @param userId - the user's identifier
      */
-    async addFileForDownload(auth: string, authKey: string, userId: string) {
-        const file = await prisma.view.findFirst({where: {auth}, select: {video: true}});
-        const userFile = await prisma.user.findUnique({where: {userId}});
-        const valid = await user.validateAuthKey(authKey, userFile?.role || Role.OAUTH);
-        if (valid === 0 && file) {
+    public async getSuggestions(userId: string): Promise<SectionPick<'BASIC'>> {
+        let suggestions = await this.prisma.suggestion.findMany({where: {userId}, include: {media: true}});
+        suggestions = this.randomise(suggestions, 10, 0);
+
+        suggestions = this.sortArray(suggestions, ['times'], ['desc']);
+        return {
+            display: 'just for you',
+            type: 'BASIC', data: suggestions.map(e => {
+                const {background, id, type, name, poster} = e.media;
+                return {background, id, type, name, poster}
+            }) as any
+        }
+    }
+
+    /**
+     * @desc gets the user's seen
+     * @param userId - the user's identifier
+     */
+    public async getSeen(userId: string): Promise<SectionPick<'BASIC'>> {
+        let seen = await this.prisma.seen.findMany({where: {userId}, include: {media: true}});
+        seen = this.randomise(seen, 10, 0);
+
+        seen = this.sortArray(seen, ['times'], ['desc']);
+        return {
+            display: 'watch again',
+            type: 'BASIC', data: seen.map(e => {
+                const {background, id, type, name, poster} = e.media;
+                return {background, id, type, name, poster}
+            }) as any
+        }
+    }
+
+    /**
+     * @desc adds a file to the download queue if the auth token is valid and the auth file exists
+     * @param auth - the auth location of the file
+     * @param authKey - the auth token to be validated
+     * @param userId - the user's identifier
+     */
+    public async addFileToDownload(auth: string, authKey: string, userId: string): Promise<string | null> {
+        const user = new User();
+        const file = await this.prisma.view.findFirst({where: {auth}, select: {video: true}});
+        const userFile = await this.prisma.user.findUnique({where: {userId}});
+        const valid = await user.validateAuthKey(authKey, userFile?.role || Role.USER);
+        if (valid === 0 && file && userFile) {
             await user.utiliseAuthKey(authKey, userId, UseCase.DOWNLOAD, auth);
-            const location = create_UUID();
-            await prisma.download.create({
+            const location = this.createUUID();
+            await this.prisma.download.create({
                 data: {
                     location, auth, userId
                 }
@@ -413,196 +450,21 @@ export default class Playback {
     }
 
     /**
-     * @param userId user to be processed
-     * @returns the suggestions of a specific user
-     */
-    async getSuggestions(userId: string): Promise<SectionInterface> {
-        let data = await prisma.suggestion.findMany({where: {userId}, include: {media: true}});
-        let info = data.map(item => {
-            return {
-                rep: item.rep, background: item.media.background,
-                id: item.mediaId, name: item.media.name,
-                type: item.media.type, poster: item.media.poster
-            }
-        });
-
-        let movies = info.randomiseDB(7, 0, MediaType.MOVIE);
-        let shows = info.randomiseDB(5, 0, MediaType.SHOW);
-
-        info = movies.concat(shows).sortKey('rep', false);
-        return {display: 'just for you', data: info, type: 'basic'}
-    }
-
-    /**
-     * @desc gets the videos the user has seen but not finished so they can continue watching
-     * @param userId
-     */
-    async getContinue(userId: string): Promise<SectionInterface> {
-        let info = await prisma.view.findMany({
-            where: {userId, position: {gt: 0}},
-            include: {video: {include: {media: true}}},
-            orderBy: [{updated: 'desc'}, {created: 'desc'}, {position: 'desc'}]
-        })
-        let data = info.map(e => {
-            return {
-                finished: e.finished,
-                backdrop: e.video.media.backdrop,
-                name: e.video.media.name, logo: e.video.media.logo,
-                type: e.video.media.type, id: e.video.media.id, position: e.position
-            }
-        }).uniqueID('id').filter(e => (e.position < 919 && e.type === MediaType.MOVIE) || (e.type === MediaType.SHOW && e.finished !== 2))
-            .map(e => {
-                return {
-                    position: e.position,
-                    backdrop: e.backdrop, name: e.name,
-                    type: e.type, logo: e.logo, id: e.id
-                }
-            });
-
-        let episode = new Episode();
-        let result: MediaSection[] = [];
-        for await (let item of data) {
-            if (result.length < 9) {
-                if (item.type === MediaType.SHOW) {
-                    let e = await this.getNextEpisode(item.id, userId);
-                    if (e && e.found) {
-                        let f = await episode.getEpisode(e.id);
-                        item.position = e.position;
-                        item.backdrop = f?.backdrop || item.backdrop;
-                        result.push(item);
-                    }
-
-                } else if (item.type === MediaType.MOVIE)
-                    result.push(item);
-
-            } else break;
-        }
-
-        return {display: 'continue watching', data: result, type: 'editor'};
-    }
-
-    /**
-     * @desc updates the position information as user streams through the file
-     * @param userId
-     * @param auth
-     * @param position
-     */
-    async updateStreamInformation(userId: string, auth: string, position: number): Promise<boolean> {
-        position = Math.ceil(position);
-        const file = await prisma.view.findFirst({
-            where: {auth, userId},
-            include: {video: {include: {media: {include: {episodes: {orderBy: [{seasonId: 'asc'}, {episode: 'asc'}]}}}}}}
-        });
-
-        if (file && position < 1001) {
-            if (position < 920)
-                await prisma.view.update({where: {id: file.id}, data: {finished: 0, position}});
-
-            else if (file.video.media.type === MediaType.MOVIE)
-                await prisma.view.update({where: {id: file.id}, data: {finished: 1, position}});
-
-            else if (file.episodeId && file.video.media.episodes) {
-                const episodes = file.video.media.episodes;
-                if (episodes.length) {
-                    const finished = episodes[episodes.length - 1].id === file.episodeId ? 2 : 1;
-                    await prisma.view.update({where: {id: file.id}, data: {finished, position}});
-                    if (finished === 2)
-                        await prisma.view.updateMany({
-                            where: {
-                                userId,
-                                video: {mediaId: file.video.media.id}
-                            }, data: {finished}
-                        })
-                }
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @desc finds media to play by their auth
-     * @param auth
-     * @param userId
-     */
-    async findByAuth(auth: string, userId: string): Promise<VideoPos | null> {
-        let views = await prisma.view.findFirst({
-            where: {auth},
-            select: {video: true, videoId: true, episodeId: true, position: true}
-        });
-        if (views) {
-            let position: any = views.position;
-            let video = views.episodeId ? await prisma.video.findMany({
-                include: {views: {where: {position: {gt: 0}}}},
-                where: {mediaId: views.video.mediaId, views: {some: {userId, episodeId: views.episodeId}}}
-            }) : await prisma.video.findMany({
-                include: {views: {where: {position: {gt: 0}}}},
-                where: {mediaId: views.video.mediaId, views: {some: {userId}}}
-            });
-
-            if (video.length) {
-                let view = video[0].views.sortKey('updated', false)[0];
-                position = view ? view.position : position;
-            }
-
-            return {
-                videoId: views.videoId,
-                id: views.episodeId ? views.episodeId : views.video.mediaId,
-                mediaId: views.video.mediaId,
-                position: position > 920 ? 0 : position,
-                found: true
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @desc attempts to stream a video to the client, this doesn't work on SAAS infrastructures like Vercel
-     * @param auth
-     * @param req
-     * @param res
-     */
-    async playFile(auth: string, req: NextApiRequest, res: NextApiResponse) {
-        const file = await prisma.view.findFirst({where: {auth}, select: {video: true}});
-        const down = await prisma.download.findFirst({
-            where: {location: auth},
-            select: {created: true, view: {select: {auth: true, video: true}}}
-        });
-
-        if (file)
-            if (req.headers.range)
-                await drive.streamFile(file.video.location, res, req.headers.range);
-
-            else res.status(400).json('no range provided');
-
-        else if (down && (new Date(down.created).getTime() + (1000 * 60 * 60 * 2) > Date.now())) {
-            const {location, name} = await this.getName(down.view.auth);
-            await drive.rawDownload(location, name, res);
-
-        } else
-            res.status(404).json('file not found');
-    }
-
-    /**
      * @desc gets the SRT|VTT and converts them to frames Subtitles
-     * @param auth
-     * @param language
-     * @param pure
+     * @param auth - the auth string
+     * @param language - the language of the subtitles
+     * @param pure - whether to return the pure subtitles or the frames
      */
-    async getSub(auth: string, language: string, pure?: boolean): Promise<Subtitles | string | null> {
-        const file: { video: { [key: string]: any } } | null = await prisma.view.findFirst({
+    public async getSub(auth: string, language: string, pure?: boolean): Promise<Sub[] | string | null> {
+        const file: { video: { [key: string]: any } } | null = await this.prisma.view.findFirst({
             where: {auth},
             select: {video: true}
         });
-        if (file && file.video && file.video.hasOwnProperty(language) && file.video[language] !== null && file.video[language] !== '') {
-            const sub = file.video[language];
+        if (file && file.video && file.video.hasOwnProperty(language.toLowerCase()) && file.video[language.toLowerCase()] !== null && file.video[language.toLowerCase()] !== '') {
+            const sub = file.video[language.toLowerCase()];
             let res: string | null = null;
             try {
-                const data = await got(sub)
-                res = data.body;
+                res = await this.fetch(sub).then(res => res.text());
             } catch (e) {
                 return null;
             }
@@ -627,7 +489,7 @@ export default class Playback {
                             }
 
                             let line = 0;
-                            if (!s[0].match(/\d+:\d+:\d+/) && s[1].match(/\d+:\d+:\d+/)) {
+                            if (!s[0]?.match(/\d+:\d+:\d+/) && s[1]?.match(/\d+:\d+:\d+/)) {
                                 cue += s[0].match(/\w+/) + "\n";
                                 line++;
                             }
@@ -653,7 +515,7 @@ export default class Playback {
 
                 } else {
                     res = res.replace(/\r\n|\r|\n/g, '\n');
-                    const subtitle: Subtitles = [];
+                    const subtitle: Sub[] = [];
                     const sections = res.split('\n\n');
                     for (let item of sections) {
                         let section = item.split('\n');
@@ -661,11 +523,23 @@ export default class Playback {
                             const id = +(section[0]);
                             const range = section[1].split(' --> ');
                             if (range.length > 1) {
-                                const start = parseTime(range[0]);
-                                const end = parseTime(range[1]);
+                                const start = this.parseTime(range[0]);
+                                const end = this.parseTime(range[1]);
                                 const diff = end - start;
-                                const text = section.slice(2).join(' ');
-                                subtitle.push({id, start, end, diff, text});
+                                let text = section.slice(2).join(' ');
+                                if (/<font/i.test(text))
+                                    continue;
+
+                                const italic = !!text.match(/\b(?:[iI]\b|\b[iI]\b)/g);
+                                const bold = !!text.match(/\b(?:[bB]\b|\b[bB]\b)/g);
+                                const underline = !!text.match(/\b(?:[uU]\b|\b[uU]\b)/g);
+                                text = text.replace(/<\/\w+>|<\w+>/g, '');
+                                const style = {
+                                    fontStyle: italic ? 'italic' : 'normal',
+                                    fontWeight: bold ? 'bold' : 'normal',
+                                    textDecoration: underline ? 'underline' : 'none'
+                                };
+                                subtitle.push({id, start, end, diff, text, style});
                             }
                         }
                     }
@@ -679,63 +553,332 @@ export default class Playback {
     }
 
     /**
-     * @desc returns the backdrop of a video to be played
-     * @param mediaId
-     * @param episodeBool
+     * @desc gets the next episode for playback based on user's activity
+     * @param mediaId - the media id
+     * @param userId - the user id
+     * @protected
      */
-    async getNextHolder(mediaId: number, episodeBool = false): Promise<UpNextHolder | null> {
-        if (episodeBool) {
-            const file = await prisma.episode.findFirst({where: {id: mediaId}, select: {media: true}});
-            if (file) {
-                const episode = new Episode();
-                const episodeInfo = await episode.getEpisode(mediaId);
-                if (episodeInfo)
-                    return {
-                        mediaId: file.media.id,
-                        name: file.media.name,
-                        overview: episodeInfo.overview || file.media.overview,
-                        logo: file.media.logo,
-                        episodeName: /^Episode \d+/.test(episodeInfo.name) ? `${file.media.name}: S${episodeInfo.seasonId}, E${episodeInfo.episode}` : `S${episodeInfo.seasonId}, E${episodeInfo.episode}: ${episodeInfo.name}`,
-                        backdrop: file.media.backdrop,
+    protected async getNextEpisodeForUser(mediaId: number, userId: string): Promise<{ episode: Episode, position: number } | null> {
+        const watched = await this.prisma.watched.findMany({where: {userId, mediaId}, orderBy: {updated: 'desc'}});
+        if (watched.length > 0) {
+            if (watched[0].episodeId) {
+                if (watched[0].position > 939) {
+                    const firstEpisode = await this.mediaClass.getNextEpisode(mediaId, watched[0].episodeId, 'first');
+                    const nextEpisode = await this.mediaClass.getNextEpisode(mediaId, watched[0].episodeId, 'next');
+                    if (nextEpisode)
+                        return {episode: nextEpisode, position: 0};
+
+                    else if (firstEpisode) {
+                        const episode = await this.prisma.episode.findMany({where: {showId: mediaId}});
+                        const notWatched = episode.filter(e => watched.every(w => w.episodeId !== e.id));
+                        const data = notWatched.map(e => {
+                            return {
+                                userId, mediaId,
+                                videoId: e.videoId,
+                                position: 1000,
+                                episodeId: e.id,
+                                finished: 2,
+                                times: 1,
+                                updated: new Date()
+                            }
+                        })
+
+                        await this.prisma.watched.createMany({data});
+                        await this.prisma.watched.updateMany({
+                            where: {userId, mediaId, times: {lt: 1}},
+                            data: {times: 1, finished: 2}
+                        })
+                        return {episode: firstEpisode, position: 0};
                     }
+
+                } else {
+                    const episode = await this.prisma.episode.findUnique({where: {id: watched[0].episodeId}});
+                    if (episode)
+                        return {episode, position: watched[0].position};
+                }
             }
 
-        }
-
-        const file = await prisma.media.findFirst({where: {id: mediaId}});
-        if (file) {
-            const {name, logo, backdrop, overview} = file;
-            return {name, logo, backdrop, overview, mediaId};
+        } else {
+            const episode = await this.mediaClass.getNextEpisode(mediaId, 0, 'first');
+            if (episode)
+                return {episode, position: 0};
         }
 
         return null;
     }
 
     /**
-     * @desc returns the name and location of the file requested
-     * @param auth file identification
+     * @desc gets the next videoId to be used based on the user's seen
+     * @param videoId - the current video identifier
+     * @param userId - the user's identifier
      */
-    async getName(auth: string): Promise<{ location: string, name: string }> {
-        const view = await prisma.view.findFirst({
-            where: {auth},
-            include: {video: {include: {media: true, episode: true}}}
+    public async getNextVideoId(videoId: number, userId: string): Promise<number | null> {
+        const video = await this.prisma.video.findUnique({
+            where: {
+                id: videoId
+            }, include: {media: {include: {episodes: true}}, episode: true}
         });
 
-        if (view) {
-            const location = view.video.location;
-            if (view.video.media.type === MediaType.MOVIE)
-                return {location, name: view.video.media.name};
+        if (video) {
+            const media = video.media;
+            if (media.type === MediaType.MOVIE) {
+                if (media.collection) {
+                    const col = media.collection as any as { id: number };
+                    const collections = await this.prisma.media.findMany({
+                        where: {
+                            AND: [
+                                {
+                                    collection: {
+                                        path: ['id'],
+                                        equals: col.id
+                                    }
+                                },
+                            ]
+                        }, orderBy: {release: 'asc'},
+                        include: {videos: true}
+                    });
 
-            else if (view.video.episode) {
-                const episode = await episodeClass.getEpisode(view.video.episode.id);
-                if (episode)
-                    return {
-                        location,
-                        name: view.video.media.name + (/^Episode \d+/.test(episode.name) ? ` Season ${episode.seasonId} - Episode ${episode.episode}` : ` S${episode.seasonId} - E${episode.episode}: ${episode.name}`)
-                    }
+                    const medIndex = collections.findIndex(m => m.id === media.id);
+                    const next = medIndex !== -1 && medIndex + 1 < collections.length ? collections[medIndex + 1] : null;
+                    if (next)
+                        return next.videos[0].id;
+                }
+            } else if (video.episode) {
+                const nextEpisode = await this.mediaClass.getNextEpisode(video.media.id, video.episode.id, 'next');
+                if (nextEpisode)
+                    return nextEpisode.videoId;
+            }
+
+            const recommended = await this.tmdb?.getRecommendations(media.tmdbId, media.type);
+            if (recommended?.length) {
+                const tmdbIds = recommended.map(item => item.id).filter(id => id !== video.media.tmdbId);
+                const med = await this.prisma.media.findMany({
+                    where: {AND: [{tmdbId: {in: tmdbIds}}, {type: media.type}]},
+                    include: {videos: true}
+                });
+                if (med.length) {
+                    const next = med[Math.floor(Math.random() * med.length)];
+                    if (next.type === MediaType.MOVIE)
+                        return next.videos[0].id;
+
+                    const nextEpisode = await this.getNextEpisodeForUser(next.id, userId);
+                    if (nextEpisode)
+                        return nextEpisode.episode.videoId;
+                }
+            }
+
+            const randoms = await this.prisma.media.findMany({
+                where: {AND: [{type: media.type}, {NOT: {id: media.id}}]},
+                orderBy: {release: 'asc'},
+                include: {videos: true}
+            });
+
+            const random = randoms[Math.floor(Math.random() * randoms.length)];
+            if (random && random.type === MediaType.MOVIE)
+                return random.videos[0].id;
+
+            const nextEpisode = await this.getNextEpisodeForUser(random.id, userId);
+            if (nextEpisode)
+                return nextEpisode.episode.videoId;
+        }
+
+        return null;
+    }
+
+    /**
+     * @desc Get the current playing media information using the current auth
+     * @param auth - The auth object
+     * @param userId - The user identifier
+     * @param inform - If the database should be informed about the current playing media
+     */
+    public async getPlayBack(auth: string, userId: string, inform: boolean): Promise<SpringLoad | null> {
+        const videoRes = await this.prisma.view.findFirst({
+            where: {auth},
+            include: {episode: true, video: {include: {media: true}}}
+        });
+
+        if (videoRes) {
+            const {episode, video} = videoRes;
+            return await this.handlePlayBackCreation(video, userId, videoRes.playlistId, episode, inform && videoRes.inform);
+        }
+
+        return null;
+    }
+
+    public async getBrowse(data: { genres: string[], decade: string, mediaType: MediaType }, page: number, userId: string) {
+        const {genres, decade, mediaType} = data;
+        let media: Med[] = [];
+
+        if (genres.length === 0 && decade === '') {
+            const data = await this.prisma.suggestion.findMany({
+                where: {userId}, include: {media: true}, orderBy: {times: 'desc'},
+                skip: (page - 1) * 100, take: 100
+            })
+
+            media = data.map(item => item.media).filter(item => item.type === mediaType);
+        } else if (genres.length > 0 && decade !== '') {
+            const newDecade = +decade.replace('s', '');
+            const decadeStart = new Date(newDecade, 0, 1);
+            const decadeEnd = new Date(newDecade + 10, 0, 1);
+            const data = genres.reduce((acc, genre) => genre + ' & ' + acc, '').replace(/\s&\s$/, '');
+
+            media = await this.prisma.media.findMany({
+                where: {
+                    AND: [
+                        {type: mediaType},
+                        {release: {gt: decadeStart}},
+                        {release: {lte: decadeEnd}},
+                        // @ts-ignore
+                        {genre: {search: data}}
+                    ]
+                },
+                skip: (page - 1) * 100,
+                take: 100, orderBy: [{release: 'desc'}, {vote_average: 'desc'}]
+            });
+        } else if (genres.length > 0 && decade === '') {
+            const data = genres.reduce((acc, genre) => genre + ' & ' + acc, '').replace(/\s&\s$/, '');
+            media = await this.prisma.media.findMany({
+                where: {
+                    AND: [
+                        {type: mediaType},
+                        // @ts-ignore
+                        {genre: {search: data}}
+                    ]
+                },
+                skip: (page - 1) * 100,
+                take: 100, orderBy: [{release: 'desc'}, {vote_average: 'desc'}]
+            });
+
+        } else {
+            const newDecade = +decade.replace('s', '');
+            const decadeStart = new Date(newDecade, 0, 1);
+            const decadeEnd = new Date(newDecade + 10, 0, 1);
+            media = await this.prisma.media.findMany({
+                where: {
+                    AND: [
+                        {type: mediaType},
+                        {release: {gt: decadeStart}},
+                        {release: {lte: decadeEnd}}
+                    ]
+                },
+                skip: (page - 1) * 100,
+                take: 100, orderBy: [{release: 'desc'}, {vote_average: 'desc'}]
+            });
+        }
+
+        const newData: Pick<Med, 'id' | 'type' | 'backdrop' | 'logo' | 'name' | 'genre' | 'release'>[] = media.map(item => {
+            let {id, type, backdrop, logo, name, genre, release} = item;
+            release = release || new Date();
+            return {id, type, backdrop, logo, name, genre, release};
+        });
+
+        return newData;
+    }
+
+    /**
+     * @desc Get the current playing media information using the current auth
+     * @param videoId - The video identifier
+     * @param userId - The user identifier
+     * @param inform - Whether to inform the user
+     * @param playlistId - The playlist video identifier
+     */
+    protected async setPlayBack(videoId: number, userId: string, inform: boolean, playlistId: number | null): Promise<SpringLoad | null> {
+        const episode = await this.prisma.episode.findFirst({where: {videoId}});
+        const video = await this.prisma.video.findFirst({where: {id: videoId}, include: {media: true}});
+
+        if (video)
+            return await this.handlePlayBackCreation(video, userId, playlistId, episode, inform);
+
+        return null;
+    }
+
+    /**
+     * @desc Handle the creation of the play back information
+     * @param video - The video object
+     * @param userId - The user identifier
+     * @param playlistId - The playlist video identifier
+     * @param episode - The episode object
+     * @param inform - The inform? variable
+     */
+    private async handlePlayBackCreation(video: (Video & { media: Med }), userId: string, playlistId: number | null, episode: Episode | null, inform: boolean): Promise<SpringLoad | null> {
+        const {media, english, french, german} = video;
+        let episodeName: string | null = null;
+        let location = this.createUUID();
+
+        let {overview, backdrop, poster, logo, name} = media;
+        if (episode) {
+            const episodeInfo = await this.mediaClass.getEpisode(episode.id);
+            if (episodeInfo) {
+                overview = episodeInfo.overview || overview;
+                episodeName = episodeInfo.name;
             }
         }
 
-        return {location: '', name: ''};
+        let subs = [];
+        if (!english && !french && !german)
+            subs = await this.scanner.getSub({...video, episode}, location);
+
+        else {
+            if (english)
+                subs.push({
+                    language: 'English',
+                    url: '/api/stream/subtitles?auth=' + location + '&language=english',
+                    label: 'English',
+                    lang: 'en'
+                });
+
+            if (french)
+                subs.push({
+                    language: 'French',
+                    url: '/api/stream/subtitles?auth=' + location + '&language=french',
+                    label: 'Français',
+                    lang: 'fr'
+                });
+
+            if (german)
+                subs.push({
+                    language: 'German',
+                    url: '/api/stream/subtitles?auth=' + location + '&language=german',
+                    label: 'Deutsch',
+                    lang: 'de'
+                });
+        }
+
+        const user = await this.prisma.user.findFirst({where: {userId}});
+        if (user) {
+            inform = user.inform ? inform : false;
+            const obj = {
+                inform,
+                playlistId,
+                videoId: video.id,
+                episodeId: episode?.id,
+                auth: location, userId,
+                created: new Date(),
+                updated: new Date(),
+            };
+
+            const watched = await this.prisma.watched.findUnique({where: {seenByUser: {userId, videoId: video.id}}});
+
+            await this.prisma.view.upsert({
+                where: {auth: location},
+                update: obj,
+                create: obj
+            });
+
+            return {
+                playlistId,
+                videoId: video.id,
+                mediaId: media.id,
+                episodeId: episode?.id || null,
+                autoPlay: user.autoplay,
+                playerId: this.createUUID(), frame: false,
+                location, inform, overview, activeSub: user.defaultLang,
+                logo, backdrop, name, poster, cdn: this.regrouped.user?.cdn || '/api/streamVideo?auth=',
+                position: inform ? (watched?.position || 0) > 939 ? 0 : (watched?.position || 0) : 0,
+                episodeName, subs, guest: user.role === Role.GUEST
+            };
+        }
+
+        return null;
     }
 }

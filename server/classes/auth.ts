@@ -1,11 +1,14 @@
 import bcrypt from 'bcrypt';
-import {Role, UseCase} from '@prisma/client';
-import {create_UUID, generateKey, get} from "../base/baseFunctions";
-import {prisma} from '../base/utils';
-import env from "../base/env";
+import fetch from 'cross-fetch';
+import {PrismaClient, Role, UseCase} from '@prisma/client';
 import requestIp from "request-ip";
 import parser from "ua-parser-js";
 import {NextApiRequest} from "next";
+import {RestAPI} from "./stringExt";
+import {Regrouped} from "../lib/environment";
+import {regrouped} from "../lib/environment";
+import {prisma} from "./utils";
+import {Aggregate} from "./tmdb";
 
 interface IP {
     status: string;
@@ -24,12 +27,10 @@ interface IP {
     query: string;
 }
 
-const environment = env.config;
-
 export interface AuthInterface {
     error?: string
     response?: string
-    payLoad?: { userId: string, session: string, context: Role, email: string }
+    payLoad?: {session: string, context: Role, email: string, validUntil: number, notificationChannel: string }
 }
 
 export interface ManageAuthKey {
@@ -41,18 +42,36 @@ export interface ManageAuthKey {
     access: number;
 }
 
-export class Session {
+export class Base extends RestAPI {
+    protected readonly fetch: (input: RequestInfo, init?: (RequestInit | undefined)) => Promise<Response>;
+    protected readonly prisma: PrismaClient;
+    protected tmdb: Aggregate | null;
+    protected readonly regrouped: Regrouped = regrouped;
+    protected readonly socket: any;
+
+    constructor() {
+        super();
+        this.prisma = prisma;
+        this.fetch = fetch;
+        if (this.regrouped.tmdbToken)
+            this.tmdb = new Aggregate(this.regrouped.tmdbToken);
+        else
+            this.tmdb = null;
+    }
+}
+
+export class Session extends Base {
 
     /**
      * @desc confirms that session /Session exists if account is guest, the account is deleted
-     * @param session
+     * @param session - session to check
      */
-    async validateSession(session: string): Promise<AuthInterface> {
-        let result = await prisma.session.findFirst({where: {session}, include: {user: true}});
+    public async validateSession(session: string): Promise<AuthInterface> {
+        let result = await this.prisma.session.findFirst({where: {session}, include: {user: true}});
         if (result) {
             if (result.user.role === Role.GUEST) {
                 try {
-                    await prisma.user.delete({where: {userId: result.userId}});
+                    await this.prisma.user.delete({where: {userId: result.userId}});
                 } catch (e) {
                     console.log(e);
                 }
@@ -62,7 +81,13 @@ export class Session {
 
             return result.valid > new Date() ? {
                 response: 'valid',
-                payLoad: {userId: result.userId, session, context: result.user.role, email: result.user.email}
+                payLoad: {
+                    session,
+                    validUntil: new Date(result.valid).getTime(),
+                    context: result.user.role,
+                    email: result.user.email,
+                    notificationChannel: result.user.notificationChannel
+                }
             } : {error: 'app id has expired'};
         }
 
@@ -70,37 +95,37 @@ export class Session {
     }
 
     /**
-     * @param userId user id to be stored with generated auth key
-     * @returns an session
+     * @desc creates a new session for a user
+     * @param userId - user id to be stored with generated auth key
      */
-    async generateSession(userId: string): Promise<string> {
-        const session = generateKey(5, 5);
+    public async generateSession(userId: string): Promise<{session: string, validUntil: number}> {
+        const session = this.generateKey(5, 5);
         let valid = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
-        await prisma.session.create({
+        await this.prisma.session.create({
             data: {
                 session: session, valid: new Date(valid),
                 userId, created: new Date()
             }
         })
-        return session;
+        return {session, validUntil: valid};
     }
 
     /**
      * @desc clears out all sessions for a specific user
-     * @param session
-     * @param userId
+     * @param session - session to be cleared
+     * @param userId - user id to be cleared
      */
-    async clearSession(session: string, userId = false): Promise<boolean> {
+    public async clearSession(session: string, userId = false): Promise<boolean> {
         if (userId) {
-            await prisma.userIdentifier.deleteMany({where: {userId: session}});
-            const user = await prisma.session.deleteMany({where: {userId: session}});
+            await this.prisma.userIdentifier.deleteMany({where: {userId: session}});
+            const user = await this.prisma.session.deleteMany({where: {userId: session}});
             return user.count > 0;
 
         } else {
-            let result = await prisma.session.findFirst({where: {session}});
+            let result = await this.prisma.session.findFirst({where: {session}});
             if (result) {
-                await prisma.userIdentifier.deleteMany({where: {userId: result.userId}});
-                const user = await prisma.session.deleteMany({where: {userId: result.userId}});
+                await this.prisma.userIdentifier.deleteMany({where: {userId: result.userId}});
+                const user = await this.prisma.session.deleteMany({where: {userId: result.userId}});
                 return user.count > 0;
             }
         }
@@ -110,13 +135,16 @@ export class Session {
 
     /**
      * @desc deletes a specific session for a user
-     * @param session
+     * @param session - session to be deleted
      */
-    async clearSingleSession(session: string) {
-        const state = await prisma.session.findUnique({where: {session}});
+    public async clearSingleSession(session: string) {
+        const state = await this.prisma.session.findUnique({where: {session}, include: {user: true}});
         if (state) {
             try {
-                await prisma.session.delete({where: {session}});
+                if (state.user.role === Role.GUEST)
+                    await this.prisma.user.delete({where: {userId: state.userId}});
+                else
+                    await this.prisma.session.delete({where: {session}});
             } catch (e) {
                 console.log(e)
             }
@@ -125,17 +153,18 @@ export class Session {
 
     /**
      * @desc saves the identity of a specific user's session
-     * @param userId
-     * @param sessionId
-     * @param req
+     * @param sessionId - session id to be stored
+     * @param req - request object
      */
-    async saveIdentity(userId: string, sessionId: string, req: NextApiRequest) {
+    public async saveIdentity(sessionId: string, req: NextApiRequest) {
         const address = requestIp.getClientIp(req);
+        const user = await this.getUserFromSession(sessionId);
         const ua = parser(req.headers['user-agent']);
-        if (address && address !== '127.0.0.1') {
+        if (address && address !== '127.0.0.1' && user) {
             const osName = ua.os.name;
+            const userId = user.userId;
             const browserName = ua.browser.name + ' ' + ua.browser.version;
-            const identity = await prisma.userIdentifier.findFirst({where: {address}});
+            const identity = await this.prisma.userIdentifier.findFirst({where: {address}});
             let country: string, regionName: string, city: string;
 
             if (identity) {
@@ -144,20 +173,31 @@ export class Session {
                 regionName = identity.regionName;
 
             } else {
-                const client: IP | false = await get('http://ip-api.com/json/' + address);
-                city = client === false ? '' : client.city;
-                country = client === false ? '' : client.country;
-                regionName = client === false ? '' : client.regionName;
+                const client = await this.makeRequest<IP>('http://ip-api.com/json/' + address, null, 'GET');
+                city = client?.city || '';
+                country = client?.country || '';
+                regionName = client?.regionName || '';
             }
 
             const data = {osName: osName || '', userId, browserName, sessionId, address, regionName, country, city};
             if (city && country && regionName)
-                await prisma.userIdentifier.upsert({
+                await this.prisma.userIdentifier.upsert({
                     create: data,
                     update: data,
                     where: {sessionId}
                 });
         }
+    }
+
+    /**
+     * @desc gets a user from a session
+     * @param sessionId - session id to be stored
+     */
+    public async getUserFromSession(sessionId: string) {
+        const session = await this.prisma.session.findUnique({where: {session: sessionId}, include: {user: true}});
+        if (session)
+            return session.user;
+        return null;
     }
 }
 
@@ -165,21 +205,21 @@ export class Auth extends Session {
 
     /**
      * @desc verifies the role of the provided user
-     * @param userId
+     * @param userId - user id to be verified
      */
-    async validateUser(userId: string): Promise<boolean> {
-        const user = await prisma.user.findFirst({where: {userId}});
+    public async validateUser(userId: string): Promise<boolean> {
+        const user = await this.prisma.user.findFirst({where: {userId}});
         return user ? user.role === Role.ADMIN : false;
     }
 
     /**
      * @desc generates an auth key if the user has the right to generate one
-     * @param userId
+     * @param userId - user id to be verified
      */
-    async generateAuthKey(userId: string): Promise<string | null> {
+    public async generateAuthKey(userId: string): Promise<string | null> {
         if (await this.validateUser(userId)) {
-            const authKey = generateKey(4, 5);
-            await prisma.auth.create({
+            const authKey = this.generateKey(4, 5);
+            await this.prisma.auth.create({
                 data: {
                     authKey,
                     userId, access: 0,
@@ -194,15 +234,15 @@ export class Auth extends Session {
 
     /**
      * @desc checks if the auth key is valid or even exists
-     * @param authKey
-     * @param context
+     * @param authKey - auth key to be checked
+     * @param context - context of the request
      */
-    async validateAuthKey(authKey: string, context: Role): Promise<number> {
+    public async validateAuthKey(authKey: string, context: Role): Promise<number> {
         let value = -1;
         if (authKey === 'homeBase' && (context === Role.ADMIN || context === Role.GUEST))
             value = 0;
 
-        const authFile = await prisma.auth.findUnique({where: {authKey}});
+        const authFile = await this.prisma.auth.findUnique({where: {authKey}});
         if (authFile)
             value = authFile.access;
 
@@ -211,16 +251,16 @@ export class Auth extends Session {
 
     /**
      * @desc clears out the auth key by assigning a user to it and updating the accessing
-     * @param authKey
-     * @param userId
-     * @param useCase
-     * @param authView
+     * @param authKey - auth key to be cleared
+     * @param userId - user id to be assigned
+     * @param useCase - use case of the request
+     * @param authView - auth view of the request
      */
-    async utiliseAuthKey(authKey: string, userId: string, useCase: UseCase, authView: string | null = null) {
-        const auth = await prisma.auth.findUnique({where: {authKey}});
-        const user = await prisma.user.findUnique({where: {userId}});
+    public async utiliseAuthKey(authKey: string, userId: string, useCase: UseCase, authView: string | null = null) {
+        const auth = await this.prisma.auth.findUnique({where: {authKey}});
+        const user = await this.prisma.user.findUnique({where: {userId}});
         if (user && auth && auth.access === 0)
-            await prisma.auth.update({
+            await this.prisma.auth.update({
                 where: {authKey},
                 data: {userId, access: auth.access + 1, auth: authView, useCase}
             })
@@ -231,11 +271,11 @@ export class Auth extends Session {
 
     /**
      * @desc provides information about all keys on the database
-     * @param userId user requesting the information
+     * @param userId - user requesting the information
      */
-    async getKeys(userId: string): Promise<ManageAuthKey[]> {
+    public async getKeys(userId: string): Promise<ManageAuthKey[]> {
         if (await this.validateUser(userId)) {
-            const keys = await prisma.auth.findMany({
+            const keys = await this.prisma.auth.findMany({
                 include: {
                     user: true,
                     view: {include: {episode: true, video: {include: {media: true}}}}
@@ -246,7 +286,7 @@ export class Auth extends Session {
 
             for (let item of keys) {
                 let description = '';
-                let backdrop = '/frames.png';
+                let backdrop = '';
 
                 if (item.access === 0)
                     description = item.user.email + ' created this auth key';
@@ -283,21 +323,23 @@ export default class User extends Auth {
 
     /**
      * @desc creates a new user with the given details
-     * @param email
-     * @param password
-     * @param username
-     * @param authKey
-     * @param role
+     * @param email - email of the user
+     * @param password - password of the user
+     * @param authKey - auth key of the user
+     * @param role - role of the user
      * @returns Promise<AuthInterface> auth object on with either error or response on success
      */
-    async register(email: string, password: string, username: string, authKey: string, role: Role = Role.USER): Promise<AuthInterface> {
+    public async register(email: string, password: string, authKey: string, role?: Role): Promise<AuthInterface> {
+        role = role || Role.USER;
+        const confirmedEmail = role === Role.OAUTH || role === Role.GUEST;
         password = await bcrypt.hash(password, 10);
-        let userId = create_UUID();
+        const notificationChannel = this.generateKey(13, 7);
+        let userId = this.createUUID();
 
-        let user = await prisma.user.findFirst({where: {OR: [{email}, {username}]}});
+        let user = await this.prisma.user.findFirst({where:{email}});
 
         if (user)
-            return {error: 'this ' + (user.email === email ? 'email' : 'username') + ' already exists'};
+            return {error: 'this email already exists'};
 
         const validAuth = await this.validateAuthKey(authKey, role);
         if (validAuth !== 0) {
@@ -305,88 +347,94 @@ export default class User extends Auth {
             return {error};
         }
 
-        await prisma.user.create({
-            data: {email, username, password, userId, role}
+        const userRes = await this.prisma.user.create({
+            data: {email, password, userId, role, confirmedEmail, notificationChannel}
         });
+
         await this.utiliseAuthKey(authKey, userId, UseCase.SIGNUP);
-        return {
-            response: 'created',
-            payLoad: {email, session: await this.generateSession(userId), userId, context: role}
+        return !confirmedEmail ? {error: 'Please check your email for a verification link'}: {
+            response: 'User created successfully',
+            payLoad: {
+                email: userRes.email,
+                context: userRes.role,
+                notificationChannel: userRes.notificationChannel,
+                ...await this.generateSession(userRes.userId)
+            }
         };
     }
 
     /**
      * @desc attempts to log in a user with the given credentials
-     * @param email
-     * @param password
+     * @param email - email of the user
+     * @param password - password of the user
      * @returns Promise<AuthInterface> auth object with payload on success just error
      */
-    async authenticateUser(email: string, password: string): Promise<AuthInterface> {
-        let user = await prisma.user.findFirst({where: {email}})
-        if (user) {
+    public async authenticateUser(email: string, password: string): Promise<AuthInterface> {
+        let user = await this.prisma.user.findFirst({where: {email}})
+        if (user)
             if (await bcrypt.compare(password, user.password))
-                return {
-                    response: 'logged in',
-                    payLoad: {
-                        email: user.email,
-                        context: user.role,
-                        userId: user.userId,
-                        session: await this.generateSession(user.userId)
-                    }
-                };
+                if (user.confirmedEmail)
+                    return {
+                        response: 'logged in',
+                        payLoad: {
+                            email: user.email,
+                            context: user.role,
+                            notificationChannel: user.notificationChannel,
+                            ...await this.generateSession(user.userId)
+                        }
+                    };
 
-            return {error: 'Incorrect password'};
-        }
+                else
+                    return {error: 'email not confirmed'};
 
-        return {error: 'No such user exists'};
+            else
+                return {error: 'Incorrect password'};
+
+        else
+            return {error: 'No such user exists'};
     }
 
     /**
-     * @description checks if the email exists for the react form
-     * @param email
+     * @desc checks if the email exists for the react form
+     * @param email - email of the user
      * @returns boolean !!user exists
      */
-    async validateEmail(email: string): Promise<boolean> {
-        let user = await prisma.user.findFirst({where: {email}});
+    public async validateEmail(email: string): Promise<boolean> {
+        let user = await this.prisma.user.findFirst({where: {email}});
         return !!user;
     }
 
     /**
      * @desc attempts to modify a user's details with the given credentials
-     * @param email
-     * @param password
-     * @param username
-     * @param userId
+     * @param email - email of the user
+     * @param password - password of the user
+     * @param userId - userId of the user
      */
-    async modifyUser(email: string, password: string, username: string, userId: string) {
+    public async modifyUser(email: string, password: string, userId: string) {
         password = await bcrypt.hash(password, 10);
-        const user = await prisma.user.findUnique({where: {userId}});
+        const user = await this.prisma.user.findUnique({where: {userId}});
         if (user) {
             if (user.role !== Role.OAUTH) {
                 await this.clearSession(userId, true);
-                await prisma.user.update({
+                await this.prisma.user.update({
                     data: {
-                        email, password, username
+                        email, password
                     }, where: {userId}
                 })
-
-            } else await prisma.user.update({
-                data: {username}, where: {userId}
-            })
+            }
         }
     }
 
     /**
      * @desc creates a user from their OAUTH2 credentials
-     * @param email
-     * @param password
-     * @param username
-     * @param authKey
+     * @param email - email of the user
+     * @param password - password of the user
+     * @param authKey - auth key of the user
      */
-    async oauthHandler(email: string, password: string, username: string, authKey: string): Promise<AuthInterface> {
+    public async oauthHandler(email: string, password: string, authKey: string): Promise<AuthInterface> {
         let response = await this.authenticateUser(email, `${password}`);
         if (response.error && response.error === 'No such user exists')
-            response = await this.register(email, `${password}`, username, authKey, Role.OAUTH);
+            response = await this.register(email, `${password}`, authKey, Role.OAUTH);
 
         return response;
     }
@@ -394,75 +442,58 @@ export default class User extends Auth {
     /**
      * @desc creates the admin account and the guest accounts if they do not exist
      */
-    async createAccounts() {
-        let password = generateKey(4, 5);
+    public async createAccounts() {
+        let password = this.generateKey(4, 5);
         password = await bcrypt.hash(password, 10);
-        await prisma.user.upsert({
-            create: {password, email: 'guest@frames.local', role: Role.GUEST, userId: create_UUID()},
+        await this.prisma.user.upsert({
+            create: {confirmedEmail: true, password, email: 'guest@frames.local', role: Role.GUEST, userId: this.createUUID()},
             update: {},
             where: {email: 'guest@frames.local'}
         });
-        if (environment.admin_mail !== '' && environment.admin_pass !== '')
-            await prisma.user.upsert({
+        await this.prisma.user.upsert({
+            where: {email: 'frames AI'},
+            create: {confirmedEmail: true, password, email: 'frames AI', role: Role.ADMIN, userId: this.createUUID()},
+            update: {}
+        });
+        if (this.regrouped.user)
+            await this.prisma.user.upsert({
                 create: {
-                    password: await bcrypt.hash(environment.admin_pass, 10),
-                    email: environment.admin_mail,
+                    confirmedEmail: true,
+                    password: await bcrypt.hash(this.regrouped.user.admin_pass, 10),
+                    email: this.regrouped.user.admin_mail,
                     role: Role.ADMIN,
-                    userId: create_UUID()
+                    userId: this.createUUID()
                 },
                 update: {},
-                where: {email: environment.admin_mail}
+                where: {email: this.regrouped.user.admin_mail}
             });
     }
 
     /**
-     * @desc gets the guest user, useful for SEO displays and other critical things
-     */
-    async getGuest(): Promise<string> {
-        const user = await prisma.user.findUnique({where: {email: 'guest@frames.local'}});
-        if (user)
-            return user.userId;
-
-        return 'unknown';
-    }
-
-    /**
      * @desc creates a guest user that in theory should be usable for one session
+     * @param password - email of the user
      */
-    async createGuestUser(password: string) {
-        const username = password;
+    public async createGuestUser(password: string) {
         const email = password + '@frames.local';
-        return await this.register(email, password, username, 'homeBase', Role.GUEST);
+        return await this.register(email, password, 'homeBase', Role.GUEST);
     }
 
     /**
-     * @desc checks if a user with this userId exists
-     * @param userId
+     * @desc changes the user's password and returns the new password in plain text
+     * @param email - email of the user
      */
-    async confirmUserId(userId: string) {
-        const user = await prisma.user.findUnique({where: {userId}});
-        return !!user;
-    }
-
-    /**
-     * @desc gets a user's details using frames' framework
-     * @param userId
-     * @param session
-     */
-    async getFramedUser(userId: string, session: string): Promise<AuthInterface> {
-        await this.clearSingleSession(session);
-        const user = await prisma.user.findUnique({where: {userId}});
+    public async forgotPassword(email: string): Promise<{password?: string, error?: string}> {
+        const user = await this.prisma.user.findUnique({where: {email}});
         if (user) {
-            return {
-                payLoad: {
-                    email: user.email,
-                    context: user.role,
-                    userId: user.userId,
-                    session: await this.generateSession(user.userId)
-                }, response: user.role === Role.GUEST ? 'guest user' : 'authenticated user'
-            }
+            const password = this.generateKey(4, 5);
+            await this.prisma.user.update({
+                data: {
+                    password: await bcrypt.hash(password, 10)
+                }, where: {userId: user.userId}
+            });
+            return {password};
         }
 
-        return await this.createGuestUser('' + Date.now())
+        return {error: 'No such user exists'};
     }
 }
