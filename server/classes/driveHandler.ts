@@ -34,6 +34,8 @@ export default class DriveHandler {
             spaces: 'drive',
             orderBy: 'name',
             pageSize: 1000,
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
             pageToken: pageToken
         });
 
@@ -53,6 +55,8 @@ export default class DriveHandler {
             fields: 'files(id, name, size, mimeType)',
             spaces: 'drive',
             orderBy: 'name',
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true,
             pageSize: 10
         });
 
@@ -94,6 +98,7 @@ export default class DriveHandler {
         return new Promise(resolve => {
             this.drive.files.get({
                 fileId: fileId,
+                supportsAllDrives: true,
                 fields: "id, name, size, parents, mimeType, contentHints/thumbnail, videoMediaMetadata, thumbnailLink, explicitlyTrashed"
             }).then(response => resolve(response.data))
                 .catch(() => resolve(null))
@@ -145,6 +150,7 @@ export default class DriveHandler {
             let {data} = await this.drive.files.get({
                 fileId: id,
                 alt: 'media',
+                supportsAllDrives: true,
             }, {responseType: 'stream', headers: {Range: `bytes=${start}-${end}`}});
 
             data.pipe(dest);
@@ -160,7 +166,8 @@ export default class DriveHandler {
     moveElement = async (element: string, folder_id: string) => {
         let file = await this.drive.files.get({
             fileId: element,
-            fields: 'parents'
+            fields: 'parents',
+            supportsAllDrives: true
         });
 
         if (file && file.data && file.data.parents){
@@ -170,6 +177,7 @@ export default class DriveHandler {
                     fileId: element,
                     addParents: folder_id,
                     removeParents: parent,
+                    supportsAllDrives: true,
                     fields: 'id, parents'
                 })
             }
@@ -206,7 +214,8 @@ export default class DriveHandler {
             let value = 'attachment; filename=' + name + ' [frames].mp4';
             let {data} = await this.drive.files.get({
                 fileId: file_id,
-                alt: 'media'
+                alt: 'media',
+                supportsAllDrives: true,
             }, {responseType: 'stream'});
 
             dest.setHeader('Content-disposition', value);
@@ -226,7 +235,8 @@ export default class DriveHandler {
         { // @ts-ignore
             return await this.drive.files.update({
                 'fileId': fileId,
-                'resource': {name}
+                'resource': {name},
+                'supportsAllDrives': true,
             })
         }
         else return false;
@@ -248,7 +258,8 @@ export default class DriveHandler {
                 // @ts-ignore
                 resource: fileMetadata,
                 fields: 'id',
-                parents: parent
+                parents: parent,
+                supportsAllDrives: true,
             }, (err: any, file: { data: { id: string | PromiseLike<string>; }; }) => {
                 if (err) {
                     console.warn(err);
@@ -285,7 +296,8 @@ export default class DriveHandler {
             let {id, mimeType} = file;
             let {data} = await this.drive.files.get({
                 fileId: id!,
-                alt: 'media'
+                alt: 'media',
+                supportsAllDrives: true,
             }, {responseType: 'stream'});
 
             dest.setHeader('Content-type', mimeType!);

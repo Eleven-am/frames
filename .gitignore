@@ -2,3 +2,4 @@
 /.idea/
 /.next/
 /node_modules/
+/.env/
