@@ -6,6 +6,7 @@
     "dev": "next dev -p 5000",
     "build": "next build",
     "start": "next start",
+    "generate-env": "npx ts-node ./framesConfig.ts",
     "vercel-build": "npx prisma generate && npm run build",
     "setup": "npm install && next build && pm2 start ecosystem.config.js",
     "update": "npm install && npx prisma db push && npx prisma generate && next build",
