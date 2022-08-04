@@ -1,10 +1,6 @@
-import {createClient, SupabaseClient} from '@supabase/supabase-js';
-import cookie from "cookie";
 import {Aggregate} from "./tmdb";
 import {NextRequest} from "next/server";
-import {NextApiResponse} from "next";
-import {Download, Episode, Frame, Media, Role, Room, Video, View} from "@prisma/client";
-import {Modify} from "./scanner";
+import {Role} from "@prisma/client";
 import {RestAPI} from "./stringExt";
 import {MiddleWareInterface} from "../lib/environment";
 
@@ -28,33 +24,29 @@ export interface CookiePayload {
     validUntil: number;
     email: string;
     notificationChannel: string;
+    identifier: string;
 }
 
-const SECRET = process.env.SECRET || '';
-const MIDDLEWARE = process.env.MIDDLEWARE || '';
-
 export default class Middleware extends Aggregate {
+    public readonly cypher: string;
+    public readonly secret: string;
     private oauth: MiddlewareOauth;
     private cache: Map<string, any>;
     private readonly realtimeApiKey: string;
     private readonly realtimeNotification: string;
-    public readonly cypher: string;
-    public readonly secret: string;
-    private readonly supabase: SupabaseClient;
 
     constructor() {
         const config = Middleware.readMiddleWareEnv();
-        super({apiKey: config.externalApis.tmdbApiKey, fanArtApiKey: config.externalApis.fanArtApiKey, realTimeApiKey: config.externalApis.realTimeApiKey});
+        super({
+            apiKey: config.externalApis.tmdbApiKey,
+            fanArtApiKey: config.externalApis.fanArtApiKey,
+            realTimeApiKey: config.externalApis.realTimeApiKey
+        });
         this.cache = new Map();
         this.realtimeNotification = config.globalNotification;
         this.realtimeApiKey = config.externalApis.realTimeApiKey;
         this.cypher = config.cypher;
         this.secret = config.secret;
-        this.supabase = createClient(
-            config.externalApis.supabase.supabaseEndpoint,
-            config.externalApis.supabase.supabasePublicKey
-        )
-
         this.oauth = {
             client_id: config.client_id,
             client_secret: config.client_secret,
@@ -62,6 +54,43 @@ export default class Middleware extends Aggregate {
             refreshToken: config.refresh_token,
             expiresIn: config.expiry_date
         };
+    }
+
+    /**
+     * @desc reads the middleware config file
+     * @private
+     */
+    private static readMiddleWareEnv() {
+        const restApi = new RestAPI();
+        const SECRET = process.env.SECRET || '';
+        const MIDDLEWARE = process.env.MIDDLEWARE || '';
+        const middleware = restApi.decrypt<MiddleWareInterface>(SECRET, MIDDLEWARE);
+        if (middleware) return middleware;
+
+        else throw new Error('No Configurations found');
+    }
+
+    /**
+     * @desc gets the meta tags for the page
+     * @param type - type of the page
+     * @param value - value of the page
+     * @param hostname - hostname of the page
+     * @private
+     */
+    private static async getMetaTags(type: string, value: string, hostname: string) {
+        const response = await fetch(`${hostname}/api/stream/meta`, {
+            'method': 'POST', 'headers': {'Content-Type': 'application/json'},
+            'body': JSON.stringify({type, value})
+        });
+
+        if (response.ok)
+            return await response.json()
+
+        else return {
+            overview: 'Frames is a streaming service that offers a wide variety of TV shows, movies, anime, documentaries, and more on thousands straight to your browser',
+            name: 'Frames - Watch FREE TV Shows and Movies Online',
+            poster: '/meta.png'
+        }
     }
 
     /**
@@ -77,146 +106,27 @@ export default class Middleware extends Aggregate {
     }
 
     /**
-     * @desc confirms if a user is logged in or not by checking the cookie
-     * @param cookies - cookies sent by the client
-     * @param key - key to check
-     */
-    public async confirmContent<S>(cookies: { [p: string]: string}, key: string) {
-        const token = cookies[key];
-
-        if (token) {
-            const decrypted = await this.decrypt<S>(this.secret, token);
-            if (decrypted)
-                return decrypted;
-        }
-
-        return null;
-    }
-
-    /**
      * @desc contacts HomeBase
      */
     public async getAuthCpRight() {
         const url = 'https://frameshomebase.maix.ovh/api/oauth';
         const params = {type: 'authenticate', state: this.cypher};
         const response = await this.makeRequest<AuthCP>(url, params);
-        if (response)
-            return response;
+        if (response) return response;
 
         return {
             cpRight: 'Copyright © 2021 Roy Ossai.',
             aReserved: 'All rights reserved. No document may be reproduced for commercial use without written approval from the author.',
-            authentication: true
-        }
-    }
-
-    /**
-     * @desc creates the SEO data for the page
-     * @param type - type of the page
-     * @param value - value of the page
-     */
-    public async getMetaTags(type: string, value: string) {
-        if (type === 'movie' || type === 'show') {
-            const {data} = await this.supabase
-                .from<Modify<Media, {release: string}>>('Media')
-                .select('*')
-                .eq('type', type.toUpperCase())
-                .ilike('name', `*${value}*`)
-
-            if (data) {
-                const response = data.map(item => {
-                    const year = new Date(item.release).getFullYear();
-                    const drift = item.name.Levenshtein(value);
-                    return {...item, year, drift};
-                })
-
-                const info = this.sortArray(response, ['drift', 'year'], ['asc', 'desc'])[0];
-                if (info)
-                    return {
-                        overview: info.overview,
-                        name: info.name,
-                        poster: info.poster
-                    }
-            }
-        }
-
-        if (type === 'watch' || type === 'frame' || type === 'room') {
-            if (type === 'room') {
-                const {data} = await this.supabase
-                    .from<Room>('Room')
-                    .select('*')
-                    .eq('roomKey', value)
-                    .single();
-
-                value = data ? data.auth: value;
-            }
-
-            if (type === 'frame') {
-                const {data} = await this.supabase
-                    .from<Frame>('Frame')
-                    .select('*')
-                    .eq('cypher', value)
-                    .single();
-
-                value = data ? data.auth: value;
-            }
-
-            const {data} = await this.supabase
-                .from<(View & {episode: Episode | null, video: (Video & {media: Media})})>('View')
-                .select('*, episode:Episode(*), video:Video(*, media:Media!Video_mediaId_fkey(*))')
-                .eq('auth', value)
-                .single();
-
-            if (data) {
-                const {episode, video} = data;
-                let {name, overview, poster, tmdbId} = video.media;
-
-                if (episode) {
-                    const episodeInfo = await this.getEpisode(tmdbId, episode.seasonId, episode.episode);
-                    name = /^Episode \d+/i.test(episodeInfo?.name || 'Episode') ? `${name}: S${episode.seasonId}, E${episode.episode}` : `S${episode.seasonId}, E${episode.episode}: ${episodeInfo?.name}`;
-                    overview = episodeInfo?.overview || overview;
-                }
-
-                return {
-                    overview,
-                    name,
-                    poster
-                }
-            }
-        }
-
-        if (type === 'person') {
-            const person = await this.findPerson(value);
-            if (person)
-                return {
-                    overview: `See all media produced by ${person.name} available on Frames`,
-                    name: person.name,
-                    poster: 'https://image.tmdb.org/t/p/original' + person.profile_path
-                }
-        }
-
-        /*if (type === 'collection') {
-            const {data} = await this.supabase
-                .from('Media')
-                .select('name, poster, overview, cName:collection->>name')
-                .ilike('cName', `*${value}*`)
-                .single();
-
-            console.log(data);
-        }*/
-
-        return {
-            overview: 'Frames is a streaming service that offers a wide variety of TV shows, movies, anime, documentaries, and more on thousands straight to your browser',
-            name: 'Frames - Watch FREE TV Shows and Movies Online',
-            poster: '/meta.png'
+            authentication: false
         }
     }
 
     /**
      * @desc creates a html header tag for SEO
-     * @param pathname
+     * @param pathname - pathname of the request
+     * @param host - host of the request
      */
-    public async createHTML (pathname: string) {
+    public async createHTML(pathname: string, host: string) {
         let type: string;
         let value: string;
         let name: string, overview: string, poster: string, link: string;
@@ -231,7 +141,7 @@ export default class Middleware extends Aggregate {
             type = object[0];
             value = object[1];
 
-            const meta = await this.getMetaTags(type, value);
+            const meta = await Middleware.getMetaTags(type, value, host);
             if (meta) {
                 name = meta.name;
                 overview = meta.overview;
@@ -278,80 +188,32 @@ export default class Middleware extends Aggregate {
     }
 
     /**
-     * @desc writes a cookie to the response
-     * @param res - response object
-     * @param data - cookie data
+     * @desc reads a cookie from the request
+     * @param cookies - request object
      * @param cookieName - cookie name
-     * @param maxAge - cookie max age
      */
-    public writeCookie(res: NextApiResponse, data: any, cookieName: string, maxAge: number) {
-        const token = data !== null ? this.encrypt(this.secret, data): 'null';
+    public async readCookie(cookies: { [p: string]: string }, cookieName: string): Promise<CookiePayload> {
+        let cookiePayload: CookiePayload = {
+            validUntil: 0,
+            session: 'unknown',
+            context: Role.GUEST,
+            email: 'unknown',
+            notificationChannel: 'unknown',
+            identifier: 'unknown',
+        }
 
-        res.setHeader('Set-Cookie', cookie.serialize(cookieName, token, {
-            httpOnly: true,
-            maxAge: maxAge,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/'
-        }))
+        const cookie = await this.confirmContent<CookiePayload>(cookies, cookieName);
+        return cookie !== null ? cookie : cookiePayload;
     }
 
     /**
      * @desc gets a file's location from the request
+     * @param hostname - hostname of the request
      * @param location - file location
      */
-    public async getFileAndAndLocation(location: string) {
-        let res: {location: string, download: boolean, name: string} = {
-            location: '',
-            download: false,
-            name: ''
-        };
-
-        const { data, error } = await this.supabase
-            .from<(View & {video: Video})>('View')
-            .select('*,video:Video(*)')
-            .eq('auth', location)
-            .single();
-
-        if (!error && data) {
-            const { video } = data;
-
-            res = {
-                location: video.location,
-                download: false,
-                name: ''
-            }
-
-        } else {
-            const { data, error } = await this.supabase
-                .from<(Download & {view: (View & {episode: Episode, video: (Video & {media: Media})})})>('Download')
-                .select('*,view:View(*,episode:Episode(*),video:Video(*,media:Media!Video_mediaId_fkey(*)))')
-                .eq('location', location)
-                .single();
-
-            if (!error && data) {
-                if (data.view.episode) {
-                    const { episode, video } = data.view;
-                    const { media } = video;
-                    const episodeInfo = await this.getEpisode(media.tmdbId, episode.seasonId, episode.episode);
-                    res = {
-                        location: video.location,
-                        download: true,
-                        name: media.name + (/^Episode \d+/i.test(episodeInfo?.name || 'Episode 0') ? ` Season ${episode.seasonId} - Episode ${episode.episode}` : ` S${episode.seasonId} - E${episode.episode}: ${episodeInfo?.name}`)
-                    }
-
-                } else {
-                    const { video } = data.view;
-                    res = {
-                        location: video.location,
-                        download: true,
-                        name: video.media.name
-                    }
-                }
-            }
-        }
-
-        return res;
+    public async getFileAndAndLocation(hostname: string, location: string) {
+        const response = await fetch(`${hostname}/api/stream/worker?auth=${location}`);
+        return await response.json() as  { location: string, download: boolean, name: string };
     }
 
     /**
@@ -365,7 +227,7 @@ export default class Middleware extends Aggregate {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
 
-            const post_data: {[p: string]: any} = {
+            const post_data: { [p: string]: any } = {
                 client_id: this.oauth.client_id,
                 client_secret: this.oauth.client_secret,
                 refresh_token: this.oauth.refreshToken,
@@ -378,9 +240,7 @@ export default class Middleware extends Aggregate {
             }
 
             let requestOption = {
-                'method': 'POST',
-                'headers': headers,
-                'body': ret.join('&')
+                'method': 'POST', 'headers': headers, 'body': ret.join('&')
             }
 
             const response = await fetch(url, requestOption)
@@ -394,58 +254,71 @@ export default class Middleware extends Aggregate {
 
     /**
      * @desc returns a 206 response with the video
+     * @param hostname - hostname of the request
      * @param location - the location of the video
      * @param range - the range of the video
      */
-    public async streamFile(location: string, range: string) {
-        let res: {location: string, download: boolean, name: string} | null = this.cache.get(location);
-        const data = res ? res: await this.getFileAndAndLocation(location);
+    public async streamFile(hostname: string, location: string, range: string) {
+        let res: { location: string, download: boolean, name: string } | null = this.cache.get(location);
+        const data = res ? res : await this.getFileAndAndLocation(hostname, location);
         this.cache.set(location, data);
 
         await this.authenticate();
         const headers = {
-            'authorization': `Bearer ${this.oauth.accessToken}`,
-            'Range': range,
+            'authorization': `Bearer ${this.oauth.accessToken}`, 'Range': range,
         }
 
         let url = `https://www.googleapis.com/drive/v3/files/${data.location}?alt=media`
         let response = await fetch(url, {
-            'method': 'GET',
-            'headers': headers
+            'method': 'GET', 'headers': headers
         })
 
         if (response.ok) {
-            const { headers } = response = new Response(response.body, response);
+            const {headers} = response = new Response(response.body, response);
             let value = !data.download ? 'inline' : 'attachment; filename=' + data.name + ' [frames].mp4'
             headers.set('Content-Disposition', value);
             return response
         }
 
         return new Response(null, {
-            status: data.location !== '' ? 404 : 403,
-            statusText: data.location !== '' ? 'Not Found' : 'Forbidden'
+            status: data.location !== '' ? 404 : 403, statusText: data.location !== '' ? 'Not Found' : 'Forbidden'
         })
     }
 
     /**
      * @desc returns some information on first page render
      */
-    public async getApiKey(){
-        return {apiKey: this.realtimeApiKey, globalKey: this.realtimeNotification}
+    public async getApiKey() {
+        let accessToken = '';
+        const url = `https://hopr.maix.ovh/api/auth/access`;
+        const response = await fetch(url, {
+            'method': 'POST', 'headers': {'Content-Type': 'application/json'},
+            'body': JSON.stringify({
+                "refreshToken": this.realtimeApiKey
+            })
+        })
+
+        if (response.ok) {
+            const obj = await response.json()
+            accessToken = obj.accessToken
+        }
+
+        return {token: accessToken, globalKey: this.realtimeNotification}
     }
 
     /**
-     * @desc reads the middleware config file
-     * @private
+     * @desc confirms if a user is logged in or not by checking the cookie
+     * @param cookies - cookies sent by the client
+     * @param key - key to check
      */
-    private static readMiddleWareEnv() {
-        const restApi = new RestAPI();
-        const middleware = restApi.decrypt<MiddleWareInterface>(SECRET, MIDDLEWARE);
-        if (middleware)
-            return middleware;
+    private async confirmContent<S>(cookies: { [p: string]: string }, key: string) {
+        const token = cookies[key];
 
-        else
-            throw new Error('No Configurations found');
+        if (token) {
+            const decrypted = await this.decrypt<S>(this.secret, token);
+            if (decrypted) return decrypted;
+        }
+
+        return null;
     }
-
 }

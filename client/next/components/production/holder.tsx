@@ -1,23 +1,24 @@
 import styles from "./back.module.css";
 import {SectionBone} from "../entities/section";
-import {Loading} from "../misc/Loader";
-import {Link} from "../misc/Loader";
+import {Link, Loading} from "../misc/Loader";
 import {useFetcher} from "../../../utils/customHooks";
-import {FramesCollections, ProductionCompanyInterface} from "../../../../server/classes/media";
-import {PlayListResponse} from "../../../../server/classes/listEditors";
+import {PlayListResponse} from "../../../../server/classes/playlist";
+import {FramesCollections, ProductionCompanyInterface} from "../../../../server/classes/springboard";
 
-export default function Holder({response}: {response: ProductionCompanyInterface}) {
+export default function Holder({response}: { response: ProductionCompanyInterface }) {
     const {response: data} = useFetcher<PlayListResponse | null>('/api/media/prodPlaylist?mediaId=' + response.id);
 
     if (data)
         return (
             <>
-                <Link href={'/watch?playlistId='+data.id}>
+                <Link href={'/watch?playlistId=' + data.id}>
                     <img className={styles.image} src={response.logo} alt={response.name}/>
                 </Link>
                 <div className={styles.holder}>
-                    {response.movies.length ? <SectionBone data={response.movies} type={'BASIC'} display={'movies'}/>: null}
-                    {response.shows.length ? <SectionBone data={response.shows} type={'BASIC'} display={'tv shows'}/>: null}
+                    {response.movies.length ?
+                        <SectionBone data={response.movies} type={'BASIC'} display={'movies'}/> : null}
+                    {response.shows.length ?
+                        <SectionBone data={response.shows} type={'BASIC'} display={'tv shows'}/> : null}
                 </div>
             </>
         )
@@ -25,7 +26,7 @@ export default function Holder({response}: {response: ProductionCompanyInterface
     else return <Loading/>
 }
 
-export function CollectionHolder({response}: {response: FramesCollections}) {
+export function CollectionHolder({response}: { response: FramesCollections }) {
     const {response: data} = useFetcher<PlayListResponse | null>('/api/media/collectionPlaylist?mediaId=' + response.id, {
         revalidateOnFocus: false,
     });
@@ -33,11 +34,12 @@ export function CollectionHolder({response}: {response: FramesCollections}) {
     if (data)
         return (
             <>
-                <Link href={'/watch?playlistId='+data.id}>
+                <Link href={'/watch?playlistId=' + data.id}>
                     <span className={styles.image}>{response.name}</span>
                 </Link>
                 <div className={styles.holder}>
-                    {response.media.length ? <SectionBone data={response.media} type={'BASIC'} display={response.name}/>: null}
+                    {response.media.length ?
+                        <SectionBone data={response.media} type={'BASIC'} display={response.name}/> : null}
                 </div>
             </>
         )

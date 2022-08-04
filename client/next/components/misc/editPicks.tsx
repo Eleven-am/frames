@@ -2,20 +2,18 @@ import {useCallback, useEffect, useState} from "react";
 import {EditPickContext, PickSearchContext, PickSelectorContext, useEditorPicks} from "../../../utils/modify";
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import ss from "./MISC.module.css";
-import {Template} from "../buttons/Buttons";
+import {FramesButton} from "../buttons/Buttons";
 import {useFetcher} from "../../../utils/customHooks";
-import {UpdateSearch} from "../../../../server/classes/modify";
 import style from '../settings/ACCOUNT.module.css';
 import {PickType} from "@prisma/client";
+import {UpdateSearch} from "../../../../server/classes/pickAndFrame";
 
 function Tail({close}: { close: () => void }) {
     const {addPick} = useEditorPicks();
 
-    const handleClick = () => addPick(close);
-
     return (
         <div className={ss.tail}>
-            <Template id={1} type={'none'} name={'submit'} onClick={handleClick}/>
+            <FramesButton type='primary' state={close} label='Submit' onClick={addPick}/>
         </div>
     )
 }
@@ -39,7 +37,9 @@ function Image({obj}: { obj: UpdateSearch }) {
     const {modifyPick} = useEditorPicks();
     const {type} = useRecoilValue(EditPickContext);
 
-    const handleClick = () => modifyPick(obj);
+    const handleClick = useCallback(() => {
+        modifyPick(obj);
+    }, [obj, modifyPick]);
 
     if (type === PickType.BASIC)
         return (

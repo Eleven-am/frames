@@ -3,15 +3,14 @@ import Details from "../details/fullDetails";
 import React, {Suspense, useEffect, useRef} from "react";
 import styles from '../Info.module.css';
 import ss from '../../entities/Sections.module.css';
-import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
+import {useRecoilState, useRecoilValue} from "recoil";
 import {
+    InfoContext,
     InfoEpisodesContext,
-    InfoMediaIdContext,
     InformSeasonContext,
     InfoSeasonContext,
-    InfoSeasonsContext, InfoSectionContext
+    InfoSectionContext
 } from "../infoContext";
-import {SpringMedia} from "../../../../../server/classes/media";
 
 const SectionLoading = () => {
     return (
@@ -23,15 +22,18 @@ const SectionLoading = () => {
     )
 }
 
-function Sections({response}: { response: SpringMedia }) {
+function Sections() {
+    const response = useRecoilValue(InfoContext);
     const {seasons, section} = useRecoilValue(InfoEpisodesContext);
+
+    if (!response) return null;
 
     return (
         <>
             {
-                section === 'More like this' || section === 'Surprise me!' ?
+                section === 'More like this' || section === 'Featured media' ?
                     <div className="sectionContainer">
-                        <Entities section={true} response={response.recommendations!} type={'BASIC'}/>
+                        <Entities section={true} response={response.recommendations} type={'BASIC'}/>
                     </div> :
                     section === 'Details' ?
                         <Details response={response}/> :
@@ -41,32 +43,33 @@ function Sections({response}: { response: SpringMedia }) {
     )
 }
 
-export default function InfoSections({response, setReference}: { response: SpringMedia, setReference: ((arg: Element | null) => void) }) {
+export default function InfoSections({setReference}: { setReference: ((arg: Element | null) => void) }) {
+    const response = useRecoilValue(InfoContext);
     const [sections, setSections] = useRecoilState(InformSeasonContext);
     const reference = useRef<HTMLDivElement>(null);
     const [section, setSection] = useRecoilState(InfoSectionContext)
     const isServer = typeof window === "undefined";
-    const setSeasons = useSetRecoilState(InfoSeasonsContext)
     const season = useRecoilValue(InfoSeasonContext);
-    const setMedia = useSetRecoilState(InfoMediaIdContext);
 
     useEffect(() => {
-        setSeasons(response.seasons || []);
-        setSection(response.sections[0]);
-        setSections(response.sections);
-        setMedia(response.id);
-    }, [])
+        if (response) {
+            setSection(response.sections[0]);
+            setSections(response.sections);
+        }
+    }, [response])
 
     useEffect(() => {
         setReference(reference.current)
-    }, [reference])
+    }, [reference.current])
+
+    if (!response) return null;
 
     return (
         <>
             <div className={styles.a}>
                 <ul className={styles.infoSection}>
                     {sections.map(item => <li key={item} className={item === section ? styles.infoSectionActive : ''}
-                                                   onClick={() => setSection(item)}>{item}</li>)}
+                                              onClick={() => setSection(item)}>{item}</li>)}
                 </ul>
                 <div className={styles.svg} style={season === 0 ? {visibility: "hidden"} : {}} onClick={() => {
                     setSection(response.sections[0]);
@@ -76,7 +79,7 @@ export default function InfoSections({response, setReference}: { response: Sprin
             <div className={styles.spacer} ref={reference}/>
             {isServer ? <SectionLoading/> :
                 <Suspense fallback={<SectionLoading/>}>
-                    <Sections response={response}/>
+                    <Sections/>
                 </Suspense>
             }
         </>

@@ -1,11 +1,11 @@
 import {useFetcher} from "../../../utils/customHooks";
-import useUser from "../../../utils/userTools";
 import {Loading} from "../misc/Loader";
 import ManageMedia from "./manage/";
 import ss from './ACCOUNT.module.css';
 import About from "./about";
 import Account from "./account";
 import {useManageSections} from "../../../utils/modify";
+import useUser from "../../../utils/user";
 
 export default function Index() {
     const {response, loading: loading2} = useFetcher<string[]>('/api/settings/getSections');

@@ -1,46 +1,98 @@
 import {GetServerSidePropsContext} from "next";
-import {MediaType, Role} from "@prisma/client";
-import HomeLayout from "../client/next/components/navbar/navigation";
-import {useNavBar} from "../client/utils/customHooks";
-import Browse from "../client/next/components/browse";
-import {CookiePayload} from "../server/classes/middleware";
-import {Banner} from "../server/serverFunctions/load";
+import {Role} from "@prisma/client";
+import Background from "../client/next/components/misc/back";
+import {useNavBar} from "../client/next/components/navbar/navigation";
+import ss from "../client/next/components/settings/ACCOUNT.module.css";
+import sss from "../client/next/components/playlists/Playlist.module.css";
+import {useState} from "react";
+import {SpringMedia} from "../server/classes/media";
+import PlaylistBanner from "../client/next/components/playlists/Banner";
 
-export default function Test({banner}: { banner: Banner[] }) {
-    useNavBar('movies', 1);
+const sides = ['your playlists', 'shared with you', 'public playlists'];
+type Test = Pick<SpringMedia, "id" | "poster" | "backdrop" | "background" | "overview" | "name" | "type" | "trailer"> & {logo: string};
+
+export default function Test({images, media}: {images: string[], media: Test[]}) {
+    useNavBar('playlists', 1);
+    const [select, setSelect] = useState(sides[0]);
 
     return (
-        <HomeLayout>
-            <Browse banner={banner}/>
-        </HomeLayout>
-    );
+        <>
+            <Background response={images} />
+            <div className={ss.grid}>
+                <ul className={ss.top}>
+                    {sides.map((e, v) => <li key={v} onClick={() => setSelect(e)}
+                                                className={e === select ? `${ss.li} ${ss.ac}` : ss.li}>
+                        {e}
+                    </li>)}
+                </ul>
+
+                <div className={sss.container}>
+
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+                        <PlaylistBanner />
+
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                    <PlaylistBanner />
+                </div>
+            </div>
+        </>
+    )
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+    const AuthService = await import("../server/classes/auth").then(m => m.default);
     const MiddleWare = await import("../server/classes/middleware").then(m => m.default);
-    const Media = await import("../server/classes/media").then(m => m.default);
-    const trendingData = await new Media().getTrending();
+    const SpringBoard = await import("../server/classes/springboard").then(m => m.default);
 
-    const data = trendingData.map(e => {
-        const {id, backdrop, type, trailer, logo, name, overview} = e;
-        return {id, backdrop, type, trailer, logo, name, overview}
-    }).filter(e => e.logo !== null && e.type === MediaType.MOVIE).slice(0, 10) as Banner[];
-
-    const pop = data.pop();
-    const banner = [pop, ...data];
+    const authService = new AuthService();
     const middleware = new MiddleWare();
+    const springboard = new SpringBoard();
 
-    const {context: role} = await middleware.confirmContent<CookiePayload>(context.req.cookies, 'frames-cookie') || {
-        email: 'unknown', context: Role.GUEST, session: 'unknown', validUntil: 0,
-    };
+    const data = await middleware.readCookie(ctx.req.cookies, 'frames-cookie');
+    const presentUser = await authService.getUserFromSession(data.session);
+    const trending = await springboard.getTrending();
 
-    if (role !== Role.ADMIN) return {
-        notFound: true
-    }
+    if (presentUser?.role !== Role.ADMIN)
+        return {
+            notFound: true
+        }
 
     return {
         props: {
-            banner
+            images: trending.map(e => e.poster).slice(0, 10),
+            media: trending
         }
     }
 }

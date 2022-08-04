@@ -41,7 +41,7 @@
     color: var(--nino-blue);
 }
 
-.bck{
+.bck {
     background: linear-gradient(to top, rgba(1, 16, 28, .7), rgba(1, 16, 28, .0));
     box-shadow: 2px 12px 12px -12px #000000;
 }
@@ -68,7 +68,7 @@
 }
 
 .top .li {
-    border-bottom: 1px solid rgba(0,0,0,0);
+    border-bottom: 1px solid rgba(0, 0, 0, 0);
 }
 
 .top .ac {
@@ -99,7 +99,7 @@
     justify-content: center;
 }
 
-.search-holder{
+.search-holder {
     position: absolute;
     display: flex;
     align-items: center;
@@ -148,7 +148,7 @@
     cursor: pointer;
 }
 
-.search-input:hover, .search-input:focus{
+.search-input:hover, .search-input:focus {
     opacity: 1;
 }
 
@@ -174,7 +174,7 @@
     transform: scale(.7);
 }
 
-.searchRes{
+.searchRes {
     position: absolute;
     top: 200px;
     height: 490px;
@@ -190,7 +190,7 @@
     height: 150px;
 }
 
-.resImage{
+.resImage {
     height: 84px;
     width: 150px;
     object-fit: contain;
@@ -202,14 +202,14 @@
     max-height: 76px;
     font-weight: lighter;
     font-size: medium;
-    overflow : hidden;
+    overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
 }
 
-.resSpan, .res p{
+.resSpan, .res p {
     left: 0;
     width: 100%;
     transition: all .2s ease-in-out;
@@ -235,7 +235,7 @@
     transition: all .2s ease-in-out;
 }
 
-.d .inDX{
+.d .inDX {
     position: absolute;
     margin: 10px;
     width: 280px;
@@ -274,7 +274,7 @@
     -webkit-box-orient: vertical;
 }
 
-.h{
+.h {
     display: flex;
     justify-content: space-between;
 }
@@ -312,7 +312,7 @@
     transition: all 0.2s ease-in-out;
 }
 
-.resDiv{
+.resDiv {
     position: relative;
     display: flex;
     justify-content: center;
@@ -344,7 +344,7 @@
 }
 
 .had:hover img {
-    border: 2px solid rgba(0,0,0,0);
+    border: 2px solid rgba(0, 0, 0, 0);
 }
 
 .had:hover .resDiv {
@@ -372,7 +372,7 @@
     object-fit: contain;
 }
 
-.lg span{
+.lg span {
     object-fit: contain;
     font-family: "Baloo 2", cursive;
     color: var(--nino-blue);

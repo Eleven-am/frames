@@ -21,12 +21,6 @@ export interface GoogleCred {
     redirect_uris: string | string[];
 }
 
-export interface SupageCred {
-    supabaseEndpoint: string;
-    supabasePublicKey: string;
-    supabasePrivateKey: string;
-}
-
 export interface DelugeCred {
     deluge_url: string;
     directory: string;
@@ -77,7 +71,7 @@ export interface MiddleWareInterface {
         tmdbApiKey: string;
         fanArtApiKey: string;
         realTimeApiKey: string;
-        supabase: SupageCred;
+        databaseUrl: string;
     };
     globalNotification: string;
 }
@@ -88,13 +82,12 @@ export interface FRAMES_INTERFACE {
         tmdbApiKey: string;
         fanArtApiKey: string;
         realTimeApiKey: string;
-        supabase: SupageCred;
     };
     token: GoogleToken;
     credentials: GoogleCred;
     others: {
-        deluge: DelugeCred | null;
-        openSubtitles: OpenSubs | null;
+        deluge: DelugeCred;
+        openSubtitles: OpenSubs;
     };
 }
 
@@ -106,16 +99,18 @@ function readFramesEnv() {
     const frames = restApi.decrypt<FRAMES_INTERFACE>(secret, data);
     if (frames) {
         const data: Regrouped = {
-            tmdbToken: {apiKey: frames.externalApis.tmdbApiKey, fanArtApiKey: frames.externalApis.fanArtApiKey, realTimeApiKey: frames.externalApis.realTimeApiKey},
+            tmdbToken: {
+                apiKey: frames.externalApis.tmdbApiKey,
+                fanArtApiKey: frames.externalApis.fanArtApiKey,
+                realTimeApiKey: frames.externalApis.realTimeApiKey
+            },
             token: frames.token, openSubtitles: frames.others.openSubtitles, deluge: frames.others.deluge,
             credentials: frames.credentials, user: frames.privateConfig,
             usenet: null
         }
 
         return data;
-    }
-
-    else
+    } else
         throw new Error('No Configurations found');
 }
 

@@ -5,9 +5,9 @@ module.exports = {
         dest: 'public', disable: process.env.NODE_ENV === 'development', register: true, skipWaiting: true,
     },*/
     rewrites: async () => [{
-        source: '/movies', destination: '/library',
+        source: '/movies', destination: '/library?type=movie',
     }, {
-        source: '/shows', destination: '/library',
+        source: '/shows', destination: '/library?type=show',
     }, {
         source: '/movie=:movie', destination: '/info'
     }, {

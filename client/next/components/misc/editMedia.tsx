@@ -4,13 +4,11 @@ import sss from '../settings/ACCOUNT.module.css';
 import useModify, {DeleteAndLocationAtom, EditFrontMediaAtom, EditModalAtom} from "../../../utils/modify";
 import {useCallback, useEffect, useState} from "react";
 import {MediaType} from "@prisma/client";
-import {useFetcher} from "../../../utils/customHooks";
-import {EpisodeModSettings, FrontEpisodes, FrontMediaSearch} from "../../../../server/classes/modify";
-import {useInfoDispatch} from "./inform";
+import {subscribe, useEventListener, useFetcher} from "../../../utils/customHooks";
 import {FrontImages} from "../../../../server/classes/tmdb";
-import {Template} from "../buttons/Buttons";
-import ManagePick from "./editPicks";
-import {ManagePlaylist} from "./editPlaylist";
+import {FramesButton} from "../buttons/Buttons";
+import {EpisodeModSettings, FrontEpisode, FrontMediaSearch} from "../../../../server/classes/media";
+import {useConfirmDispatch} from "../../../utils/notifications";
 
 const General = () => {
     const setDelete = useSetRecoilState(DeleteAndLocationAtom);
@@ -18,13 +16,13 @@ const General = () => {
     const [state, dispatch] = useRecoilState(EditFrontMediaAtom);
     const [tmdbI, setTmdbI] = useState('');
     const [search, setSearch] = useState('');
-    const dispatcher = useInfoDispatch();
+    const dispatcher = useConfirmDispatch();
     const {
         response,
         abort
-    } = useFetcher<FrontMediaSearch[]>(`/api/modify/searchMedia?type=${state.type}&query=${search}`);
+    } = useFetcher<FrontMediaSearch[]>(`/api/modify/searchMedia?mediaType=${state.type}&query=${search}`);
 
-    const handleTmdbIChange = async (tmdbI: string) => {
+    const handleTmdbIChange = useCallback(async (tmdbI: string) => {
         if (isNaN(parseInt(tmdbI)))
             return;
 
@@ -39,16 +37,14 @@ const General = () => {
 
             setDelete({location: check?.location || null, del: !!check, name: check?.name || ''})
         }
-    }
+    }, [getMediaInfo, state.type, dispatch]);
 
     useEffect(() => {
         if (search === '')
             abort.cancel();
     }, [search]);
 
-    useEffect(() => {
-        handleTmdbIChange(tmdbI);
-    }, [tmdbI]);
+    subscribe(handleTmdbIChange, tmdbI);
 
     return (
         <div className={ss.genInput}>
@@ -130,15 +126,12 @@ const Tail = ({close}: { close: () => void }) => {
     const state = useRecoilValue(EditFrontMediaAtom).stateType;
     const {modifyMedia, deleteMedia, scanSubs} = useModify();
 
-    const handleDelete = () => deleteMedia(close);
-    const handleSave = () => modifyMedia(close);
-
     return (
         <div className={ss.tail}>
-            {found.del ? <Template id={1} type={'none'} name={'delete this'} onClick={handleDelete}/> : null}
+            {found.del ? <FramesButton type='primary' label='delete this' state={close} onClick={deleteMedia}/> : null}
             {state === 'MODIFY' ?
-                <Template id={1} type={'none'} name={'scan subs'} onClick={scanSubs}/> : null}
-            <Template id={1} type={'none'} name={found.del ? 'replace' : 'submit'} onClick={handleSave}/>
+                <FramesButton type='secondary' label={'scan subs'} onClick={scanSubs}/> : null}
+            <FramesButton type='secondary' label={found.del ? 'replace' : 'submit'} state={close} onClick={modifyMedia}/>
         </div>
     )
 }
@@ -147,16 +140,14 @@ export const Episodes = () => {
     const [thoroughHover, setThoroughHover] = useState(false);
     const [quickHover, setQuickHover] = useState(false);
     const state = useRecoilValue(EditFrontMediaAtom);
-    const {response} = useFetcher<FrontEpisodes | null>(`/api/modify/getEpisodes?mediaId=${state.mediaId}`);
+    const {response} = useFetcher<FrontEpisode | null>(`/api/modify/getEpisodes?mediaId=${state.mediaId}`);
     const {scanMedia} = useModify();
 
     return (
         <div className={ss.epiHolder}>
             <div className={ss.buttons}>
-                <Template id={0} onClick={() => scanMedia(true)} type={'scan'} name={'thorough scan'}
-                          onHover={setThoroughHover}/>
-                <Template id={1} onClick={() => scanMedia(false)} type={'scan'} name={'quick scan'}
-                          onHover={setQuickHover}/>
+                <FramesButton type='primary' onClick={scanMedia} state={true} icon='scan' label='thorough scan' onHover={setThoroughHover}/>
+                <FramesButton type='secondary' onClick={scanMedia} state={false} icon='scan' label='quick scan' onHover={setQuickHover}/>
             </div>
             {thoroughHover || quickHover ?
                 <div
@@ -168,7 +159,10 @@ export const Episodes = () => {
     )
 }
 
-function Season({seasonId, episodes}: { seasonId: number; episodes: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean })[] }) {
+function Season({
+                    seasonId,
+                    episodes
+                }: { seasonId: number; episodes: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean })[] }) {
 
     return (
         <div style={{marginTop: '10px'}}>
@@ -216,8 +210,7 @@ function Episode({episode: obj}: { episode: (EpisodeModSettings & { backdrop: st
                             </label>
                         </div>
                         <div className={ss.epiSub}>
-                            <Template id={1} type={'none'} name={'submit'}
-                                      onClick={() => modifyEpisode(episode.episodeId, episode)}/>
+                            <FramesButton type='secondary' label='submit' state={episode} onClick={modifyEpisode}/>
                         </div>
                     </div>
                 </div>
@@ -227,11 +220,17 @@ function Episode({episode: obj}: { episode: (EpisodeModSettings & { backdrop: st
     )
 }
 
-const ManageMedia = () => {
+export const ManageMedia = () => {
+    const setDelete = useSetRecoilState(DeleteAndLocationAtom);
     const [state, setState] = useRecoilState(EditFrontMediaAtom);
     const [modal, setModal] = useRecoilState(EditModalAtom);
     const [select, setSelect] = useState('');
     const [sides, setSides] = useState<string[]>([]);
+
+    useEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Escape')
+            setDelete({del: true, location: state.location, name: state.name});
+    })
 
     useEffect(() => {
         setSides(['General', 'Images'].concat((state.type === MediaType.MOVIE ? [] : ['Episodes'])));
@@ -243,6 +242,7 @@ const ManageMedia = () => {
         setModal(false);
         setTimeout(() => {
             setState(prev => ({...prev, stateType: 'NONE'}));
+            setDelete({del: false, location: '', name: ''});
         }, 200)
     }, [])
 
@@ -277,14 +277,4 @@ const ManageMedia = () => {
         )
 
     else return null;
-}
-
-export const ManageHolders = () => {
-    return (
-        <>
-            <ManageMedia/>
-            <ManagePick/>
-            <ManagePlaylist/>
-        </>
-    )
 }

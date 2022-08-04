@@ -4,8 +4,7 @@ import auth from "../../server/serverFunctions/auth";
 import media from "../../server/serverFunctions/media";
 import modify from "../../server/serverFunctions/modify";
 import settings from "../../server/serverFunctions/settings";
-import Middleware, {CookiePayload} from "../../server/classes/middleware";
-import {Role} from "@prisma/client";
+import Middleware from "../../server/classes/middleware";
 import stream from "../../server/serverFunctions/stream";
 import User from "../../server/classes/auth";
 
@@ -13,13 +12,7 @@ const middleware = new Middleware();
 const user = new User();
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-    const data = await middleware.confirmContent<CookiePayload>(req.cookies, 'frames-cookie') || {
-        email: 'unknown',
-        context: Role.GUEST,
-        session: 'unknown',
-        validUntil: 0,
-        notificationChannel: 'unknown',
-    };
+    const data = await middleware.readCookie(req.cookies, 'frames-cookie');
 
     const type = req.query.type[0];
     const presentUser = await user.getUserFromSession(data.session);
@@ -58,10 +51,4 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             await settings(req, res, userId);
             return;
     }
-
-
-    /*else if (req.query.type[0] === 'update') {
-        await updateRoute(req, res, userId);
-        return;
-    }*/
 }

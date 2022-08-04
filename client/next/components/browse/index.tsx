@@ -3,30 +3,28 @@ import BannerHolder from "./banner";
 import Selectors from "./selectors";
 import Grid from "./grid";
 import useOnScroll from "../../../utils/opacityScroll";
-import React from 'react';
+import {useCallback, useEffect} from 'react';
 import {useBrowseContext} from "./browseContext";
-import {Banner} from "../../../../server/serverFunctions/load";
+import {BrowseData} from "../../../../server/classes/media";
 
-export default function Browse({banner}: { banner: Banner[] }) {
+export default function Browse({data}: { data: BrowseData }) {
     const {onScroll} = useOnScroll();
     const {handleScroll, reset} = useBrowseContext(true);
 
-    const scroll = async (event: any) => {
+    const scroll = useCallback(async (event: any) => {
         await handleScroll(event);
         onScroll();
-    }
+    }, [handleScroll, onScroll]);
 
-    React.useEffect(() => {
-        return () => {
-            reset();
-        }
+    useEffect(() => {
+        return () => reset();
     }, []);
 
     return (
         <div className={style.cntr} onScroll={scroll}>
-            <BannerHolder banners={banner} />
-            <Selectors />
-            <Grid />
+            <BannerHolder banners={data.trending}/>
+            <Selectors data={data}/>
+            <Grid/>
         </div>
     )
 }

@@ -1,33 +1,30 @@
-import {
-    GroupWatch,
-    MyList,
-    PlayButton,
-    PLayList,
-    Rating,
-    Seen,
-    Shuffle,
-    Template,
-    TrailerButton
-} from "../../buttons/Buttons";
+import {FramesButton, Rating} from "../../buttons/Buttons";
 import info from '../Info.module.css';
 import {useRecoilValue} from "recoil";
-import {SpringMedia} from "../../../../../server/classes/media";
-import {infoUserContext} from "../infoContext";
-import useUser from "../../../../utils/userTools";
+import {InfoContext, infoUserContext, useInfoContext} from "../infoContext";
 import {MediaType, Role} from "@prisma/client";
 import useModify, {useGetContext} from "../../../../utils/modify";
+import useUser from "../../../../utils/user";
+import {useState} from "react";
+import {useGroupWatch} from "../../../../utils/groupWatch";
 
 interface InfoType {
     trailer: boolean;
-    response: SpringMedia,
     loadTrailer: () => void
 }
 
-export default function InfoDetails({response, loadTrailer, trailer}: InfoType) {
+export default function InfoDetails({loadTrailer, trailer}: InfoType) {
+    const response = useRecoilValue(InfoContext);
     const infoUser = useRecoilValue(infoUserContext);
+    const {toggleSeen, toggleAddToList} = useInfoContext();
     const {getMedia} = useModify();
     const {downloadEpisodes} = useGetContext();
+    const [seen, setSeen] = useState(false);
+    const [list, setList] = useState(false);
+    const {connected, openSession} = useGroupWatch();
     const {user} = useUser();
+
+    if (!response) return null;
 
     return (
         <>
@@ -37,19 +34,28 @@ export default function InfoDetails({response, loadTrailer, trailer}: InfoType) 
             </div>
             <div className={info.infoButtons}
                  style={response.type === 'MOVIE' ? infoUser?.myList ? {width: '44%'} : {width: '44%'} : {width: '58%'}}>
-                <PlayButton id={response.id}/>
-                <TrailerButton id={response.id} trailer={trailer} onClick={loadTrailer}/>
-                <Shuffle id={response.id} type={response.type}/>
-                <MyList id={response.id} myList={infoUser?.myList}/>
-                <Seen id={response.id} seen={infoUser?.seen}/>
-                <GroupWatch id={response.id} />
-                <PLayList id={response.id} type={response.type}/>
+                <FramesButton type='primary' icon='play' tooltip={`play ${response.name}`} label='play'
+                              link={{href: '/watch?mediaId=' + response.id}}/>
+                <FramesButton type='secondary' icon='roll' label={trailer ? 'stop' : 'trailer'}
+                              tooltip={trailer ? 'stop trailer' : 'trailer'} onClick={loadTrailer}/>
+                {response.type === MediaType.SHOW &&
+                    <FramesButton type='round' icon='shuffle' tooltip='shuffle playback'
+                                  link={{href: '/watch?shuffleId=' + response.id}}/>}
+                <FramesButton type='round' onClick={toggleAddToList}
+                              icon={infoUser?.myList ? list ? 'close' : 'check' : 'add'}
+                              onHover={setList} tooltip={infoUser?.myList ? 'remove' : 'add to list'}/>
+                <FramesButton type='round' onHover={setSeen} onClick={toggleSeen}
+                              tooltip={`mark as ${infoUser?.seen ? 'un' : ''}seen`}
+                              icon={(seen && !infoUser?.seen) || (!seen && infoUser?.seen) ? 'seen' : 'unseen'}/>
+                <FramesButton type='round' icon='user' isFill tooltip='Group Watch' state={{id: response.id}}
+                              onClick={openSession} style={connected ? {fill: '#3cab66'} : {}}/>
+                <FramesButton type='round' icon='square' tooltip={'add to playlist'}/>
                 {infoUser === null && user?.role === Role.ADMIN || infoUser?.canEdit ?
-                    <Template id={2} type={'edit'} name={'edit ' + response.name}
-                              onClick={() => getMedia(response.id)}/> : null}
+                    <FramesButton type={'round'} icon={'edit'} tooltip={'edit ' + response.name} state={response.id}
+                                  onClick={getMedia}/> : null}
                 {(infoUser === null && user?.role === Role.ADMIN && response.type === MediaType.SHOW) || infoUser?.download ?
-                    <Template id={2} type={'down'} name={'download more episodes for ' + response.name}
-                              onClick={() => downloadEpisodes(response.id, response.name)}/> : null}
+                    <FramesButton type={'round'} icon={'down'} tooltip={'download more episodes for ' + response.name}
+                                  state={response} onClick={downloadEpisodes}/> : null}
             </div>
             <div className={info.detailsHolder}>
                 <div className={info.infoDetails}>

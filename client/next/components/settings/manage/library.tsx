@@ -1,13 +1,14 @@
-import {MedForMod, UpdateSearch} from "../../../../../server/classes/modify";
 import {useEffect, useState} from "react";
 import ss from "../ACCOUNT.module.css";
 import {useFetcher} from "../../../../utils/customHooks";
-import useModify, {EditFrontMediaAtom} from "../../../../utils/modify";
+import useModify, {EditFrontMediaAtom, UnsavedFrontMediaAtom} from "../../../../utils/modify";
 import {Image, Loading} from "../../misc/Loader";
-import {Template} from "../../buttons/Buttons";
-import {useSetRecoilState} from "recoil";
+import {FramesButton} from "../../buttons/Buttons";
+import {useRecoilState, useSetRecoilState} from "recoil";
 import frames from '../../../assets/frames.png';
-import {useBase} from "../../../../utils/Providers";
+import {UpdateSearch} from "../../../../../server/classes/pickAndFrame";
+import {MedForMod} from "../../../../../server/classes/media";
+import useBase from "../../../../utils/provider";
 
 export interface Settings<S> {
     id: S;
@@ -40,7 +41,7 @@ export default function Library() {
     const setMedia = useSetRecoilState(EditFrontMediaAtom);
     const {scanAllMedia, scanAllEpisodes, scanAllSubs, getMedia} = useModify();
     const [text, setText] = useState('');
-    const [unScan, setUnScan] = useState<MedForMod[]>([]);
+    const [unScan, setUnScan] = useRecoilState(UnsavedFrontMediaAtom);
     const [load, setLoad] = useState(false);
     const {response: search, abort} = useFetcher<UpdateSearch[]>('/api/settings/libSearch?value=' + text);
 
@@ -50,6 +51,13 @@ export default function Library() {
 
         return () => abort.cancel();
     }, [text]);
+
+    useEffect(() => {
+        return () => {
+            abort.cancel();
+            setUnScan([]);
+        }
+    }, []);
 
     const getUnScanned = async () => {
         setText('');
@@ -61,8 +69,8 @@ export default function Library() {
     }
 
     const onScanClick = (id: string) => {
-        const file = unScan.find(x => x.file!.id === id);
-        file && setMedia({...file, location: file.file!.id!});
+        const file = unScan.find(x => x.file!.location === id);
+        file && setMedia({...file, location: file.file!.location});
     }
 
     return (
@@ -87,7 +95,7 @@ export default function Library() {
                         <div className={ss.searchRes}>
                             {unScan.map((e, v) => {
                                 const obj = {
-                                    id: e.file!.id!,
+                                    id: e.file!.location,
                                     name: e.file!.name!,
                                     overview: e.suggestions.length === 1 ? 'Found an exact match' : 'Found ' + e.suggestions.length + ' matches',
                                     backdrop: e.backdrop,
@@ -98,10 +106,10 @@ export default function Library() {
                         </div> :
                     <>
                         <div className={ss.buttons}>
-                            <Template id={2} type={'scan'} name={'perform library scan'} onClick={scanAllMedia}/>
-                            <Template id={1} type={'info'} name={'handle unScanned items'} onClick={getUnScanned}/>
-                            <Template id={0} type={'scan'} name={'scan episodes'} onClick={scanAllEpisodes}/>
-                            <Template id={2} type={'down'} name={'get missing subtitles'} onClick={scanAllSubs}/>
+                            <FramesButton type='round' icon='scan' tooltip={'perform library scan'} onClick={scanAllMedia}/>
+                            <FramesButton type='secondary' icon='info' label={'handle unScanned items'} onClick={getUnScanned}/>
+                            <FramesButton type='primary' icon='scan' label={'scan episodes'} onClick={scanAllEpisodes}/>
+                            <FramesButton type='round' icon='down' tooltip={'get missing subtitles'} onClick={scanAllSubs}/>
                         </div>
                         {load ? <Loading/> : null}
                     </>

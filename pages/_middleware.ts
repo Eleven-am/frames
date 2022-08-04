@@ -1,6 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
-import Middleware, {CookiePayload} from "../server/classes/middleware";
-import {Role} from "@prisma/client";
+import Middleware from "../server/classes/middleware";
 
 const middleware = new Middleware();
 
@@ -10,19 +9,22 @@ const getExtension = (url: string) => {
 }
 
 const verifyAccess = async function (request: NextRequest, response: NextResponse) {
-    const userToken = await middleware.confirmContent<CookiePayload>(request.cookies, 'frames-cookie') || {email: 'unknown', context: Role.GUEST, session: 'unknown', validUntil: 0, userId: 'unknown'};
+    const userToken = await middleware.readCookie(request.cookies, 'frames-cookie');
     const valid = Date.now() < userToken.validUntil;
     const path = request.nextUrl.pathname;
     const extension = getExtension(path);
     const isSEOBot = middleware.detectSEOBot(request);
     const url = request.nextUrl.clone();
+    const host = url.hostname;
+    const protocol = url.protocol;
+    const address = `${protocol}//${host}`;
     url.pathname = '/auth';
 
-    if (isSEOBot) {
-        if (extension !== 'unknown')
-            return response;
+    if (extension !== 'unknown')
+        return response;
 
-        const html = await middleware.createHTML(path);
+    else if (isSEOBot) {
+        const html = await middleware.createHTML(path, address);
         return new Response(html, {
             headers: {
                 "content-type": "text/html;charset=UTF-8",
@@ -30,17 +32,19 @@ const verifyAccess = async function (request: NextRequest, response: NextRespons
         })
     }
 
-    if (path === '/midIn' || path === '/getApiKey') {
-        const {email, context, session} = userToken;
-        const res = path === '/getApiKey' ? await middleware.getApiKey(): !valid ? {error: 'access unauthorised'} : {
+    if (path === '/midIn') {
+        const defDetails = await middleware.getApiKey();
+        const {email, context, session, identifier} = userToken;
+        const user = !valid ? null : {
             context: {
-                email,
-                session,
-                role: context
+                email, session, role: context,
+                identifier
             }
         };
 
-        return new Response(JSON.stringify(res), {
+        const details = {...defDetails, user};
+
+        return new Response(JSON.stringify(details), {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
@@ -56,14 +60,11 @@ const verifyAccess = async function (request: NextRequest, response: NextRespons
             path: '/',
         });
 
-    else if (extension !== 'unknown')
-        return response;
-
     else if (!valid && !/\/api\/(auth|stream)/.test(path) && !/\/frame=|\/auth/.test(path))
         return NextResponse.redirect(url);
 
-    else if (valid && path === '/auth' ) {
-        if (request.redirect ===  'follow')
+    else if (valid && path === '/auth') {
+        if (request.redirect === 'follow')
             return response;
 
         url.pathname = '/';

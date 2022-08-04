@@ -111,7 +111,7 @@
     display: grid;
     align-items: center;
     row-gap: 15px;
-    height:  calc(100% - 130px);
+    height: calc(100% - 130px);
     overflow: scroll;
 }
 
@@ -181,7 +181,9 @@
     cursor: pointer;
 }
 
-.nSel{ color: #d9eeffa1;}
+.nSel {
+    color: #d9eeffa1;
+}
 
 .sel, .side li:hover {
     color: var(--nino-blue);
@@ -214,6 +216,12 @@
     transition: all 0.2s ease-in-out;
     align-items: center;
     margin: 10px 0;
+}
+
+.select::-webkit-outer-spin-button, .select::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
 .pBtn {
@@ -289,7 +297,7 @@
     object-fit: contain;
     transition: all .2s ease-in-out;
     border-radius: 5px;
-    border: 1px solid rgba(0,0,0,0);
+    border: 1px solid rgba(0, 0, 0, 0);
 }
 
 .images img:hover {

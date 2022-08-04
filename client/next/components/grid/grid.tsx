@@ -40,7 +40,6 @@ export const CollectionGrid = () => {
         handleScroll
     } = useInfiniteScroll<Pick<SpringMedia, 'id' | 'poster' | 'name'>>(gridSelector ? `/api/load/${gridSelector.type}?${gridSelector.type}=${gridSelector.value}` : '');
 
-
     if (loading && !data.length)
         return <Loading/>;
 

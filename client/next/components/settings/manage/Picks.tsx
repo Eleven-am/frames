@@ -1,14 +1,14 @@
 import ss from "../ACCOUNT.module.css";
 import {Loading} from "../../misc/Loader";
-import {Template} from "../../buttons/Buttons";
-import {PickSummary} from "../../../../../server/classes/listEditors";
-import {useLongPolling} from "../../../../utils/customHooks";
+import {FramesButton} from "../../buttons/Buttons";
 import {useEditorPicks} from "../../../../utils/modify";
-import {Settings, SearchRes} from "./library";
+import {SearchRes, Settings} from "./library";
+import {PickSummary} from "../../../../../server/classes/pickAndFrame";
+import {useFetcher} from "../../../../utils/customHooks";
 
 export default function Picks() {
     const {pushPickLib} = useEditorPicks();
-    const {loading, state: response} = useLongPolling<PickSummary[]>('/api/settings/getPicks', null);
+    const {loading, response} = useFetcher<PickSummary[]>('/api/settings/getPicks');
 
     if (loading && !response) return <Loading/>
 
@@ -16,7 +16,7 @@ export default function Picks() {
         return (
             <div className={ss.data}>
                 <div className={ss.searchContainer}>
-                    <Template id={1} type={'add'} name={`add new editor's pick`} onClick={() => pushPickLib(null)}/>
+                    <FramesButton type='secondary' icon='add' label="add new editor's pick" state={null} onClick={pushPickLib}/>
                 </div>
 
                 {response.map((e, v) => {

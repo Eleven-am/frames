@@ -1,17 +1,31 @@
 import {useRecoilValue, useSetRecoilState} from "recoil";
-import usePlayback, {differance, framesPlayer, framesVideoStateAtom, HideImageAtom} from "../../../../utils/playback";
+import {differance, framesPlayer, HideImageAtom, usePlaybackControlsListener} from "../../../../utils/playback";
 import {useEffect, useRef} from "react";
 import cd from './frames.module.css';
 
 export default function FramesPlayer() {
     const setFrames = useSetRecoilState(framesPlayer);
-    const response = useRecoilValue(framesVideoStateAtom);
     const hideImage = useRecoilValue(HideImageAtom);
     const player = useRef<HTMLVideoElement | null>(null);
     const diff = useRecoilValue(differance);
-    const playback = usePlayback();
+    const {
+        handleLoadedMetadata,
+        handleEnded,
+        handleDurationChange,
+        handleVolumeChange,
+        handlePlayPause,
+        handleTimeUpdate,
+        handleWaiting,
+        handleError,
+        response
+    } = usePlaybackControlsListener(true);
 
-    useEffect(() => setFrames(player.current), [player.current])
+    useEffect(() => {
+        setFrames(player.current)
+        return () => {
+            setFrames(null)
+        }
+    }, [player.current]);
 
     if (response === null)
         return null;
@@ -20,15 +34,15 @@ export default function FramesPlayer() {
         <>
             <video
                 id={response.playerId}
-                onTimeUpdate={playback.handleTimeUpdate}
-                onLoadedMetadata={playback.handleLoadedMetadata}
-                onDurationChange={playback.handleDurationChange}
-                onEnded={playback.handleEnded}
-                onWaiting={playback.handleWaiting}
-                onVolumeChange={playback.handleVolumeChange}
-                onError={playback.handleError}
-                onPlay={playback.handlePlayPause}
-                onPause={playback.handlePlayPause}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onDurationChange={handleDurationChange}
+                onEnded={handleEnded}
+                onWaiting={handleWaiting}
+                onVolumeChange={handleVolumeChange}
+                onError={handleError}
+                onPlay={handlePlayPause}
+                onPause={handlePlayPause}
                 ref={player} className={diff ? cd.count : cd.frames} preload="metadata"
             >
                 <source src={response.cdn + response.location} type="video/mp4"/>

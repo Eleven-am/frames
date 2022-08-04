@@ -1,5 +1,6 @@
 import fetch from 'cross-fetch';
 import {MediaType} from "@prisma/client";
+import rename from "locutus/php/strings/strtr";
 
 declare global {
 
@@ -25,6 +26,18 @@ declare global {
         strip(string: string, whole?: boolean): boolean;
     }
 }
+
+export const dicDo = {
+    "mp4": "", "m4v": "", "264": "",
+    "1080p": "", "bluray": "", "x264": "",
+    "h264": "", "hddvd": "", "brrip": "",
+    "bitloks": "", "extended": "", "webrip": "",
+    "theatrical": "", "edition": "", "4k": "", "x265": "",
+    "10bit": "", "rarbg": "", "anoxmous": "", "10-bit": "",
+    "Deceit": "", "imax": "", "unrated": "",
+    "aac2": "", "0pr1nce": "", "yify": "", "aac": "", "yts": "",
+    "directors cut": "",
+};
 
 /**
  * @desc helps compare the similarities between two strings
@@ -79,6 +92,10 @@ type ExtractPropertyNames<T, M> = {
     [K in keyof T]: T[K] extends M ? K : never
 }[keyof T]
 
+type ExtractSameValueType<A, B, C extends keyof A> = {
+    [K in keyof B]: B[K] extends A[C] ? A[C] extends B[K] ? K : never : never
+}[keyof B]
+
 export class RestAPI {
 
     /**
@@ -109,7 +126,7 @@ export class RestAPI {
      * @param ground - the level of the recursion
      */
     public objectToInterface(obj: any, interfaceName: string, ground = 0): string {
-        let str = ground === 0 ? `export interface ${interfaceName} {\n`: `{\n`;
+        let str = ground === 0 ? `export interface ${interfaceName} {\n` : `{\n`;
         const tab = Array(ground).fill('\t').join('') + '\t';
         for (let key in obj) {
             switch (true) {
@@ -118,7 +135,7 @@ export class RestAPI {
                     break;
 
                 case Array.isArray(obj[key]):
-                    str += `${tab}${key}: Array<${typeof obj[key][0] === 'object' || Array.isArray(obj[key][0]) ? this.objectToInterface(obj[key][0], key, ground + 1).replace(/\n$/, ''): typeof obj[key][0]}>;\n`;
+                    str += `${tab}${key}: Array<${typeof obj[key][0] === 'object' || Array.isArray(obj[key][0]) ? this.objectToInterface(obj[key][0], key, ground + 1).replace(/\n$/, '') : typeof obj[key][0]}>;\n`;
                     break;
 
                 case typeof obj[key] === 'object':
@@ -153,8 +170,8 @@ export class RestAPI {
      * @desc returns a key from a weighted random object
      * @param spec - the spec to use
      */
-    public weightedRandom<B extends keyof A, A extends {[p: string]: number}>(spec: A): B | 'none' {
-        let i = 0, sum=0, r=Math.random();
+    public weightedRandom<B extends keyof A, A extends { [p: string]: number }>(spec: A): B | 'none' {
+        let i = 0, sum = 0, r = Math.random();
         for (const key in spec) {
             sum += spec[key];
             if (r <= sum) return key as any as B;
@@ -170,16 +187,16 @@ export class RestAPI {
      * @param key - the key to save the count in
      * @param needle - the element property to count
      */
-    public countAppearances<A extends {count?: number, [p: string]: any}, C extends keyof A, B extends string>(arrayOfA: A[][], key: B, needle: C): AddProperty<Omit<A, 'count'>, B, number>[] {
+    public countAppearances<A extends { count?: number, [p: string]: any }, C extends keyof A, B extends string>(arrayOfA: A[][], key: B, needle: C): AddProperty<Omit<A, 'count'>, B, number>[] {
         let count = 0;
         let response: AddProperty<A, B, number>[] = [];
-        const map = new Map<string | number, A & {count: number}>();
+        const map = new Map<string | number, A & { count: number }>();
 
         while (count < arrayOfA.length) {
             const items = arrayOfA[count];
 
             items.forEach(item => {
-                const val = map.get(item[needle]) as A & {count: number};
+                const val = map.get(item[needle]) as A & { count: number };
                 if (val)
                     val.count++;
                 else {
@@ -305,45 +322,33 @@ export class RestAPI {
         if (info > years - 1) {
             const yy = Math.floor(info / years);
             return yy + ' year' + (yy > 1 ? 's' : '') + ' ago';
-        }
-
-        else if (info > months - 1) {
+        } else if (info > months - 1) {
             const mm = Math.floor(info / months);
             return mm + ' month' + (mm > 1 ? 's' : '') + ' ago';
-        }
-
-        else if (info > week - 1) {
+        } else if (info > week - 1) {
             const ww = Math.floor(info / week);
             return ww + ' week' + (ww > 1 ? 's' : '') + ' ago';
-        }
-
-        else if (info > days -1) {
+        } else if (info > days - 1) {
             const dd = Math.floor(info / days);
             const minute = date.getMinutes();
             const hour = date.getHours();
-            const twelveHour = hour === 0 ? 12: hour > 12 ? hour - 12 : hour;
+            const twelveHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
             const ampm = hour > 12 ? 'PM' : 'AM';
             const day = date.getDay();
             if (dd < 2)
-                return 'Yesterday at ' + twelveHour + ':' + (minute > 9 ? '': '0') + minute + ' ' + ampm;
+                return 'Yesterday at ' + twelveHour + ':' + (minute > 9 ? '' : '0') + minute + ' ' + ampm;
 
             else {
                 const dayInWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                return 'Last ' + dayInWeek[day] + ' at ' + twelveHour + ':' + (minute > 9 ? '': '0') + minute + ' ' + ampm;
+                return 'Last ' + dayInWeek[day] + ' at ' + twelveHour + ':' + (minute > 9 ? '' : '0') + minute + ' ' + ampm;
             }
-        }
-
-        else if (info > hours - 1) {
+        } else if (info > hours - 1) {
             const hh = Math.floor(info / hours);
-            return (hh > 1 ? hh: 'An') + ' hour' + (hh > 1 ? 's': '') + ' ago';
-        }
-
-        else if (info > minutes - 1) {
+            return (hh > 1 ? hh : 'An') + ' hour' + (hh > 1 ? 's' : '') + ' ago';
+        } else if (info > minutes - 1) {
             const mm = Math.floor(info / minutes);
-            return (mm > 1 ? mm: 'A') + ' minute' + (mm > 1 ? 's': '') + ' ago';
-        }
-
-        else if (info > seconds - 1)
+            return (mm > 1 ? mm : 'A') + ' minute' + (mm > 1 ? 's' : '') + ' ago';
+        } else if (info > seconds - 1)
             return 'A few seconds ago';
 
         else
@@ -391,18 +396,18 @@ export class RestAPI {
      * @param id - the id of the element to be excluded
      * @param type - the type of the element to be accepted
      */
-    public randomise<S extends { id: number, type?: MediaType }>(arr: S[], length: number, id: number, type?: MediaType) {
+    public shuffle<S extends { id: number, type?: MediaType }>(arr: S[], length: number, id: number, type?: MediaType) {
         let array: S[] = [];
         let temp = type ? arr.filter(item => item.id !== id && item.type === type) : arr.filter(item => item.id !== id);
 
         length = length > temp.length ? temp.length : length;
-        for (let i = 0; i < length; i++) {
-            let int = Math.floor(Math.random() * temp.length);
-            while (array.some(file => file.id === temp[int].id))
-                int = Math.floor(Math.random() * temp.length);
 
-            array.push(temp[int]);
+        while (array.length < length) {
+            const index = Math.floor(Math.random() * temp.length);
+            array.push(temp[index]);
+            temp.splice(index, 1);
         }
+
         return array;
     }
 
@@ -480,25 +485,74 @@ export class RestAPI {
     }
 
     /**
+     * @desc returns array excluding the elements of the second array
+     * @param arr - array to check
+     * @param arr2 - array to check against
+     * @param keyA - the key to compare
+     * @param keyB - the key to compare
+     */
+    public exclude<A, B, C extends keyof A, D extends keyof B>(arr: A[], arr2: B[], keyA: C | C[], keyB: D | D[]): Array<A> {
+        let a: any = arr.concat();
+        let b = arr2.concat();
+        let result: Array<A> = [];
+        let keysA = Array.isArray(keyA) ? keyA : [keyA];
+        let keysB = Array.isArray(keyB) ? keyB : [keyB];
+
+        for (let i = 0; i < a.length; ++i) {
+            let val = true;
+            for (let j = 0; j < b.length; ++j) {
+                let index = 0;
+                for (let k = 0; k < keysA.length; ++k)
+                    if (a[i][keysA[k]] === b[j][keysB[k]])
+                        index++;
+
+                if (index === keysA.length) {
+                    val = false;
+                    break;
+                }
+            }
+
+            if (val)
+                result.push(a[i]);
+        }
+
+        return result;
+    }
+
+    /**
      * @desc returns the intersects of two arrays keeping an object key from the second array in the first
      * @param arr - array to check
      * @param arr2 - array to check against
-     * @param key - the key to save
-     * @param type - the type of the element to be accepted
+     * @param keyA - the key to compare
+     * @param keyB - the key to compare
+     * @param keepKey - the key to save
      */
-    public intersect<S extends { tmdbId: number, type: MediaType }, T extends { id: number }, B extends keyof T>(arr: S[], arr2: T[], type: MediaType, key?: B): Array<S & Pick<T, B>> {
-        let a: any = arr.concat();
-        let b = arr2.concat();
+    public intersect<A, B, C extends keyof A, D extends ExtractSameValueType<A, B, C>, E extends keyof B>(arr: A[], arr2: B[], keyA: C | C[], keyB: D | D[], keepKey?: E): Array<A & Pick<B, E>> {
+        let a: any[] = arr.concat();
+        let b: any[] = arr2.concat();
+        let c: (A & Pick<B, E>)[] = [];
+        let keysA = Array.isArray(keyA) ? keyA : [keyA];
+        let keysB = Array.isArray(keyB) ? keyB : [keyB];
+
         for (let i = 0; i < a.length; ++i) {
+            let val = false;
             for (let j = 0; j < b.length; ++j) {
-                if (a[i].tmdbId === b[j].id && a[i].type === type) {
-                    if (key) a[i][key] = b[j][key];
-                    b.splice(j--, 1);
+                let index = 0;
+                for (let k = 0; k < keysA.length; ++k)
+                    if (a[i][keysA[k]] === b[j][keysB[k]])
+                        index++;
+
+                if (index === keysA.length) {
+                    val = true;
+                    break;
                 }
             }
+
+            if (val)
+                c.push(a[i]);
         }
 
-        return a;
+        return c;
     }
 
     /**
@@ -510,7 +564,7 @@ export class RestAPI {
      */
     public async makeRequest<S>(url: string, params: any, method: 'POST' | 'GET' = 'GET', source?: AbortSignal): Promise<S | null> {
         return new Promise<S | null>(resolve => {
-            url = params && method === 'GET'? url + '?' + new URLSearchParams(params).toString(): url;
+            url = params && method === 'GET' ? url + '?' + new URLSearchParams(params).toString() : url;
             fetch(url, {
                 method,
                 headers: {
@@ -519,11 +573,12 @@ export class RestAPI {
                 body: method === 'POST' ? JSON.stringify(params) : null,
                 signal: source || null
             }).then(async response => {
-                if (response.status === 200) {
+                if (response.status >= 200 && response.status < 300) {
                     try {
                         const res = await response.json();
                         resolve(res);
                     } catch (e) {
+
                         const res = await response.text() as any as S
                         resolve(res);
                     }
@@ -536,5 +591,19 @@ export class RestAPI {
         })
     }
 
+    /**
+     * @desc fixes a file name to be valid
+     * @param str - the file name
+     * @private
+     */
+    protected prepareString(str: string) {
+        str = str.replace(/NaN/g, '');
+        str = str.replace(/\d{3,4}p.*?$/gi, ' ');
+        str = str.replace(/\(.*?\)|\[.*?]/g, ' ');
+        str = str.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ0-9]/g, ' ').toLowerCase();
+        str = str.replace(/\s+/g, ' ');
+        str = rename(str, dicDo);
+        str = str.trim();
+        return str;
+    }
 }
-

@@ -2,7 +2,6 @@ import ss from "../ACCOUNT.module.css";
 import {useManageSections} from "../../../../utils/modify";
 import WatchHistory from "./watchHistory";
 import YourList from "./myList";
-import UserPlaylist from "./playlist";
 
 export default function Account() {
     const response = ['watch history', 'notifications', 'playlists', 'your list', 'playback settings', 'security settings'];
@@ -19,7 +18,6 @@ export default function Account() {
             <div className={ss.infH}>
                 {side === 'watch history' && <WatchHistory/>}
                 {side === 'notifications' && <div>notifications</div>}
-                {side === 'playlists' && <UserPlaylist/>}
                 {side === 'your list' && <YourList/>}
             </div>
         </div>

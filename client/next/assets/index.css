@@ -17,7 +17,7 @@ body {
     --nino-blue: #d9eeff;
 }
 
-#player, #playerTwo{
+#player, #playerTwo {
     position: fixed;
     top: 0;
     left: 0;
@@ -26,7 +26,7 @@ body {
     background: #01101c;
 }
 
-#player{
+#player {
     height: 95%;
 }
 

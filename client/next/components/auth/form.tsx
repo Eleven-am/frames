@@ -1,21 +1,22 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import styles from './Auth.module.css';
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import googleLogo from '../../assets/ggl.png';
 import facebook from '../../assets/fb.png';
 import Image from "next/image";
-
 import {
     AuthContextEmailAtom,
     AuthContextHandler,
-    AuthContextPasswordAtom,
     AuthErrors,
     AuthFade,
     Process,
+    useAuth,
+    useEmail,
+    usePassword,
     useReset
 } from "./authContext";
-import {useEventListener} from "../../../utils/customHooks";
-import useUser, {Provider, useAuth} from "../../../utils/userTools";
+import {subscribe, useEventListener} from "../../../utils/customHooks";
+import useUser, {Provider} from "../../../utils/user";
 
 function Login() {
     const [state, dispatch] = useRecoilState(AuthContextHandler);
@@ -25,7 +26,7 @@ function Login() {
     const {emailError} = useRecoilValue(AuthErrors);
     const {error, process} = state;
 
-    const submit = () => {
+    const submit = useCallback(() => {
         dispatch({fade: true, error: null});
         setTimeout(async () => {
             if (process === 'email') {
@@ -39,24 +40,24 @@ function Login() {
             } else if (process === 'password')
                 dispatch({error: await signIn(email, pass)});
         }, 500)
-    }
+    }, [email, pass, process, confirmMail, signIn, emailError]);
 
-    const handleForgotPassword = () => {
+    const handleForgotPassword = useCallback(() => {
         dispatch({fade: true, error: null});
         setTimeout(async () => {
             if (email !== '' && !emailError) {
                 const data = await forgotPassword(email);
-                if (data)
+                if (data && !data.hasOwnProperty('error'))
                     dispatch({process: 'reset'});
-                else
-                    dispatch({error: 'email not found'});
+                else if (data && typeof data !== 'boolean')
+                    dispatch({error: data.error as string});
             } else
                 dispatch({error: 'enter a valid email address', process: 'email'});
             fade()
         }, 500)
-    }
+    }, [email, emailError, forgotPassword]);
 
-    const fade = () => setTimeout(() => dispatch({fade: false}), 1000);
+    const fade = useCallback(() => setTimeout(() => dispatch({fade: false}), 1000), [dispatch]);
 
     useEventListener('keyup', event => {
         if (event.code === 'Enter')
@@ -71,6 +72,7 @@ function Login() {
         <>
             <div className={styles["log-input-holder"]}>
                 <input readOnly={process !== "email"}
+                       autoComplete={'on'}
                        className={process === "email" ? styles["log-input"] : styles["log-pass"]}
                        style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="email"
                        placeholder="enter your email address" onChange={(e) => {
@@ -78,24 +80,24 @@ function Login() {
                     setEmail(e.currentTarget.value)
                 }}/>
                 <input className={process === "password" ? styles["log-input"] : styles["log-pass"]}
+                       autoComplete={'current-password'}
+                       readOnly={process !== "password"}
                        style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="password"
                        placeholder="enter your password" onChange={(e) => {
                     dispatch({error: null})
                     setPass(e.currentTarget.value)
                 }}/>
             </div>
-            {process !== 'reset' ?
-                <div className={styles["submit-width"]}>
-                    <button
-                        className={styles["log-submit"]}
-                        type="button"
-                        style={{width: "100%"}}
-                        onClick={submit}
-                    >
-                        Submit
-                    </button>
-                </div> : null
-            }
+            <div className={styles["submit-width"]}>
+                <button
+                    className={styles["log-submit"]}
+                    type="button"
+                    style={{width: "100%"}}
+                    onClick={submit}
+                >
+                    Submit
+                </button>
+            </div>
 
             {error === 'Incorrect password' ? <div className={styles["submit-width"]}>
                 <div className={styles.fp} onClick={handleForgotPassword}>forgot password?</div>
@@ -104,24 +106,21 @@ function Login() {
     )
 }
 
-function Create() {
+function CreateAccount() {
     const submitWidth = useRef<HTMLButtonElement>(null);
     const {signUp} = useUser();
     const dispatch = useSetRecoilState(AuthContextHandler);
     const fade = useRecoilValue(AuthFade);
-    const [email, setEmail] = useRecoilState(AuthContextEmailAtom);
-    const [pass, setPass] = useRecoilState(AuthContextPasswordAtom);
-    const [cPass, setCPass] = useState(false);
-    const [confirmPass, setConfirmPass] = useState('');
-    const {emailError, passError} = useRecoilValue(AuthErrors);
     const {auth, setAuth, authError, valid} = useAuth();
+    const {email, setEmail, isValid, validating} = useEmail(true);
+    const {passError, valid: cPass, pass, setPass, setConfirmPass} = usePassword();
 
-    const submit = async () => {
-        if (email !== '' && pass !== '' && auth !== '' && !emailError && !passError && !authError)
+    const submit = useCallback(async () => {
+        if (email !== '' && pass !== '' && auth !== '' && (!isValid && validating) && !passError && !authError)
             dispatch({
                 error: await signUp(email, pass, auth)
             });
-    }
+    }, [email, pass, auth, isValid, validating, passError, authError, signUp, dispatch]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -132,16 +131,6 @@ function Create() {
             }
         }, 500)
     }, [])
-
-    useEffect(() => {
-        if (confirmPass !== pass && confirmPass !== '') {
-            dispatch({error: 'Passwords do not match'});
-            setCPass(true);
-        } else {
-            dispatch({error: null});
-            setCPass(false);
-        }
-    }, [confirmPass])
 
     useEventListener('keyup', async event => {
         if (event.code === 'Enter')
@@ -167,7 +156,7 @@ function Create() {
                 <div className={styles["create-holders"]}>
                     <label htmlFor="create-email">email address</label>
                     <br/>
-                    <input style={emailError ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="text"
+                    <input style={!validating || isValid ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="text"
                            placeholder="enter your email address" value={email}
                            onChange={(e) => setEmail(e.currentTarget.value)}/>
                     <div className={styles.authSpacers}/>
@@ -199,7 +188,7 @@ function AuthKey() {
     const dispatch = useSetRecoilState(AuthContextHandler);
     const {auth, setAuth, authError, valid} = useAuth();
 
-    const submit = () => {
+    const submit = useCallback(() => {
         if (auth !== '' && !authError && valid) {
             dispatch({fade: true});
             setTimeout(async () => {
@@ -208,7 +197,7 @@ function AuthKey() {
                 });
             }, 500)
         }
-    }
+    }, [auth, authError, valid])
 
     useEventListener('keyup', event => {
         if (event.code === 'Enter')
@@ -244,34 +233,29 @@ function AuthKey() {
 }
 
 function Pick() {
-    const {connected, signOauth, connect, disconnect} = useUser()
+    const {signOauth, windowOpen} = useUser()
     const dispatch = useSetRecoilState(AuthContextHandler);
 
-    const handleClick = () => {
+    const handleClick = useCallback(() => {
         dispatch({fade: true});
         setTimeout(() => {
             dispatch({process: "email"});
         }, 500);
-    }
+    }, [])
 
-    const handleClickOauth = (provider: Provider) => {
+    const handleClickOauth = useCallback((provider: Provider) => {
         dispatch({fade: true});
         setTimeout(async () => {
             await signOauth(provider);
         }, 500);
-    }
+    }, []);
 
-    useEffect(() => {
-        connect();
-        return () => disconnect();
-    }, [])
-
-    useEventListener('visibilitychange', event => {
-        if (!event.srcElement.hidden && !connected) {
+    subscribe(windowOpen => {
+        if (windowOpen)
+            dispatch({fade: true});
+        else
             dispatch({fade: false});
-            connect();
-        }
-    })
+    }, windowOpen);
 
     return (
         <>
@@ -300,6 +284,53 @@ function Pick() {
     )
 }
 
+function ResetPassword() {
+    const {modifyPassword} = useUser();
+    const dispatch = useSetRecoilState(AuthContextHandler);
+    const {passError, valid: cPass, passValid, pass, setPass, setConfirmPass} = usePassword();
+
+    const submit = useCallback(async () => {
+        if (passValid) {
+            dispatch({fade: true});
+            setTimeout(async () => {
+                dispatch({
+                    error: await modifyPassword(pass),
+                })
+            }, 500);
+        } else dispatch({error: "passwords do not match"});
+    }, [modifyPassword, dispatch, passValid, pass]);
+
+    return (
+        <>
+            <div className={styles.rst}>
+                <label htmlFor="create-pass">password</label>
+                <br/>
+                <input
+                    style={passValid ? {borderColor: "#3cab66d0"} : passError || cPass ? {borderColor: "rgba(245, 78, 78, .9)"} : {}}
+                    type="password" placeholder="enter your password"
+                    onChange={(e) => setPass(e.currentTarget.value)}/>
+                <div className={styles.authSpacers}/>
+                <label htmlFor="confirm-pass">confirm password</label>
+                <br/>
+                <input
+                    style={passValid ? {borderColor: "#3cab66d0"} : cPass ? {borderColor: "rgba(245, 78, 78, .9)"} : {}}
+                    type="password" placeholder="confirm your password"
+                    onChange={(e) => setConfirmPass(e.currentTarget.value)}/>
+            </div>
+            <div className={styles["submit-width"]}>
+                <button
+                    className={styles["log-submit"]}
+                    type="button"
+                    style={{width: "100%"}}
+                    onClick={submit}
+                >
+                    Submit
+                </button>
+            </div>
+        </>
+    )
+}
+
 export default function LoginForm() {
     const reset = useReset();
     const {error, process, fade} = useRecoilValue(AuthContextHandler);
@@ -308,7 +339,7 @@ export default function LoginForm() {
         return () => reset();
     }, [])
 
-    const handleProcess = (process: Process | undefined) => {
+    const handleProcess = useCallback((process: Process | undefined) => {
         switch (process) {
             case "email":
                 return 'email address';
@@ -320,10 +351,14 @@ export default function LoginForm() {
                 return "create an account, it's free!";
             case "reset":
                 return "please visit your email to reset your password";
+            case "verify":
+                return "Please check your email for a verification link";
             case "pick":
                 return "select sign in options";
+            case "resetPassword":
+                return "enter your new password";
         }
-    }
+    }, [])
 
     return (
         <div className={styles['login-container']}>
@@ -332,8 +367,11 @@ export default function LoginForm() {
                 <div className={styles["log-label-div"]} style={error ? {color: "rgba(245, 78, 78, .9)"} : {}}>
                     {error ? error : handleProcess(process)}
                 </div>
-                {process === 'pick' ? <Pick/> : process === "create" ? <Create/> : process === "authKey" ? <AuthKey/> :
-                    <Login/>}
+                {process === "pick" && <Pick/>}
+                {process === "authKey" && <AuthKey/>}
+                {process === "create" && <CreateAccount/>}
+                {process === "resetPassword" && <ResetPassword/>}
+                {(process === "password" || process === 'email') && <Login/>}
             </div>
         </div>
     )

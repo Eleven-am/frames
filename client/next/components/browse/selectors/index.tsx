@@ -1,13 +1,10 @@
 import ss from './Styles.module.css';
 import styles from '../../grid/List.module.css';
 import {useEffect, useRef, useState} from "react";
-import {
-    GenreAndDecadeContextAtom,
-    useDecadeContext,
-    useGenreContext
-} from "../browseContext";
+import {GenreHolderContextAtom, useDecadeContext, useGenreContext} from "../browseContext";
 import useOnScroll from "../../../../utils/opacityScroll";
 import {useRecoilValue} from "recoil";
+import {BrowseData} from "../../../../../server/classes/media";
 
 const useScroll = () => {
     const list = useRef<HTMLUListElement>();
@@ -55,9 +52,9 @@ const useScroll = () => {
     return {scrollLeft, scrollRight, setList, atLeft, atRight};
 }
 
-export default function Selectors() {
+export default function Selectors({data}: { data: BrowseData }) {
     const divRef = useRef<HTMLDivElement>(null);
-    const {genres, decades} = useRecoilValue(GenreAndDecadeContextAtom);
+    const genres = useRecoilValue(GenreHolderContextAtom);
     const {setReference} = useOnScroll();
 
     useEffect(() => {
@@ -66,13 +63,13 @@ export default function Selectors() {
 
     return (
         <div className={ss.cntr} ref={divRef}>
-            <GenreHolder genres={genres} />
-            <DecadeHolder decades={decades} />
+            <GenreHolder genres={genres.length ? genres : data.genres}/>
+            <DecadeHolder decades={data.decades}/>
         </div>
     );
 }
 
-const GenreHolder = ({genres}: {genres: string[]}) => {
+const GenreHolder = ({genres}: { genres: string[] }) => {
     const list = useRef<HTMLUListElement>(null);
     const {scrollLeft, scrollRight, setList, atLeft, atRight} = useScroll();
     const {manageGenre, isGenreSelected} = useGenreContext();
@@ -83,31 +80,32 @@ const GenreHolder = ({genres}: {genres: string[]}) => {
 
     return (
         <div className={ss.list}>
-            <svg style={{left: '-3%', display: atLeft ? 'none': 'block'}} onClick={scrollLeft}>
+            <svg style={{left: '-3%', display: atLeft ? 'none' : 'block'}} onClick={scrollLeft}>
                 <polyline points="15 18 9 12 15 6"/>
             </svg>
             <ul className={styles.searchList} ref={list}>
                 {genres.map(value => (
-                    <li className={isGenreSelected(value) ? styles.activeList : styles.passiveList} key={value} onClick={() => manageGenre(value)}>
+                    <li className={isGenreSelected(value) ? styles.activeList : styles.passiveList} key={value}
+                        onClick={() => manageGenre(value)}>
                         {value}
                     </li>
                 ))}
             </ul>
-            <svg style={{right: '6%', display: atRight ? 'none': 'block'}} onClick={scrollRight}>
+            <svg style={{right: '6%', display: atRight ? 'none' : 'block'}} onClick={scrollRight}>
                 <polyline points="9 18 15 12 9 6"/>
             </svg>
         </div>
     )
 }
 
-const DecadeHolder = ({decades}:{decades: string[]}) => {
+const DecadeHolder = ({decades}: { decades: string[] }) => {
     const {manageDecade, decade} = useDecadeContext();
 
     return (
         <select className={ss.select}
                 value={decade}
                 onChange={e => manageDecade(e.currentTarget.value)}>
-            <option value="">choose decades</option>
+            <option value="">choose decade</option>
             {decades.map(value => <option key={value} value={value}>{value}</option>)}
         </select>
     )

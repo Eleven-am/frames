@@ -77,19 +77,24 @@ export default class Magnet extends Aggregate {
      * @param type - movie or tv
      */
     async addMagnet(id: number, type: MediaType) {
-        if (!this.deluge) return;
-        let res : {url: any, size: string} | null;
+        try {
+            if (!this.deluge)
+                return null;
+            let res: { url: any, size: string } | null;
 
-        if (type === MediaType.MOVIE)
-            res = await this.getMovie(id);
+            if (type === MediaType.MOVIE)
+                res = await this.getMovie(id);
 
-        else
-            res = await this.getSeasonTorrent(id, 1);
+            else
+                res = await this.addSeasonTorrent(id, 1);
 
-        if (!res) return;
-        const {url, size} = res;
-        await this.download(url);
-        return {url, size};
+            if (!res) return null;
+            const {url, size} = res;
+            return {url, size};
+        } catch (e) {
+            console.log(e);
+            return null;
+        }
     }
 
     /**
@@ -151,7 +156,7 @@ export default class Magnet extends Aggregate {
             }
         }
 
-        let data = await this.makeRarBGRequest(externalIds, movie.title || '', MediaType.MOVIE);
+        let data = await this.makeRarBGRequest(externalIds, movie.title || '', MediaType.MOVIE) || [];
         data = this.sortArray(data, ['size', 'seeders'], ['desc', 'desc']);
         if (data.length > 0) {
             let {download, size} = data[0];
@@ -159,7 +164,7 @@ export default class Magnet extends Aggregate {
         }
 
         let resolve = [];
-        let response = await this.makeTorrentRequest(movie.title || '');
+        let response = await this.makeTorrentRequest(movie.title || '') || [];
         response = this.sortArray(response, ['size', 'seeds'], ['desc', 'desc']);
 
         for (let item of response) {
@@ -179,26 +184,12 @@ export default class Magnet extends Aggregate {
     }
 
     /**
-     * @desc Get torrents from the providers
-     * @param id - The TMDB id of the movie
-     * @param season - The season number
-     * @param episode - The episode number
-     */
-    async addSeasonTorrent(id: number, season: number, episode?: number) {
-        const torrent = await this.getSeasonTorrent(id, season, episode);
-        if (!torrent) return;
-        const {url, size} = torrent;
-        await this.download(url);
-        return {url, size};
-    }
-
-    /**
      * @desc Get the magnet link for a torrent
      * @param id - The id of the torrent
      * @param season - The season of the torrent
      * @param episode - The episode of the torrent
      */
-    async getSeasonTorrent(id: number, season: number, episode?: number): Promise<{url: any, size: string} | null> {
+    async addSeasonTorrent(id: number, season: number, episode?: number): Promise<{ url: any, size: string } | null> {
         let search: string;
         let allProviders: TorrentApi[] = [];
 
@@ -208,7 +199,7 @@ export default class Magnet extends Aggregate {
 
         const externalIds = details.external_ids;
 
-        const response = await this.makeRarBGRequest(externalIds, details.name || '', MediaType.SHOW, episode);
+        const response = await this.makeRarBGRequest(externalIds, details.name || '', MediaType.SHOW, episode) || [];
 
         const data: AggregatedTorrents[] = response.map(item => {
             return {
@@ -226,12 +217,13 @@ export default class Magnet extends Aggregate {
 
         if (episode === undefined) {
             search = details.name + ' S' + (season > 9 ? '' : '0') + season;
-            allProviders = await this.makeTorrentRequest(search);
+            allProviders = await this.makeTorrentRequest(search) || [];
             search = details.name + ' Season ' + season;
-            allProviders = allProviders.concat(await this.makeTorrentRequest(search));
+            allProviders = allProviders.concat(await this.makeTorrentRequest(search) || []);
         } else {
             search = `${details.name} S${(season > 9 ? '' : '0') + season}E${(episode > 9 ? '' : '0') + episode}`;
-            allProviders = allProviders.concat(await Torrent.search(search));
+            const temp = await this.makeTorrentRequest(search) || [];
+            allProviders = allProviders.concat(temp);
         }
 
         const proves: AggregatedTorrents[] = allProviders.map(e => {
@@ -252,7 +244,7 @@ export default class Magnet extends Aggregate {
             return res;
 
         else if (episode === undefined)
-            return this.getSeasonTorrent(id, season, 1);
+            return this.addSeasonTorrent(id, season, 1);
 
         else return null;
     }
@@ -284,6 +276,25 @@ export default class Magnet extends Aggregate {
     }
 
     /**
+     * @desc adds multiple torrents to the deluge client
+     * @param magnets - array of magnet links
+     */
+    async addTorrents(magnets: ({ url: any, size: string } | null)[]) {
+        if (this.deluge) {
+            if (!await this.deluge.isConnected()) {
+                const hosts = await this.deluge.getHosts();
+                if (hosts)
+                    await this.deluge.connect(hosts[0].id);
+
+                else throw new Error('Deluge is not configured correctly')
+            }
+
+            for await (const item of magnets)
+                item && await this.deluge.add(item.url || '');
+        }
+    }
+
+    /**
      * @desc make a request to the rarbg api
      * @param external - ids of the media
      * @param search - query to search for
@@ -299,25 +310,19 @@ export default class Magnet extends Aggregate {
             ranked: 0
         };
 
-        return new Promise<RarBgApi[]>(async (resolve) => {
-            setTimeout(() => (resolve([])), 3000);
-
-            return new Promise<RarBgApi[]>(() => {
-                if (episode === undefined)
-                    resolve(rarBgApi.search(external.imdb_id, options, 'imdb'));
-                else
-                    resolve(rarBgApi.search(search, options));
-
-            }).catch(err => {
-                if (err === 'Cant find imdb in database. Are you sure this imdb exists?')
-                    return rarBgApi.search(external.id, options, 'themoviedb')
-                        .then((data: RarBgApi[]) => resolve(data))
-                        .catch((err: any) => {
-                            resolve([]);
-                            console.error(err)
-                        });
-            });
-        })
+        return await this.timeOutFunction<RarBgApi[]>(5000, async (resolve) => {
+            let data: RarBgApi[];
+            if (episode === undefined)
+                data = await rarBgApi.search(external.imdb_id, options, 'imdb')
+            else
+                data = await rarBgApi.search(search, options);
+            resolve(data);
+        }, async (err, resolve) => {
+            if (err === 'Cant find imdb in database. Are you sure this imdb exists?')
+                resolve(await rarBgApi.search(external.id, options, 'themoviedb'));
+            else
+                resolve([]);
+        });
     }
 
     /**
@@ -326,18 +331,32 @@ export default class Magnet extends Aggregate {
      * @protected
      */
     protected async makeTorrentRequest(query: string) {
-        return new Promise<TorrentApi[]>(async (resolve) => {
-            setTimeout(() => (resolve([])), 3000);
+        return await this.timeOutFunction<TorrentApi[]>(5000, async (resolve) => {
+            resolve(await Torrent.search(query));
+        }, async (err, resolve) => {
+            resolve([]);
+        })
+    }
 
-            Torrent.search(query)
-                .then((data: TorrentApi[]) => {
-                    resolve(data)
-                })
-                .catch((err: any) => {
-                    resolve([]);
-                    console.error(err)
+    private async timeOutFunction<S>(time: number, callback: (resolve: (value: (S | PromiseLike<S>)) => void) => Promise<void>, retry: (err: string, resolve: (value: (S | PromiseLike<S>)) => void) => Promise<void>) {
+        return new Promise<S | null>((resolve) => {
+            const timeout = setTimeout(() => {
+                resolve(null);
+            }, time);
+
+            const resolver = async (value: (S | PromiseLike<S>)) => {
+                clearTimeout(timeout);
+                resolve(value);
+            }
+
+            callback(resolver)
+                .catch(err => {
+                    retry(err, resolver)
+                        .catch(() => {
+                            resolve(null);
+                        })
                 });
-        });
+        })
     }
 
     /**
@@ -413,4 +432,5 @@ export default class Magnet extends Aggregate {
 
         return null;
     }
+
 }

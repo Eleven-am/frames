@@ -1,10 +1,10 @@
 import ss from '../misc.module.css';
 import style from './misc.module.css';
-import {BackButton, InfoButton, PlayButton, Template} from "../../buttons/Buttons";
+import {BackButton, FramesButton} from "../../buttons/Buttons";
 import {useRecoilState, useRecoilValue} from "recoil";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import cd from "../frames.module.css";
-import usePlayback, {
+import {
     differance,
     displaySidesAtom,
     FramesInformAtom,
@@ -16,17 +16,18 @@ import usePlayback, {
     SubtitlesAndUpNextAtom,
     SubtitlesAtom,
     UpNextAtom,
-    VideoListener
+    useRightControls,
 } from "../../../../utils/playback";
 import useCast, {VideoStateAtom} from "../../../../utils/castContext";
-import {useAuth} from "../../../../utils/userTools";
 import {useBasics, useClipboard, useEventListener} from "../../../../utils/customHooks";
 import Media from "../../entities/singleEntity/media";
 import styles from "../../buttons/Button.module.css";
-import {AlreadyStreamingAtom, useNotification} from "../../../../utils/notificationConext";
-import {useBase} from "../../../../utils/Providers";
 import {Link} from "../../misc/Loader";
-import {ManagePlaylist} from "../../misc/editPlaylist";
+import useNotifications, {AlreadyStreamingAtom} from "../../../../utils/notifications";
+import {useAuth} from "../../auth/authContext";
+import {GroupWatchSlide} from "../../lobby/groupWatchHandler";
+import useBase from "../../../../utils/provider";
+import {useRouter} from "next/router";
 
 export const Toppers = () => {
     const response = useRecoilValue(framesVideoStateAtom);
@@ -36,8 +37,10 @@ export const Toppers = () => {
         <>
             <BackButton response={response}/>
             <div className={ss.ci}>
-                {response?.logo ? <img src={response?.logo || ''} alt={response?.name}/> :
-                    <span>{response?.name}</span>}
+                {
+                    response?.logo ? <img src={response?.logo || ''} alt={response?.name}/> :
+                        <span>{response?.name}</span>
+                }
                 {response?.episodeName ? <div className={ss.ep}>{response?.episodeName}</div> : null}
             </div>
         </>
@@ -245,6 +248,14 @@ export const UpNextHolder = () => {
     const response = useRecoilValue(framesVideoStateAtom);
     const diff = useRecoilValue(differance);
     const data = useRecoilValue(UpNextAtom);
+    const router = useRouter();
+
+    const handleClick = useCallback(async () => {
+        if (response) {
+            const url = '/' + (response.episodeName ? 'show' : 'movie') + '=' + response.name.replace(/\s/g, '+');
+            await router.push('/info?mediaId=' + response.mediaId, url);
+        }
+    }, [response, router]);
 
     if (data && response)
         return (
@@ -260,8 +271,9 @@ export const UpNextHolder = () => {
                     <div className={cd.epi}>Up next: {data.episodeName || data.name}</div>
                     <p>{data.overview}</p>
                     <div className={cd.but}>
-                        <PlayButton id={data.mediaId} name={'plays in: ' + diff} url={data.location}/>
-                        <InfoButton id={data.mediaId} name={data.name} type={data.episodeName ? 'show' : 'movie'}/>
+                        <FramesButton type='primary' label={`plays in: ${diff}`} icon='play'
+                                      link={{href: data.location}}/>
+                        <FramesButton type='secondary' label='see details' icon='info' onClick={handleClick}/>
                     </div>
                 </div>
             </>
@@ -271,7 +283,7 @@ export const UpNextHolder = () => {
 }
 
 export const AlreadyStreaming = () => {
-    const {signOutEveryWhere} = useNotification();
+    const {signOutEveryWhere} = useNotifications();
     const data = useRecoilValue(AlreadyStreamingAtom);
 
     if (data)
@@ -299,10 +311,9 @@ export const AlreadyStreaming = () => {
                     <p>Someone is currently streaming {data.episodeName || data.name} on another device. To continue
                         streaming your favorite media, consider creating a new account, it is free!</p>
                     <div className={cd.but}>
-                        <Link href={'/'}>
-                            <Template id={0} type={'none'} name={'return home'}/>
-                        </Link>
-                        <Template id={1} type={'info'} name={'sign out everywhere'} onClick={signOutEveryWhere}/>
+                        <FramesButton type='primary' tooltip={'return home'} link={{href: '/'}}/>
+                        <FramesButton type='secondary' icon={'info'} tooltip={'sign out everywhere'}
+                                      onClick={signOutEveryWhere}/>
                     </div>
                 </div>
             </>
@@ -316,7 +327,7 @@ export const Subtitles = () => {
     const response = useRecoilValue(framesVideoStateAtom);
     const activeSub = useRecoilValue(framesSubtitlesAtom).activeSub;
     const sub = useRecoilValue(SubtitlesAndUpNextAtom).subtitles;
-    const {switchLanguage} = usePlayback();
+    const {switchLanguage} = useRightControls();
 
     return (
         <div onClick={(event) => event.stopPropagation()}
@@ -334,7 +345,7 @@ export const Subtitles = () => {
 
 const Sub = ({sub}: { sub: { language: string, url: string } }) => {
     const activeSub = useRecoilValue(framesSubtitlesAtom).activeSub;
-    const {switchLanguage} = usePlayback();
+    const {switchLanguage} = useRightControls();
 
     if (sub && sub.url !== '')
         return (
@@ -351,7 +362,7 @@ const Sub = ({sub}: { sub: { language: string, url: string } }) => {
 export const UpNextMini = () => {
     const upNext = useRecoilValue(UpNextAtom);
     const next = useRecoilValue(SubtitlesAndUpNextAtom).upNext;
-    const {playNext} = usePlayback();
+    const {playNext} = useRightControls();
 
     if (upNext)
         return (
@@ -367,8 +378,7 @@ export const UpNextMini = () => {
 export const Modals = () => {
     return (
         <>
-            <VideoListener/>
-            <ManagePlaylist/>
+            <GroupWatchSlide/>
         </>
     )
 }

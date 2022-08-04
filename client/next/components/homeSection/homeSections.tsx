@@ -1,11 +1,11 @@
-import React, {useRef, useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import Section from "../entities/section";
 import styles from './homeSections.module.css';
 import {useSetRecoilState} from "recoil";
 import {sectionAtom, startHeight} from "./homeContext";
 import {useHomeSegments} from "../../../utils/customHooks";
 
-export default function HomeSections ({stop}: {stop: (s: boolean) => void}) {
+export default function HomeSections({stop}: { stop: (s: boolean) => void }) {
     const {segment: response, handleScroll, setCallback} = useHomeSegments();
     const setHeight = useSetRecoilState(startHeight);
     const setSection = useSetRecoilState(sectionAtom);
@@ -20,7 +20,7 @@ export default function HomeSections ({stop}: {stop: (s: boolean) => void}) {
     })
 
     useEffect(() => {
-        if (response){
+        if (response) {
             let startHeight = divRef.current?.getBoundingClientRect().top;
             setHeight(startHeight);
         }

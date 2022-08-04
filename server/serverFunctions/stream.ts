@@ -1,25 +1,26 @@
 import {NextApiRequest, NextApiResponse} from "next";
-import PlayBack from "../classes/playBack";
-import {Playlist, FramesCast} from "../classes/listEditors";
-import {Modify} from "../classes/modify";
 import {CookiePayload} from "../classes/middleware";
+import Playback from "../classes/playback";
+import User from "../classes/user";
+import PickAndFrame from "../classes/pickAndFrame";
+import Springboard from "../classes/springboard";
 
-const playBack = new PlayBack();
-const list = new Playlist();
-const framesCast = new FramesCast();
-const modify = new Modify();
+const playBack = new Playback();
+const user = new User();
+const framesCast = new PickAndFrame();
+const springboard = new Springboard();
 
-export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePayload & {userId: string}) => {
+export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePayload & { userId: string }) => {
     const body = req.body;
     const query = req.query;
     let response: any;
     const type = req.query.type[1];
-    const {session, userId} = data;
+    const {userId, session} = data;
 
     switch (type) {
         case 'inform':
             response = true;
-            await playBack.saveInformation(body.auth, userId, body.position);
+            await user.saveInformation(body.auth, userId, body.position);
             break;
 
         case 'pureSub':
@@ -33,7 +34,7 @@ export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePay
             break;
 
         case 'upNext':
-            response = await list.getUpNext(query.auth as string, query.language as string);
+            response = await springboard.getUpNext(query.auth as string, query.language as string);
             break;
 
         case 'groupWatch':
@@ -41,7 +42,8 @@ export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePay
             break;
 
         case 'getDown':
-            response = await framesCast.addFileToDownload(body.auth, body.authKey, userId);
+            const location = await framesCast.addFileToDownload(body.auth, body.authKey, userId);
+            response = {location};
             break;
 
         case 'genCypher':
@@ -49,7 +51,7 @@ export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePay
             break;
 
         case 'switchLang':
-            response = await modify.modifyUserDefaultSub(userId, body.language);
+            response = await user.modifyUserDefaultSub(userId, body.language);
             break;
 
         case 'worker':
@@ -59,6 +61,14 @@ export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePay
         case 'getInfo':
             const save = query.save === 'true';
             response = await playBack.getMediaLite(+query.id, userId, save);
+            break;
+
+        case 'meta':
+            response = await springboard.getMetaTags(body.type, body.value);
+            break;
+
+        case 'loadVideo':
+            response = await springboard.startPlayback(body.media, session, true, body.playbackKey);
             break;
     }
 

@@ -1,7 +1,5 @@
-import {useEffect, useState} from "react";
 import ss from "../ACCOUNT.module.css";
-import {useRecoilState} from "recoil";
-import {SettingsSegmentContext, useManageSections} from "../../../../utils/modify";
+import {useManageSections} from "../../../../utils/modify";
 
 export default function About() {
     const response = ['about', 'help', 'feedback', 'privacy policy', 'terms of use'];

@@ -1,10 +1,22 @@
-import React from "react";
+import React, {useCallback} from "react";
 import styles from './FullDetails.module.css';
 import info from '../Info.module.css';
 import {Link} from "../../misc/Loader";
 import {SpringMedia} from "../../../../../server/classes/media";
+import {useGenreContext} from "../../browse/browseContext";
+import {useRouter} from "next/router";
+import {MediaType} from "@prisma/client";
 
 export default function Details({response}: { response: SpringMedia }) {
+    const router = useRouter();
+    const {splitGenres} = useGenreContext();
+
+    const handleClick = useCallback(async () => {
+        splitGenres(response.genre);
+        const url = response.type === MediaType.MOVIE ? '/movies' : '/shows';
+        await router.push(url);
+    }, [response, router, splitGenres]);
+
     return (
         <div id={styles["info-extra"]}>
             <div id={styles["info-full-overview"]}>
@@ -14,12 +26,13 @@ export default function Details({response}: { response: SpringMedia }) {
             </div>
             <div id={styles["info-extras"]}>
                 <div id={styles["info-item-release"]}>
-                    <div>Genre: <span className={styles["info-basic"]}>{response.genre}</span></div>
+                    <div>Genre: <span className={styles.click} onClick={handleClick}>{response.genre}</span></div>
                     <div>Release: <span className={styles["info-basic"]}>{response.release}</span></div>
                     <div>Runtime: <span className={styles["info-basic"]}>{response.runtime}</span></div>
                     {response.collection ?
                         <div>
-                            <Link href={'collection?collectionId=' + response.collection.id} as={'collection=' + response.collection.name.replace(/\s/g, '+')}>
+                            <Link href={'collection?collectionId=' + response.collection.id}
+                                  as={'collection=' + response.collection.name.replace(/\s/g, '+')}>
                                 <span className={styles.click}>{response.collection.name}</span>
                             </Link>
                         </div>
@@ -32,7 +45,8 @@ export default function Details({response}: { response: SpringMedia }) {
                             <br/>
                             <div>Writers:</div>
                             <ul>{response.writers && response.writers.map((person, v) =>
-                                <Link key={v} href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
+                                <Link key={v} href={`/person?id=${person.id}`}
+                                      as={'person=' + person.name.replace(/\s/g, '+')}>
                                     <li>
                                         <span className={styles.click}>{person.name}</span>
                                         <br/>
@@ -46,7 +60,8 @@ export default function Details({response}: { response: SpringMedia }) {
                             <br/>
                             <div>Directors:</div>
                             <ul>{response.directors && response.directors.map((person, v) =>
-                                <Link key={v} href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
+                                <Link key={v} href={`/person?id=${person.id}`}
+                                      as={'person=' + person.name.replace(/\s/g, '+')}>
                                     <li>
                                         <span className={styles.click}>{person.name}</span>
                                         <br/>
@@ -60,7 +75,8 @@ export default function Details({response}: { response: SpringMedia }) {
                             <br/>
                             <div>Producers:</div>
                             <ul>{response.producers && response.producers.map((person, v) =>
-                                <Link key={v} href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
+                                <Link key={v} href={`/person?id=${person.id}`}
+                                      as={'person=' + person.name.replace(/\s/g, '+')}>
                                     <li>
                                         <span className={styles.click}>{person.name}</span>
                                         <br/>

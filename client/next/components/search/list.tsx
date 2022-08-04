@@ -1,14 +1,15 @@
 import styles from "../grid/List.module.css";
 import {useRouter} from "next/router";
 import {MediaType} from "@prisma/client";
+import {useCallback} from "react";
 
-export default function List({list} : {list : {name: string, type: MediaType, id: number}[]}) {
+export default function List({list}: { list: { name: string, type: MediaType, id: number }[] }) {
     const history = useRouter();
 
-    const handleClick = async ({name, type, id}: { name: string, type: MediaType, id: number }) => {
+    const handleClick = useCallback(async ({name, type, id}: { name: string, type: MediaType, id: number }) => {
         let url = "/" + (type === MediaType.MOVIE ? "movie" : "show") + "=" + name.replace(/\s/g, "+");
         await history.push('/info?mediaId=' + id, url);
-    };
+    }, [history]);
 
     if (list && list.length)
         return (

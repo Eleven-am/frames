@@ -229,7 +229,7 @@ export interface FrontImages {
     logos: FrontImage[];
 }
 
-class TmdbApi extends RestAPI {
+export class TmdbApi extends RestAPI {
     private readonly apiKey: string;
     private readonly fanArtApiKey: string;
     private readonly fanArtBaseUrl: string;
@@ -448,20 +448,36 @@ class TmdbApi extends RestAPI {
 
     /**
      * @desc gets the information of a person from TMDB
-     * @param id - id of the person
+     * @param id - id of the movie
      */
-    public async getPersonMedia(id: number) {
+    public async getBibliography(id: number) {
         const url1 = this.baseUrl + '/person/' + id + '/movie_credits';
         const url2 = this.baseUrl + '/person/' + id + '/tv_credits';
         const params = {
             api_key: this.apiKey, language: 'en-US'
         };
 
-        const data1 = await this.makeRequest<{ cast: tmdbMedia[], crew: tmdbMedia[] }>(url1, params);
-        const data2 = await this.makeRequest<{ cast: tmdbMedia[], crew: tmdbMedia[] }>(url2, params);
-        const movies = this.uniqueId((data1?.cast || []).concat(data1?.crew || []), 'id');
-        const tv = this.uniqueId((data2?.cast || []).concat(data2?.crew || []), 'id');
-        return { movies, tv };
+        const movies = await this.makeRequest<{ cast: tmdbMedia[], crew: (tmdbMedia & { job: string })[] }>(url1, params) || {
+            cast: [],
+            crew: []
+        };
+        const shows = await this.makeRequest<{ cast: tmdbMedia[], crew: (tmdbMedia & { job: string })[] }>(url2, params) || {
+            cast: [],
+            crew: []
+        };
+
+        return {movies, shows};
+    }
+
+    /**
+     * @desc gets the information of a person from TMDB
+     * @param id - id of the person
+     */
+    public async getPersonMedia(id: number) {
+        const {movies: data1, shows: data2} = await this.getBibliography(id);
+        const movies = this.uniqueId((data1.cast || []).concat(data1?.crew || []), 'id');
+        const tv = this.uniqueId((data2.cast || []).concat(data2?.crew || []), 'id');
+        return {movies, tv};
     }
 
     /**
@@ -745,20 +761,20 @@ export class Aggregate extends TmdbApi {
         posters = posters.filter(poster => !isNaN(poster.year || NaN));
         logos = logos.filter(logo => !isNaN(logo.year || NaN));
         backdrops = backdrops.filter(backdrop => !isNaN(backdrop.year || NaN));
-        return { posters, logos, backdrops };
+        return {posters, logos, backdrops};
     }
 
     /**
      * @desc gets all the episodes for a TV show from TMDB
      * @param id - TMDB id of the TV show
      */
-    public async getAllEpisodes(id: number){
+    public async getAllEpisodes(id: number) {
         const show = await this.getMedia(id, MediaType.SHOW);
 
         if (!show) return {episodes: [], tmdbId: id};
 
         let season = 1;
-        const episodes: {seasonId: number, season: tmdbEpisode[]}[] = [];
+        const episodes: { seasonId: number, season: tmdbEpisode[] }[] = [];
 
         do {
             const data = await this.getSeason(id, season);

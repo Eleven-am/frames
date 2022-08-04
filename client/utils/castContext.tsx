@@ -1,8 +1,7 @@
-import {createContext, ReactNode, useCallback, useContext, useEffect, useState} from "react";
-import {atom, useRecoilState, useSetRecoilState} from "recoil";
-import Cast, {CastEvent, CastEventType, MediaObject, VideoState} from "chomecast-sender";
-import {GroupWatchListener} from "./groupWatch";
-import {useInfoDispatch} from "../next/components/misc/inform";
+import {useCallback} from "react";
+import {atom, useRecoilState} from "recoil";
+import {CastEvent, MediaObject, VideoState} from "chomecast-sender";
+import {useBaseCast} from "./provider";
 
 export interface LoadVideo {
     backdrop: string;
@@ -19,93 +18,13 @@ export const VideoStateAtom = atom<VideoState | null>({
     key: 'VideoStateAtom', default: null
 })
 
-const CastContext = createContext<Cast | undefined>(undefined);
-
-export function CastContextProvider({children}: { children: ReactNode }) {
-    const [cast, setCast] = useState<Cast | undefined>(undefined);
-
-    useEffect(() => {
-        const tmp = new Cast('73BFF1D2', 'urn:x-cast:com.frames.cast');
-        setCast(tmp);
-    }, [])
-
-    return (
-        <CastContext.Provider value={cast}>
-            <CastListener/>
-            <GroupWatchListener/>
-            {children}
-        </CastContext.Provider>
-    )
-}
-
 const sourceAtom = atom({
     key: 'castSourceAtom', default: ''
 })
 
-export const CastConnectionAtom = atom<{ available: boolean, connected: boolean }>({
-    key: 'castConnectionAtom',
-    default: {
-        available: false,
-        connected: false
-    }
-})
-
-export function CastListener() {
-    const cast = useContext(CastContext);
-    const dispatch = useInfoDispatch();
-    const setVideo = useSetRecoilState(VideoStateAtom);
-    const setEventState = useSetRecoilState(CastEventAtom);
-    const setConnected = useSetRecoilState(CastConnectionAtom);
-    const eventHandler = (event: CastEvent | null) => {
-        setEventState(event);
-        if (event && event.state && event.state.time !== 0) setVideo(event.state);
-    }
-
-    useEffect(() => {
-        cast?.on(CastEventType.AVAILABLE, event => {
-            eventHandler(event);
-            setConnected({available: true, connected: false})
-        })
-
-        cast?.on(CastEventType.DURATIONCHANGE, eventHandler)
-
-        cast?.on(CastEventType.PLAYING, eventHandler)
-
-        cast?.on(CastEventType.PAUSED, eventHandler)
-
-        cast?.on(CastEventType.VOLUMECHANGE, eventHandler)
-
-        cast?.on(CastEventType.CONNECT, eventHandler)
-
-        cast?.on(CastEventType.DISCONNECT, () => eventHandler(null))
-
-        cast?.on(CastEventType.TIMEUPDATE, eventHandler)
-
-        cast?.on(CastEventType.ERROR, event => {
-            dispatch({
-                type: 'error', heading: 'Cast Error', message: event.error?.error || 'Unknown error'
-            })
-        })
-
-        cast?.on(CastEventType.END, () => eventHandler(null))
-
-        cast?.on(CastEventType.BUFFERING, eventHandler)
-
-        cast?.on(CastEventType.MUTED, eventHandler)
-
-        setConnected({
-            available: cast?.available || false,
-            connected: cast?.connected || false
-        })
-    }, [cast])
-
-    return null;
-}
-
 export default function useCast() {
-    const cast = useContext(CastContext);
+    const cast = useBaseCast();
     const [source, setSource] = useRecoilState(sourceAtom);
-    const setConnected = useSetRecoilState(CastConnectionAtom);
 
     const sendMessage = useCallback((object: any) => {
         cast?.connected && cast.send(object);
@@ -135,7 +54,6 @@ export default function useCast() {
     const disconnect = useCallback(() => {
         cast && cast.connected && cast.disconnect();
         setSource('');
-        setConnected(prev => ({...prev, connected: false}))
     }, [cast?.connected])
 
     const castMedia = useCallback((video: MediaObject, obj: LoadVideo) => {

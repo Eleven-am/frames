@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["filterJson", "fullTextSearch"]
+  previewFeatures = ["fullTextSearch"]
 }
 
 datasource db {
@@ -128,17 +128,6 @@ model Rating {
   user    User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
-model Seen {
-  id      Int      @id @default(autoincrement())
-  times   Int
-  mediaId Int
-  userId  String
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-}
-
 model PlaylistVideo {
   id         Int      @id @default(autoincrement())
   videoId    Int
@@ -163,7 +152,17 @@ model Playlist {
   isPublic       Boolean         @default(false)
   user           User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
   playlistVideos PlaylistVideo[]
-  created  DateTime @default(now())
+  sharedWith     SharedWith[]
+  created        DateTime        @default(now())
+}
+
+model SharedWith {
+  id         Int      @id @default(autoincrement())
+  email      String
+  playlistId String
+  user       User     @relation(fields: [email], references: [email], onDelete: Cascade)
+  playlist   Playlist @relation(fields: [playlistId], references: [identifier], onDelete: Cascade)
+  created    DateTime @default(now())
 }
 
 model Suggestion {
@@ -171,6 +170,7 @@ model Suggestion {
   times   Int
   mediaId Int
   userId  String
+  seen    Boolean  @default(false)
   created DateTime @default(now())
   updated DateTime @updatedAt
   media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
@@ -182,6 +182,8 @@ model Notification {
   opened     Boolean  @default(false)
   message    String
   title      String
+  image      String
+  url        String
   senderId   String
   receiverId String
   created    DateTime @default(now())
@@ -198,30 +200,33 @@ enum Role {
 }
 
 model User {
-  id             Int              @id @default(autoincrement())
-  email          String           @unique
-  password       String
-  userId         String           @unique
-  role           Role             @default(USER)
-  inform         Boolean          @default(true)
-  autoplay       Boolean          @default(true)
-  confirmedEmail Boolean          @default(false)
-  defaultLang    String           @default("none")
-  notificationChannel String       @default("global")
-  auths          Auth[]
-  frames         Frame[]
-  lists          ListItem[]
-  ratings        Rating[]
-  seen           Seen[]
-  playlist       Playlist[]
-  suggestions    Suggestion[]
-  identifiers    UserIdentifier[]
-  views          View[]
-  downloads      Download[]
-  watched        Watched[]
-  notifications  Notification[]   @relation("receiver")
-  messages       Notification[]   @relation("sender")
-  Session        Session[]
+  id                  Int              @id @default(autoincrement())
+  email               String           @unique
+  password            String
+  userId              String           @unique
+  role                Role             @default(USER)
+  inform              Boolean          @default(true)
+  autoplay            Boolean          @default(true)
+  confirmedEmail      Boolean          @default(false)
+  confirmToken        String?
+  defaultLang         String           @default("none")
+  notificationChannel String           @default("global")
+  revoked             Boolean          @default(false)
+  auths               Auth[]
+  frames              Frame[]
+  lists               ListItem[]
+  ratings             Rating[]
+  playlist            Playlist[]
+  suggestions         Suggestion[]
+  identifiers         UserIdentifier[]
+  views               View[]
+  downloads           Download[]
+  watched             Watched[]
+  notifications       Notification[]   @relation("receiver")
+  messages            Notification[]   @relation("sender")
+  session             Session[]
+  sharedWith          SharedWith[]
+  seenMedia           SeenMedia[]
 }
 
 model Video {
@@ -282,7 +287,6 @@ model Watched {
   position  Int
   mediaId   Int
   episodeId Int?
-  finished  Int      @default(0)
   times     Int      @default(0)
   created   DateTime @default(now())
   updated   DateTime
@@ -292,6 +296,19 @@ model Watched {
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@unique(fields: [userId, videoId], name: "seenByUser")
+}
+
+model SeenMedia {
+  id      Int      @id @default(autoincrement())
+  userId  String
+  mediaId Int
+  times   Int
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  created DateTime @default(now())
+  updated DateTime
+
+  @@unique(fields: [mediaId, userId], name: "seenByUser")
 }
 
 enum CastType {
@@ -343,11 +360,11 @@ model Media {
   folder       Folder?
   lists        ListItem[]
   ratings      Rating[]
-  seen         Seen[]
   suggestions  Suggestion[]
   videos       Video[]
   watched      Watched[]
   castCrews    CastCrew[]
 
+  SeenMedia SeenMedia[]
   @@unique([tmdbId, type])
 }

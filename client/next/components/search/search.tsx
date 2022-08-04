@@ -1,10 +1,11 @@
 import List from "./list";
 import SearchGrid from "./grid";
-import {useDetectPageChange, useSearch} from "../../../utils/customHooks";
+import {useDetectPageChange} from "../../../utils/customHooks";
 import {useRecoilState} from "recoil";
 import {NavOpacityAtom} from "../navbar/navigation";
 import {useEffect, useRef} from "react";
 import {Loading} from "../misc/Loader";
+import {useSearch} from "../navbar/navbar";
 
 export default function SearchLayout() {
     const {loading: pageChange} = useDetectPageChange();
@@ -24,12 +25,12 @@ export default function SearchLayout() {
     if (pageChange)
         return <Loading/>
 
-   else if (active)
+    else if (active)
         return (
-           <>
-               <List list={list} />
-               <SearchGrid grid={grid} loading={loading}/>
-           </>
+            <>
+                <List list={list}/>
+                <SearchGrid grid={grid} loading={loading}/>
+            </>
         )
 
     else return null

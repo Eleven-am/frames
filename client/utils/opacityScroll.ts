@@ -1,5 +1,5 @@
 import {atom, selector, useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
-import {useEffect} from "react";
+import {useCallback, useEffect} from "react";
 import {NavOpacityAtom} from "../next/components/navbar/navigation";
 
 const OnScrollReference = atom<Element | null>({
@@ -43,20 +43,20 @@ export default function useOnScroll() {
     const currentReset = useResetRecoilState(CurrentRefHeight);
     const startRefReset = useResetRecoilState(StartRefHeight);
 
-    const onScroll = () => {
+    const onScroll = useCallback(() => {
         const currentHeight = reference?.getBoundingClientRect().top;
         setCurrent(currentHeight);
-    }
+    }, [reference, setCurrent])
 
     useEffect(() => {
-        setNavOpacity((values.height < 0.5 ? 1.3: 0.9) - values.height);
+        setNavOpacity((values.height < 0.5 ? 1.3 : 0.9) - values.height);
     }, [values])
 
-    const reset = () => {
+    const reset = useCallback(() => {
         refReset();
         currentReset();
         startRefReset();
-    }
+    }, [refReset, currentReset, startRefReset])
 
     useEffect(() => {
         const height = reference?.getBoundingClientRect().top;

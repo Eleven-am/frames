@@ -1,21 +1,36 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {Loading} from "../../misc/Loader";
 import ss from "../ACCOUNT.module.css";
-import {Template} from "../../buttons/Buttons";
-import {useInfoDispatch} from "../../misc/inform";
-import useUser from "../../../../utils/userTools";
-import {ManageAuthKey} from "../../../../../server/classes/auth";
+import {FramesButton} from "../../buttons/Buttons";
 import {useClipboard} from "../../../../utils/customHooks";
 import {SearchRes} from "./library";
+import useNotifications, {useConfirmDispatch} from "../../../../utils/notifications";
+import useUser from "../../../../utils/user";
+import {ManageAuthKey} from "../../../../../server/classes/auth";
 
 export default function ManageKeys() {
     const {manageKeys, generateAuthKey} = useUser();
+    const {globalNotification: channel} = useNotifications();
     const [state, setState] = useState<ManageAuthKey[]>([]);
     const [loading, setLoading] = useState(true);
-    const dispatch = useInfoDispatch();
+    const dispatch = useConfirmDispatch();
     const {copy: cp} = useClipboard();
 
-    const copy = async (obj: { key: string, access: number }) => {
+    channel.subscribe<{ event: string, authKey: string, email: string }>('shout', msg => {
+        switch (msg.event) {
+            case 'exhaustedKey':
+                const username = msg.email.split('@')[0];
+                dispatch({
+                    type: 'warn',
+                    heading: 'Key Exhausted',
+                    message: `${username}'s just used the ${msg.authKey} key.`,
+                })
+                loadKeys();
+                break;
+        }
+    })
+
+    const copy = useCallback(async (obj: { key: string, access: number }) => {
         if (obj.access === 0)
             await cp(obj.key, 'Successfully copied the auth key');
 
@@ -24,9 +39,9 @@ export default function ManageKeys() {
             heading: 'Invalid action',
             message: 'This auth key has been exhausted'
         })
-    }
+    }, [cp, dispatch]);
 
-    const loadKeys = () => {
+    const loadKeys = useCallback(() => {
         manageKeys()
             .then(response => {
                 if (response.response)
@@ -41,19 +56,19 @@ export default function ManageKeys() {
 
                 setLoading(false);
             })
-    }
+    }, [manageKeys, dispatch]);
 
-    const handleClick = async () => {
+    const handleClick = useCallback(async () => {
         const response = await generateAuthKey();
         dispatch({
-            type: response.authKey ? 'alert' : 'error',
+            type: response.authKey ? 'success' : 'error',
             heading: response.authKey ? 'Auth key generated' : 'Something went wrong',
             message: response.authKey || response.error || ''
         })
 
         if (response.authKey)
             loadKeys();
-    }
+    }, [generateAuthKey, loadKeys, dispatch])
 
     useEffect(() => {
         loadKeys();
@@ -66,7 +81,7 @@ export default function ManageKeys() {
         return (
             <div className={ss.data}>
                 <div className={ss.searchContainer}>
-                    <Template id={1} type={'add'} name={`generate auth key`} onClick={handleClick}/>
+                    <FramesButton type='secondary' icon={'add'} label='generate auth key' onClick={handleClick}/>
                 </div>
 
                 {state.map((e, v) => {

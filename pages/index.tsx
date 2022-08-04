@@ -1,19 +1,18 @@
 import React, {useState} from "react";
-import {useNavBar} from "../client/utils/customHooks";
-import HomeLayout from "../client/next/components/navbar/navigation";
+import {useNavBar} from "../client/next/components/navbar/navigation";
 import Trending from "../client/next/components/trending/trending";
 import HomeSections from "../client/next/components/homeSection/homeSections";
-import {Banner} from "../server/serverFunctions/load";
+import {Banner} from "../server/classes/media";
 
 export default function Home({banner}: { banner: Banner[] }) {
     const [stop, setStop] = useState(false);
     useNavBar('home', 1);
 
     return (
-        <HomeLayout>
+        <>
             <Trending stop={stop} response={banner}/>
             <HomeSections stop={setStop}/>
-        </HomeLayout>
+        </>
     )
 }
 

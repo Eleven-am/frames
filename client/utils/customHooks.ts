@@ -1,15 +1,12 @@
 import {AbortController} from "node-abort-controller";
 import fetch from 'cross-fetch';
 import useSWR, {SWRConfiguration} from "swr";
-import React, {useCallback, useEffect, useLayoutEffect, useRef, useState} from "react";
-import {atomFamily, useRecoilState, useSetRecoilState} from "recoil";
-import NProgress from "nprogress";
-import {navSection, NavSectionAndOpacity, SearchContextAtom} from "../next/components/navbar/navigation";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {atomFamily, useRecoilState} from "recoil";
+import {useConfirmDispatch} from "./notifications";
 import {useRouter} from "next/router";
-import {SearchPicker} from "../../server/classes/media";
-import {useBase} from "./Providers";
-import {useInfoDispatch} from "../next/components/misc/inform";
-import {PrismaClient} from "@prisma/client";
+import {ParsedUrlQuery} from "querystring";
+import useBase from "./provider";
 
 declare global {
     interface Document {
@@ -31,16 +28,112 @@ declare global {
     }
 
     interface Window {
-        prisma: PrismaClient;
         WebKitPlaybackTargetAvailabilityEvent: any;
     }
 }
 
-export const fetcher = <S>(url: string, cancel?: AbortSignal) => {
+export interface default_t<T = any> {
+    [key: string]: T;
+}
+
+interface YTPlayer {
+    stopVideo: () => void;
+    destroy: () => void;
+    setVolume: (arg0: number) => void;
+    playVideo: () => void;
+}
+
+export const useClipboard = () => {
+    const dispatch = useConfirmDispatch();
+
+    const copy = useCallback(async (value: string, success: string) => {
+        navigator.clipboard.writeText(value)
+            .then(() => {
+                dispatch({
+                    type: "success",
+                    heading: 'Copy Successful',
+                    message: success
+                })
+            })
+            .catch((error) => {
+                dispatch({
+                    type: "error",
+                    heading: 'Something went wrong',
+                    message: error as string
+                })
+            })
+    }, [dispatch]);
+
+    const paste = useCallback(async (success: string) => {
+        navigator.clipboard.readText()
+            .then(() => {
+                dispatch({
+                    type: "success",
+                    heading: 'Paste Successful',
+                    message: success
+                })
+            })
+            .catch((error) => {
+                dispatch({
+                    type: "error",
+                    heading: 'Something went wrong',
+                    message: error as string
+                })
+            })
+    }, [dispatch]);
+
+    return {
+        copy, paste
+    }
+}
+
+export const useDetectPageChange = (checkShallow = false, callback?: (ev: { url: string, loading: boolean, shallow: boolean }) => void) => {
+    const router = useRouter();
+    const {isMounted} = useBasics();
+    const savedHandler = useRef<(ev: { url: string, loading: boolean, shallow: boolean }) => void>();
+    const url = useMemo(() => router.pathname, [router.pathname]);
+    const loading = useRef(false);
+
+    useEffect(() => {
+        savedHandler.current = callback;
+    }, [callback]);
+
+    const handleRouteChange = useCallback((url: string, shallow: boolean, isLoading: boolean) => {
+        isMounted() && savedHandler.current && savedHandler.current({url, loading: isLoading, shallow});
+        if (shallow && !checkShallow)
+            return;
+        loading.current = isLoading;
+    }, [isMounted, checkShallow]);
+
+    useEffect(() => {
+        router.events.on('routeChangeStart', (url, {shallow}) => {
+            handleRouteChange(url, shallow, true);
+        });
+
+        router.events.on('routeChangeComplete', (url, {shallow}) => {
+            handleRouteChange(url, shallow, false);
+        });
+
+        return () => {
+            router.events.off('routeChangeStart', (url, {shallow}) => {
+                handleRouteChange(url, shallow, true);
+            });
+
+            router.events.off('routeChangeComplete', (url, {shallow}) => {
+                handleRouteChange(url, shallow, false);
+            });
+        }
+    }, [router])
+
+    return {url, loading: loading.current, router};
+}
+
+export const fetcher = <S>(url: string, cancel?: AbortSignal, method: 'GET' | 'POST' = 'GET', body?: any) => {
     return new Promise<S>((resolve, reject) => {
         fetch(url, {
-            method: "GET",
+            method: method,
             signal: cancel,
+            body: body ? JSON.stringify(body) : undefined,
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
@@ -55,17 +148,22 @@ export const fetcher = <S>(url: string, cancel?: AbortSignal) => {
     })
 }
 
-export function useFetcher<S>(key: string, config?: SWRConfiguration) {
+export function useFetcher<S>(key: string, config?: SWRConfiguration & { method?: 'GET' | 'POST', postBody?: any }) {
     const source = new AbortController();
     const cancel = source.abort.bind(source);
-    const {data, error} = useSWR<S>(key, (url) => fetcher<S>(url, source.signal), config);
+    const {
+        data,
+        error
+    } = useSWR<S>(key, (url) => fetcher<S>(url, source.signal, config?.method, config?.postBody), config);
     return {response: data, error, loading: !error && !data, abort: {cancel}};
 }
 
 export function useEventListener<T extends Element>(eventName: string, handler: (ev: any) => void, element?: T | null) {
     const savedHandler = useRef<(ev: any) => void>(handler);
 
-    savedHandler.current = handler;
+    useEffect(() => {
+        savedHandler.current = handler;
+    }, [handler]);
 
     useEffect(() => {
         const myElement = element || document;
@@ -79,56 +177,264 @@ export function useEventListener<T extends Element>(eventName: string, handler: 
     }, [eventName, element]);
 }
 
-export function useWindowListener<T extends Element>(eventName: string, handler: (ev: any) => void) {
+export function useWindowListener<T extends Element>(eventName: string, handler: (ev: any) => void, win?: Window | null) {
     const savedHandler = useRef<(ev: any) => void>(handler);
 
-    savedHandler.current = handler;
+    useEffect(() => {
+        savedHandler.current = handler;
+    }, [handler]);
 
     useEffect(() => {
         const eventListener = (event: any) => {
             return savedHandler.current(event);
         }
-        window.addEventListener(eventName, eventListener);
+        (win || window).addEventListener(eventName, eventListener);
         return () => {
             window.removeEventListener(eventName, eventListener);
         };
     }, []);
 }
 
-export function useLocalStorage<S>(key: string, initialValue: S): [S, (arg0: S) => void] {
-    const [storedValue, setStoredValue] = useState<S>(() => {
-        try {
-            const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : initialValue;
-        } catch (error) {
-            return initialValue;
-        }
-    });
+export const useInterval = (callback: () => void, seconds: number, tick = true) => {
+    const savedCallback = useRef(callback);
+    const id = useRef<NodeJS.Timeout>()
 
-    const setValue = (value: S) => {
-        try {
-            setStoredValue(value);
-            window.localStorage.setItem(key, JSON.stringify(value));
-        } catch (error) {
-        }
-    };
+    useEffect(() => {
+        savedCallback.current = callback;
+    }, [callback]);
 
-    return [storedValue, setValue];
+    useEffect(() => {
+        if (seconds === 0)
+            return;
+
+        tick && savedCallback.current();
+        id.current = setInterval(() => savedCallback.current(), seconds * 1000);
+        return () => id.current && clearInterval(id.current);
+    }, [seconds]);
+
+    const clear = useCallback(() => {
+        id.current && clearInterval(id.current);
+    }, [id]);
+
+    const restart = useCallback(() => {
+        clear();
+        id.current = setInterval(() => savedCallback.current(), seconds * 1000);
+    }, [clear, seconds]);
+
+    return {clear, restart};
 }
 
-interface YTPlayer {
-    stopVideo: () => void;
-    destroy: () => void;
-    setVolume: (arg0: number) => void;
-    playVideo: () => void;
+export const useLoop = (initialState: { start: number, end: number }) => {
+    const [state, setState] = useState(initialState);
+
+    const {clear, restart} = useInterval(() => setState(state => {
+        return {...state, start: state.end - 1 < state.start + 1 ? 0 : state.start + 1}
+    }), 5, false);
+
+    const switchTo = useCallback((start: number, end: number) => {
+        setState({start, end});
+        restart();
+    }, []);
+
+    return {current: state.start, prev: state.start === 0 ? state.end : state.start - 1, clear, restart, switchTo};
 }
 
-export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backdrop: React.RefObject<HTMLDivElement>, trailerId: string) {
+const hookChangeAtomFamily = atomFamily<any, string>({
+    key: 'hookChangeAtomFamily',
+    default: undefined
+})
+
+export const useEventEmitter = <S>(eventName: string) => {
+    const {isMounted} = useBasics();
+    const [hook, setHook] = useRecoilState<S | undefined>(hookChangeAtomFamily(eventName));
+    const sb = useRef<(a: S) => void>();
+
+    useEffect(() => {
+        if (isMounted() && sb.current && hook !== undefined)
+            sb.current(hook);
+    }, [hook])
+
+    const subscribe = useCallback((callback: (a: S) => void) => {
+        sb.current = callback;
+    }, [])
+
+    return {
+        state: hook,
+        subscribe, emit: setHook
+    }
+}
+
+export const usePreviousState = <S>(state: S) => {
+    const ref = useRef<S>();
+
+    useEffect(() => {
+        ref.current = state;
+    }, [state])
+
+    return ref.current;
+}
+
+export const useBasics = () => {
+    const isMountedRef = useRef(true);
+    const isServer = typeof window === 'undefined';
+    const [windowOpen, setMonitor] = useState(false);
+    const [win, setWin] = useState<Window | null>(null);
+    const isMounted = useCallback(() => isMountedRef.current, [isMountedRef.current]);
+    const {clear, restart} = useInterval(() => {
+        setMonitor(true);
+        if (win) {
+            if (win.closed) {
+                setMonitor(false);
+                setWin(null);
+                clear();
+            }
+        } else {
+            setMonitor(false);
+            setWin(null);
+            clear();
+        }
+    }, 1);
+
+    const getBaseUrl = useCallback(() => {
+        if (isServer)
+            return '';
+        else
+            return window.location.protocol + '//' + window.location.host;
+    }, [isServer]);
+
+    const isMobile = useMemo(() => {
+        if (isServer)
+            return false;
+
+        else {
+            const toMatch = [
+                /Android/i,
+                /webOS/i,
+                /iPhone/i,
+                /iPad/i,
+                /iPod/i,
+                /Windows Phone/i
+            ];
+
+            return toMatch.some((toMatchItem) => {
+                return navigator.userAgent.match(toMatchItem);
+            });
+        }
+    }, [isServer]);
+
+    const openPopup = useCallback((url: string, title: string, w: number, h: number) => {
+        const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : window.screenX;
+        const dualScreenTop = window.screenTop !== undefined ? window.screenTop : window.screenY;
+
+        const width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width;
+        const height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height;
+
+        const systemZoom = width / window.screen.availWidth;
+        const left = (width - w) / 2 / systemZoom + dualScreenLeft
+        const top = (height - h) / 2 / systemZoom + dualScreenTop
+        const newWindow = window.open(url, title,
+            `
+          scrollbars=yes,
+          width=${w / systemZoom}, 
+          height=${h / systemZoom}, 
+          top=${top}, 
+          left=${left}
+          `
+        )
+
+        newWindow?.focus();
+        setWin(newWindow);
+        restart();
+    }, [restart]);
+
+    useEffect(() => {
+        return () => void (isMountedRef.current = false);
+    }, []);
+
+    return {isServer, isMounted, getBaseUrl, isMobile, openPopup, windowOpen, window: win};
+}
+
+export const usePoster = <S>(url: string, body: any) => {
+    const source = new AbortController();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | undefined>(undefined);
+    const [response, setResponse] = useState<S | undefined>(undefined);
+    const cancel = source.abort.bind(source);
+
+    const runFunction = useCallback((url: string, body: any) => {
+        fetch(url, {
+            method: "POST",
+            signal: source.signal,
+            body: JSON.stringify(body),
+            headers: {
+                "Content-Type": "application/json",
+            }
+        }).then(res => res.json()).then(res => {
+            setResponse(res);
+            setLoading(false);
+
+        }).catch(error => {
+            setError(error);
+            setLoading(false);
+
+        }).finally(() => {
+            setLoading(false);
+        });
+    }, [])
+
+    subscribe(([url, body]) => {
+        runFunction(url, body);
+    }, [url, body]);
+
+    return {response, error, loading, abort: {cancel}};
+}
+
+export const useFetch = <S>(url: string, body: default_t<string | number>) => {
+    const source = new AbortController();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | undefined>(undefined);
+    const [response, setResponse] = useState<S | undefined>(undefined);
+    const cancel = source.abort.bind(source);
+
+    const params = useMemo(() => {
+        const params = new URLSearchParams();
+        for (const key in body) {
+            params.append(key, '' + body[key]);
+        }
+        return params.toString();
+    }, [body]);
+
+    subscribe(([params, url]) => runFunction(url, params), [params, url]);
+
+    const runFunction = useCallback((url: string, params: string) => {
+        fetch(`${url}?${params}`, {
+            signal: source.signal,
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        }).then(res => res.json()).then(res => {
+            setResponse(res);
+            setLoading(false);
+
+        }).catch(error => {
+            setError(error);
+            setLoading(false);
+
+        }).finally(() => {
+            setLoading(false);
+        });
+    }, [])
+
+    return {response, error, loading, abort: {cancel}};
+}
+
+export function useYoutubePLayer() {
     const player = useRef<YTPlayer | null>(null);
     const [done, setDone] = useState(true);
     const [start, setStart] = useState(false);
 
-    function loadTrailer() {
+    const loadTrailer = useCallback((trailerId: string, image: HTMLImageElement) => {
         if (!done)
             destroyTrailer();
 
@@ -136,7 +442,7 @@ export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backd
             setStart(true);
             setDone(false);
             const string = `<div id="playerTwo" style="opacity: 0; width: 100%"></div>`;
-            image.current?.insertAdjacentHTML('afterend', string);
+            image.insertAdjacentHTML('afterend', string);
             if (player.current === null)
                 // @ts-ignore
                 player.current = new YT.Player('playerTwo', {
@@ -145,6 +451,7 @@ export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backd
                     videoId: trailerId,
                     playerVars: {
                         controls: 0,
+                        autoplay: 1,
                         enablejsapi: 1,
                         modestbranding: 1
                     },
@@ -154,9 +461,9 @@ export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backd
                     }
                 });
         }
-    }
+    }, [done]);
 
-    function endVideo(event: { data: number; }) {
+    const endVideo = useCallback((event: { data: number; }) => {
         if (event.data === 0 && player.current) {
             document.getElementById('playerTwo')?.setAttribute('class', 'fade_input');
             setStart(false);
@@ -168,61 +475,79 @@ export function useYoutubePLayer(image: React.RefObject<HTMLImageElement>, backd
                 document.getElementById('playerTwo')?.remove();
             }, 400)
         }
-    }
+    }, [player.current]);
 
-    function playYoutubeVideo() {
+    const playYoutubeVideo = useCallback(() => {
         if (player.current) {
             player.current.setVolume(50);
             player.current.playVideo();
             document.getElementById('playerTwo')?.setAttribute('class', 'glow_input');
         }
-    }
+    }, [player.current]);
 
-    function destroyTrailer() {
+    const destroyTrailer = useCallback(() => {
         if (!done && player.current) {
             player.current.stopVideo();
             endVideo({data: 0});
         }
-    }
+    }, [done, player.current, endVideo]);
 
     return {done, start, loadTrailer, destroyTrailer};
 }
 
-export function useLoadEffect(effect: (() => void), deps: any[]) {
-    const effectFunction = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
-    effectFunction(effect, deps);
-}
+export function usePageQuery(handler: (query: ParsedUrlQuery) => void) {
+    const savedCallback = useRef(handler);
+    const {router, loading} = useDetectPageChange();
+    const {isMounted} = useBasics();
 
-export function useNavBar(section: navSection, opacity: number) {
-    const setNavBar = useSetRecoilState(NavSectionAndOpacity);
-    useLoadEffect(() => {
-        NProgress.done();
-        setNavBar({opacity, section})
-    }, [section, opacity]);
+    useEffect(() => {
+        savedCallback.current = handler;
+    }, [handler]);
+
+    const query = useMemo(() => {
+        if (isMounted())
+            return router.query;
+
+        return {};
+    }, [router.query]);
+
+    useEffect(() => {
+        if (loading)
+            return;
+        savedCallback.current(query);
+    }, [query, loading]);
+
     return null;
 }
 
-export function useOnScreen<T extends Element>(watch = false, rootMargin = '900px'): [boolean, React.MutableRefObject<T | null>] {
-    const {isMounted} = useBasics();
-    const [visible, setVisible] = useState(false);
+export function subscribe<S>(cb: (a: S, b?: S | undefined) => void, state: S) {
+    const subscription = useRef<(a: S, b?: S | undefined) => void>(cb);
+    const previousState = useRef<S>();
 
-    const ref = useRef<T | null>(null);
     useEffect(() => {
-        if (watch) {
-            const observer = new IntersectionObserver(([entry]) => {
-                isMounted() && setVisible(entry.isIntersecting);
-            }, {rootMargin});
+        subscription.current = cb;
+    }, [cb]);
 
-            if (ref.current)
-                observer.observe(ref.current);
-
-            return () => {
-                ref.current && observer.unobserve(ref.current);
-            };
+    useEffect(() => {
+        if (JSON.stringify(state) !== JSON.stringify(previousState.current)) {
+            subscription.current(state, previousState.current);
+            previousState.current = state;
         }
-    }, [ref.current, watch]);
+    }, [state]);
+}
 
-    return [visible, ref];
+export function useOnUnmount<S>(cb: (prev: S | undefined) => void, deps: S) {
+    const subscription = useRef<(prev: S | undefined) => void>(cb);
+    const previousDeps = useRef<S>();
+
+    useEffect(() => {
+        subscription.current = cb;
+    }, [cb]);
+
+    useEffect(() => {
+        previousDeps.current = deps;
+        return () => subscription.current(previousDeps.current);
+    }, [deps]);
 }
 
 export function useInfiniteScroll<T>(address: string) {
@@ -236,7 +561,7 @@ export function useInfiniteScroll<T>(address: string) {
             setHasMore(data.pages !== page)
             setData(prev => prev.concat(data.results));
             setLoading(false);
-        }, onError: (err) => {
+        }, onError: () => {
             setLoading(false);
             setHasMore(false);
         }
@@ -262,124 +587,13 @@ export function useInfiniteScroll<T>(address: string) {
         }
     }, [hasMore, loading]);
 
-    const handleScroll = (event: any) => {
+    const handleScroll = useCallback((event: any) => {
         const bottom = event.target.scrollHeight - event.target.scrollTop - 3000 <= event.target.clientHeight;
         if (bottom && hasMore && !loading)
             loadMore();
-    }
+    }, [hasMore, loading, loadMore]);
 
     return {data, loading, hasMore, setData, handleScroll};
-}
-
-export const useLoop = (initialState: { start: number, end: number }) => {
-    const [state, setState] = useState(initialState);
-    const [pause, setPause] = useState(false);
-    const interval = useRef<NodeJS.Timeout>();
-
-    useEffect(() => setState(initialState), []);
-
-    useEffect(() => {
-        interval.current && clearInterval(interval.current);
-        interval.current = setInterval(
-            () => setState(state => {
-                return pause ? state : {...state, start: state.end - 1 < state.start + 1 ? 0 : state.start + 1}
-            }), 20000);
-
-        return () => interval?.current && clearInterval(interval.current);
-    }, [pause, state]);
-
-    return {
-        setPause,
-        current: state.start,
-        prev: state.start === 0 ? state.end : state.start - 1,
-        set: (start: number, end: number) => setState({start, end})
-    };
-}
-
-export const useSearch = () => {
-    const [errorState, setError] = useState('');
-    const [search, setSearch] = useRecoilState(SearchContextAtom);
-    const {
-        response,
-        abort,
-        error,
-        loading
-    } = useFetcher<SearchPicker<'list'>>('/api/load/search?node=list&value=' + search);
-    const {
-        response: searchResponse,
-        error: error2,
-        loading: load,
-        abort: abort2
-    } = useFetcher<SearchPicker<'grid'>>('/api/load/search?node=grid&value=' + search);
-
-    useEffect(() => {
-        if (search === '') {
-            abort.cancel();
-            abort2.cancel();
-            setError('');
-        }
-
-        return () => {
-            abort.cancel();
-            abort2.cancel();
-        }
-    }, [search])
-
-    useEffect(() => {
-        if (error || error2)
-            setError(error?.message || error2?.message)
-    }, [error, error])
-
-    return {
-        active: search !== '',
-        loading: loading && load,
-        grid: searchResponse || [],
-        list: response || [],
-        error: errorState,
-        setSearch
-    };
-}
-
-export const useDetectPageChange = (checkShallow = false, callback: (ev: { url: string, loading: boolean, shallow: boolean }) => void = () => {}) => {
-    const router = useRouter();
-    const savedHandler = useRef<(ev: { url: string, loading: boolean, shallow: boolean}) => void>(callback);
-    const [url, setUrl] = useState(router.pathname);
-    const [loading, setLoading] = useState(false);
-    savedHandler.current = callback;
-
-    const handleRouteChange = (url: string, {shallow}: { shallow: boolean }) => {
-        if (shallow && !checkShallow)
-            return;
-        setUrl(url);
-        setLoading(true);
-        savedHandler.current({url, loading: true, shallow});
-    }
-
-    useEffect(() => {
-        router.events.on('routeChangeStart', (url, {shallow}) => {
-            savedHandler.current({url, loading: true, shallow});
-            handleRouteChange(url, {shallow});
-        });
-        router.events.on('routeChangeComplete', (url: string) => {
-            setUrl(url);
-            setLoading(false);
-            savedHandler.current({url, loading: false, shallow: false});
-        });
-
-        return () => {
-            router.events.off('routeChangeStart', (url, {shallow}) => {
-                savedHandler.current({url, loading: true, shallow});
-                handleRouteChange(url, {shallow});
-            });
-            router.events.off('routeChangeComplete', (url: string) => {
-                setUrl(url);
-                setLoading(false);
-                savedHandler.current({url, loading: false, shallow: false});
-            });
-        }
-    }, [router])
-
-    return {url, loading, router};
 }
 
 export const useHomeSegments = () => {
@@ -445,186 +659,23 @@ export const useHomeSegments = () => {
     }
 }
 
-const hookChangeAtomFamily = atomFamily<any, string>({
-    key: 'hookChangeAtomFamily',
-    default: undefined
-})
+export const useLocalStorage = <S>(key: string, initialValue: S) => {
+    const [value, set] = useState<S>(() => {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : initialValue as S;
+    });
 
-export const useEventEmitter = <S>(eventName: string) => {
-    const {isMounted} = useBasics();
-    const [hook, setHook] = useRecoilState<S | undefined>(hookChangeAtomFamily(eventName));
-    const sb = useRef<(a: S) => void>();
+    const setValue = useCallback((newValue: S | ((arg: S) => S)) => {
+        set(prev => {
+            let value;
+            if (newValue instanceof Function)
+                value = newValue(prev);
+            else
+                value = newValue;
+            localStorage.setItem(key, JSON.stringify(value));
+            return value;
+        })
+    }, [key, set]);
 
-    useEffect(() => {
-        if (isMounted() && sb.current && hook !== undefined)
-            sb.current(hook);
-    }, [hook])
-
-    const subscribe = useCallback((callback: (a: S) => void) => {
-        sb.current = callback;
-    }, [])
-
-    return {
-        state: hook,
-        subscribe, emit: setHook
-    }
-}
-
-export const usePreviousState = <S>(state: S) => {
-    const ref = useRef<S>();
-
-    useEffect(() => {
-        ref.current = state;
-    }, [state])
-
-    return ref.current;
-}
-
-export const useBasics = () => {
-    const isMountedRef = useRef(true);
-    const isServer = typeof window === 'undefined';
-    const isMounted = useCallback(() => isMountedRef.current, [isMountedRef.current]);
-
-    const getBaseUrl = () => {
-        if (isServer)
-            return '';
-        else
-            return window.location.protocol + '//' + window.location.host;
-    }
-
-    const isTabOrMobile = () => {
-        if (isServer)
-            return false;
-        else {
-            const toMatch = [
-                /Android/i,
-                /webOS/i,
-                /iPhone/i,
-                /iPad/i,
-                /iPod/i,
-                /Windows Phone/i
-            ];
-
-            return toMatch.some((toMatchItem) => {
-                return navigator.userAgent.match(toMatchItem);
-            });
-        }
-    }
-
-    useEffect(() => {
-        return () => void (isMountedRef.current = false);
-    }, []);
-
-    return {isServer, isMounted, getBaseUrl, isTabOrMobile};
-}
-
-export const useClipboard = () => {
-    const dispatch = useInfoDispatch();
-
-    const copy = async (value: string, success: string) => {
-        navigator.clipboard.writeText(value)
-            .then(() => {
-                dispatch({
-                    type: "alert",
-                    heading: 'Copy Successful',
-                    message: success
-                })
-            })
-            .catch((error) => {
-                dispatch({
-                    type: "error",
-                    heading: 'Something went wrong',
-                    message: error as string
-                })
-            })
-    }
-
-    const paste = async (success: string) => {
-        navigator.clipboard.readText()
-            .then((text) => {
-                dispatch({
-                    type: "alert",
-                    heading: 'Paste Successful',
-                    message: success
-                })
-            })
-            .catch((error) => {
-                dispatch({
-                    type: "error",
-                    heading: 'Something went wrong',
-                    message: error as string
-                })
-            })
-    }
-
-    return {
-        copy, paste
-    }
-}
-
-export const useInterval = (callback: () => void, seconds: number) => {
-    const savedCallback = useRef(callback);
-
-    useLoadEffect(() => {
-        savedCallback.current = callback;
-    }, [callback]);
-
-    useEffect(() => {
-        if (seconds === 0)
-            return;
-
-        const id = setInterval(() => savedCallback.current(), seconds * 1000);
-        return () => clearInterval(id);
-    }, [seconds]);
-}
-
-export function useLongPolling<S>(url: string, params: any, method: 'POST' | 'GET' = 'GET') {
-    const base = useBase();
-    const [state, setState] = useState<S>();
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const handler = async () => {
-        setLoading(true);
-        const data = await base.makeRequest<S>(url, params, method);
-        data && setState(data);
-        data === null && setError('Something went wrong');
-        setLoading(false);
-    }
-
-    useInterval(handler, 300);
-
-    useEffect(() => {
-        handler();
-    }, [url, params, method]);
-
-    return {
-        state,
-        loading,
-        error
-    }
-}
-
-export function useIsInView<T extends Element>(handler: () => void, option?: IntersectionObserverInit) {
-    const element = useRef<T>();
-    const handlerRef = useRef<(() => void)>(handler);
-
-    useEffect(() => {
-        handlerRef.current = handler;
-    }, [handler]);
-
-    useEffect(() => {
-        if (element.current) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting)
-                        handlerRef.current();
-                });
-            }, option);
-            observer.observe(element.current);
-            return () => observer.disconnect();
-        }
-    }, [element.current]);
-
-    return element;
+    return [value, setValue] as const;
 }

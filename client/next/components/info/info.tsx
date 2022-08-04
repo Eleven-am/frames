@@ -1,21 +1,19 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import info from "./Info.module.css";
 import styles from '../trending/backdrop/BACKDROP.module.css'
 import InfoSections from "./sections/sections";
 import InfoDetails from "./details/infoDetails";
-import {PlayButton, TrailerButton} from "../buttons/Buttons";
-import {SpringMedia} from "../../../../server/classes/media";
+import {FramesButton} from "../buttons/Buttons";
 import {useYoutubePLayer} from "../../../utils/customHooks";
 import useOnScroll from "../../../utils/opacityScroll";
+import {useRecoilValue} from "recoil";
+import {InfoContext} from "./infoContext";
 
-export default function Info({response}: { response: SpringMedia }) {
+export default function Info() {
+    const response = useRecoilValue(InfoContext);
     const backdropRef = useRef<HTMLDivElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
-    const {
-        start,
-        loadTrailer,
-        done
-    } = useYoutubePLayer(imgRef, backdropRef, response.trailer || '');
+    const {start, loadTrailer, done} = useYoutubePLayer();
     const {onScroll, values, setReference, reset} = useOnScroll();
     const [move, setMove] = useState(false);
 
@@ -39,6 +37,10 @@ export default function Info({response}: { response: SpringMedia }) {
         return () => reset();
     }, [])
 
+    const handleClick = useCallback(() => loadTrailer(response?.trailer || '', imgRef.current!), [response, loadTrailer]);
+
+    if (!response) return null;
+
     return (
         <div className={info.infoHolder}>
             <img
@@ -53,13 +55,15 @@ export default function Info({response}: { response: SpringMedia }) {
                                 <span>{response.name}</span>}
                         </div>
                         <div className={info.infoButtons}>
-                            <PlayButton id={response.id}/>
-                            <TrailerButton id={response.id} trailer={start} onClick={loadTrailer}/>
+                            <FramesButton type='primary' icon='play' tooltip={`play ${response.name}`} label='play'
+                                          link={{href: '/watch?mediaId=' + response.id}}/>
+                            <FramesButton type='secondary' icon='roll' label={start ? 'stop' : 'trailer'}
+                                          tooltip={start ? 'stop trailer' : 'trailer'} onClick={handleClick}/>
                         </div>
                     </div>
                     : <>
-                        <InfoDetails response={response} loadTrailer={loadTrailer} trailer={start}/>
-                        <InfoSections response={response} setReference={setReference}/>
+                        <InfoDetails loadTrailer={handleClick} trailer={start}/>
+                        <InfoSections setReference={setReference}/>
                     </>
                 }
             </div>

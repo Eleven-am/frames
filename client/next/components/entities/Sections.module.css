@@ -216,7 +216,7 @@
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    z-index: 10;
+    z-index: 40;
 }
 
 .d {
@@ -283,7 +283,7 @@
     pointer-events: all;
 }
 
-.confirmButtons button{
+.confirmButtons button {
     width: calc(50% - 1px);
     height: 90%;
     border: none;
@@ -343,8 +343,18 @@
     background: rgba(60, 171, 103, .6);
 }
 
+.a button:hover {
+    background: rgba(3, 107, 43, .6);
+    transition: all 0.2s ease-in-out;
+}
+
 .e {
     background: rgba(245, 78, 78, .6);
+}
+
+.e button:hover {
+    background: rgba(156, 2, 2, .6);
+    transition: all 0.2s ease-in-out;
 }
 
 .u {

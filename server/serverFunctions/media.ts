@@ -1,12 +1,11 @@
 import {NextApiRequest, NextApiResponse} from "next";
 import Media from "../classes/media";
-import {ListEditors, Playlist} from "../classes/listEditors";
-import {Modify} from "../classes/modify";
+import Playlist from "../classes/playlist";
+import User from "../classes/user";
 
 const mediaClass = new Media();
-const list = new ListEditors();
 const playlist = new Playlist();
-const modify = new Modify();
+const user = new User();
 
 export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
     let response: any = {};
@@ -16,19 +15,19 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
 
     switch (type) {
         case 'specificUserData':
-            response = await playlist.getSpecificMediaInfo(mediaId, userId);
+            response = await user.getSpecificMediaInfo(mediaId, userId);
             break;
 
         case 'seen':
-            response = await playlist.markAsSeen(mediaId, userId);
+            response = await user.setSeen(userId, mediaId);
             break;
 
         case 'rate':
-            response = await list.rateThis(mediaId, userId, +req.query.rate);
+            response = await user.rateThis(mediaId, userId, +req.query.rate);
             break;
 
         case 'addToList':
-            response = await list.addToList(mediaId, userId);
+            response = await user.addToList(mediaId, userId);
             break;
 
         case 'episodes':
@@ -48,12 +47,12 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'downloadShow':
-            await modify.getMissingEpisodesInShow(mediaId);
+            await mediaClass.getMissingEpisodesInShow(mediaId);
             response = true;
             break;
 
         case 'browse':
-            response = await playlist.getBrowse(req.body, +req.query.page, userId);
+            response = await user.getBrowse(req.body, +req.query.page, userId);
             break;
     }
 

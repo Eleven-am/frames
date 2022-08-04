@@ -1,12 +1,17 @@
 import Head from "next/head";
-import {atom, DefaultValue, selector} from 'recoil';
-import {ReactNode} from "react";
+import {atom, DefaultValue, selector, useRecoilValue, useSetRecoilState} from 'recoil';
+import {ReactNode, useEffect} from "react";
 import {useRouter} from "next/router";
-import Navbar from "./navbar";
-import useUser from "../../../utils/userTools";
-import {Loading} from "../misc/Loader";
+import Navbar, {useSearch} from "./navbar";
+import {Image, Loading} from "../misc/Loader";
+import useUser from "../../../utils/user";
 import SearchLayout from "../search/search";
-import {useSearch} from "../../../utils/customHooks";
+import useCast from "../../../utils/castContext";
+import {useWindowListener} from "../../../utils/customHooks";
+import {Role} from "@prisma/client";
+import Script from "next/script";
+import ss from "../misc/Loading.module.css";
+import background from "../../assets/background.jpg";
 
 interface NavSectionAndOpacity {
     opacity?: number;
@@ -80,52 +85,91 @@ export const addressAtom = atom<string | null>({
     default: null
 })
 
-export function Header({meta}: { meta: MetaTags }) {
+export const MetaTagAtom = atom<MetaTags | null>({
+    key: 'MetaTagAtom',
+    default: null
+})
+
+export const hideAtom = atom({
+    key: 'hideAtom',
+    default: false
+})
+
+export function Header() {
+    const meta = useRecoilValue(MetaTagAtom) || metaTags;
+
     return (
-        <Head>
-            <title>{meta.name}</title>
-            <meta key="name" name="title" content={meta.name}/>
-            <meta key="description" name="description" content={meta.overview}/>
+        <>
+            <Head>
+                <title>{meta.name}</title>
+                <meta key="name" name="title" content={meta.name}/>
+                <meta key="description" name="description" content={meta.overview}/>
 
-            <meta key="ogType" property="og:type" content="website"/>
-            <meta key="ogLink" property="og:url" content={meta.link}/>
-            <meta key="ogName" property="og:title" content={meta.name}/>
-            <meta key="ogDescription" property="og:description" content={meta.overview}/>
-            <meta key="ogImage" property="og:image" content={meta.poster}/>
+                <meta key="ogType" property="og:type" content="website"/>
+                <meta key="ogLink" property="og:url" content={meta.link}/>
+                <meta key="ogName" property="og:title" content={meta.name}/>
+                <meta key="ogDescription" property="og:description" content={meta.overview}/>
+                <meta key="ogImage" property="og:image" content={meta.poster}/>
 
-            <meta key="twitterType" property="twitter:card" content="summary_large_image"/>
-            <meta key="twitterLink" property="twitter:url" content={meta.link}/>
-            <meta key="twitterName" property="twitter:title" content={meta.name}/>
-            <meta key="twitterDescription" property="twitter:description" content={meta.overview}/>
-            <meta key="twitterImage" property="twitter:image" content={meta.poster}/>
-        </Head>
+                <meta key="twitterType" property="twitter:card" content="summary_large_image"/>
+                <meta key="twitterLink" property="twitter:url" content={meta.link}/>
+                <meta key="twitterName" property="twitter:title" content={meta.name}/>
+                <meta key="twitterDescription" property="twitter:description" content={meta.overview}/>
+                <meta key="twitterImage" property="twitter:image" content={meta.poster}/>
+            </Head>
+
+            <Script src="https://www.youtube.com/iframe_api"/>
+            <div id={ss.bck}>
+                <Image src={background} className={ss.bckImg} loading={"eager"}/>
+            </div>
+        </>
     )
 }
 
-export default function HomeLayout({children, meta}: { children: ReactNode, meta?: MetaTags }) {
-    const {user, loading} = useUser();
+export default function HomeLayout({children}: { children: ReactNode }) {
+    const {user, loading, signOut} = useUser();
     const {active} = useSearch();
     const router = useRouter();
     const asPath = router.asPath;
+    const hide = useRecoilValue(hideAtom);
+    const {disconnect} = useCast();
 
-    if (loading)
+    useWindowListener('beforeunload', async () => {
+        disconnect();
+        user?.role === Role.GUEST && await signOut();
+    })
+
+    useWindowListener('dragstart', (ev) => {
+        ev.preventDefault();
+        return false;
+    })
+
+    if (!user && !loading && !/^\/(auth|frame)/.test(asPath)) {
+        router.push('/auth');
         return (
             <>
-                <Header meta={meta || metaTags}/>
+                <Header/>
+                <Navbar signOut={signOut} user={user}/>
                 <Loading/>
             </>
         );
-
-    if (!user && !loading && asPath !== '/auth') {
-        router.push('/auth');
-        return <Header meta={meta || metaTags}/>;
     }
 
     return (
         <>
-            <Header meta={meta || metaTags}/>
-            <Navbar/>
-            {active ? <SearchLayout/> : <>{children}</>}
+            <Header/>
+            <Navbar signOut={signOut} user={user}/>
+            {loading || hide ? <Loading/> : active ? <SearchLayout/> : <>{children}</>}
         </>
     )
+}
+
+export function useNavBar(section: navSection, opacity: number, meta?: MetaTags) {
+    const setNavBar = useSetRecoilState(NavSectionAndOpacity);
+    const setMetaTags = useSetRecoilState(MetaTagAtom);
+    useEffect(() => {
+        setNavBar({opacity, section});
+        setMetaTags(meta || metaTags);
+    }, [section, opacity]);
+    return null;
 }

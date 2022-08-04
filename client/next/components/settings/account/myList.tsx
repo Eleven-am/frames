@@ -1,10 +1,10 @@
 import {useInfiniteScroll} from "../../../../utils/customHooks";
 import {useManageUserInfo} from "../../../../utils/modify";
-import {MyList} from "../../../../../server/classes/modify";
 import {Loading} from "../../misc/Loader";
 import ss from "../ACCOUNT.module.css";
 import {UserResponse, UserSettings} from "./watchHistory";
-import {useConfirmDispatch} from "../../misc/inform";
+import {MyList} from "../../../../../server/classes/user";
+import {useConfirmDispatch} from "../../../../utils/notifications";
 
 export default function YourList() {
     const confirmAction = useConfirmDispatch();
@@ -17,7 +17,7 @@ export default function YourList() {
 
     const onClick = (id: number) => {
         confirmAction({
-            type: 'client',
+            type: 'warn',
             heading: "Delete watch entry?",
             message: "Are you sure you want to delete this watch entry?",
             onOk: async () => {

@@ -6,14 +6,13 @@
     "dev": "next dev -p 5000",
     "build": "next build",
     "start": "next start",
-    "generate-env": "npx ts-node ./framesConfig.ts",
     "vercel-build": "npx prisma generate && npm run build",
-    "setup": "npm install && npx prisma migrate dev && next build && pm2 start ecosystem.config.js",
+    "setup": "npm install && next build && pm2 start ecosystem.config.js",
+    "update": "npm install && npx prisma db push && npx prisma generate && next build",
     "pm2": "pm2 start ecosystem.config.js"
   },
   "dependencies": {
-    "@prisma/client": "^3.13.0",
-    "@supabase/supabase-js": "^1.31.0",
+    "@prisma/client": "^4.0.0",
     "bcrypt": "^5.0.1",
     "chomecast-sender": "^0.0.33",
     "cookie": "^0.4.2",
@@ -38,7 +37,6 @@
     "swr": "^1.2.2",
     "torrent-search-api": "^2.1.4",
     "ua-parser-js": "^1.0.2",
-    "usehooks-ts": "^2.5.2",
     "workbox-core": "^6.5.3",
     "workbox-expiration": "^6.5.3",
     "workbox-precaching": "^6.5.3",
@@ -58,7 +56,7 @@
     "@types/ua-parser-js": "^0.7.36",
     "eslint-plugin-react": "^7.23.2",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "prisma": "^3.13.0",
+    "prisma": "^4.0.0",
     "typescript": "^4.3.4"
   }
 }

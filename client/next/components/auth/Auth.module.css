@@ -14,9 +14,10 @@
     text-align: center;
     transition: all .2s ease-in-out;
     color: var(--nino-blue);
+    cursor: pointer;
 }
 
-.fp:hover{
+.fp:hover {
     color: rgba(165, 188, 217, 0.7);
 }
 
@@ -222,6 +223,16 @@
 .create-holders {
     padding-left: 2%;
     width: 48%;
+}
+
+.rst {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 8vh 0 4vh 0;
+    justify-content: center;
+    text-align: left;
+    flex-direction: column;
 }
 
 .authSpacers {

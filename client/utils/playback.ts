@@ -1,22 +1,48 @@
-import {atom, selector, useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
-import useCast, {CastConnectionAtom, CastEventAtom, VideoStateAtom} from "./castContext";
-import {GroupWatchSide, Message, useGroupWatch} from "./groupWatch";
-import {SyntheticEvent, useCallback, useEffect, useRef, useState} from "react";
-import {SpringPlay} from "../../server/classes/listEditors";
-import useUser from "./userTools";
-import {useBasics, useEventListener} from "./customHooks";
+import {SpringPlay, Sub} from "../../server/classes/playback";
+import {atom, selector, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
 import {UpNext} from "../../server/classes/media";
+import useCast, {CastEventAtom, VideoStateAtom} from "./castContext";
+import {AlreadyStreamingAtom, useConfirmDispatch} from "./notifications";
+import {SyntheticEvent, useCallback, useRef, useState} from "react";
+import useBase from "./provider";
 import {useRouter} from "next/router";
-import {Sub} from "../../server/classes/playBack";
-import {useInfoDispatch} from "../next/components/misc/inform";
-import {AlreadyStreamingAtom, useNotification} from "./notificationConext";
-import {useBase} from "./Providers";
+import useUser from "./user";
 import {Role} from "@prisma/client";
+import {useBasics} from "./customHooks";
+import {Message, useGroupWatch} from "./groupWatch";
+import {SideBarAtomFamily} from "../next/components/misc/sidebar";
+import {ChromeCastStateAtom} from "./listerners";
 
 export interface FramesSubs {
     language: string;
     data: Sub[];
 }
+
+type PLAYER_TYPE = 'PLAYING' | 'PAUSED' | 'BUFFERING' | 'ENDED' | 'NOT_BEGUN' | 'FAILED_TO_START';
+
+export const displaySidesAtom = atom<{ left: boolean, right: boolean, info: boolean, controls: boolean }>({
+    key: 'displaySides', default: {
+        left: true, info: false, right: true, controls: true
+    }
+})
+
+export const shareAndDownloadAtom = atom<{ share: boolean, download: boolean, settings: boolean }>({
+    key: 'shareAndDownload', default: {
+        share: false, download: false, settings: false
+    }
+})
+
+export const PipAndFullscreenAtom = atom<{ pip: boolean, fullscreen: boolean, difference: boolean }>({
+    key: 'PipAndFullscreen', default: {
+        pip: false, fullscreen: false, difference: false
+    }
+})
+
+export const SubtitlesAndUpNextAtom = atom<{ subtitles: boolean, upNext: boolean, settings: boolean }>({
+    key: 'SubtitlesAndUpNext', default: {
+        settings: false, subtitles: false, upNext: false
+    }
+})
 
 export const framesVideoStateAtom = atom<SpringPlay | null>({
     key: 'framesVideoState', default: null,
@@ -28,6 +54,59 @@ export const currentDuration = atom<{ current: number, duration: number, buffere
 
 export const framesPlayer = atom<HTMLVideoElement | null>({
     key: 'framesPlayer', default: null
+});
+
+export const framesPlayerStateAtom = atom<PLAYER_TYPE>({
+    key: 'framesPlayerState', default: 'NOT_BEGUN'
+});
+
+export const volumeFrameAtom = atom<{ volume: number, mute: boolean }>({
+    key: 'volumeFrame', default: {
+        volume: 1, mute: false
+    }
+})
+
+export const UpNextAtom = atom<UpNext | null>({
+    key: 'UpNext', default: null
+})
+
+export const HideImageAtom = atom<boolean>({
+    key: 'HideImage', default: false
+})
+
+export const framesSubtitlesAtom = atom<{ subtitles: FramesSubs[], activeSub: string }>({
+    key: 'framesSubtitles', default: {
+        subtitles: [], activeSub: 'none',
+    }
+})
+
+export const SubtitlesSyncAtom = atom<{ language: string, sync: number }[]>({
+    key: 'SubtitlesSync', default: []
+})
+
+export const AirplayAtom = atom<{ available: boolean, casting: boolean }>({
+    key: 'Airplay', default: {
+        available: false, casting: false
+    }
+})
+
+export const fullscreenAddressAtom = atom<{ fullscreen: string | null, startTime: number }>({
+    key: 'fullscreenAddress', default: {
+        fullscreen: null, startTime: 0
+    }
+})
+
+export const AirplaySelector = selector<{ available: boolean, casting: boolean, protocol: 'cast' | 'airplay' }>({
+    key: 'AirplaySelector', get: ({get}) => {
+        const airplay = get(AirplayAtom);
+        const cast = get(ChromeCastStateAtom);
+
+        return {
+            available: airplay.available || cast.available,
+            casting: airplay.casting || cast.casting,
+            protocol: airplay.available ? 'airplay' : 'cast'
+        }
+    }
 });
 
 export const FramesInformAtom = selector({
@@ -74,27 +153,6 @@ export const PlaybackDisplayInformation = selector({
     }
 });
 
-type PLAYER_TYPE = 'PLAYING' | 'PAUSED' | 'BUFFERING' | 'ENDED' | 'NOT_BEGUN' | 'FAILED_TO_START';
-
-export const framesPlayerStateAtom = atom<PLAYER_TYPE>({
-    key: 'framesPlayerState', default: 'NOT_BEGUN'
-});
-
-export const framesPlayerStateSelector = selector({
-    key: 'framesPlayerStateSelector', get: ({get}) => {
-        const state = get(CastEventAtom);
-        if (state) return state.buffering ? 'BUFFERING' : state.paused ? 'PAUSED' : 'PLAYING';
-
-        return get(framesPlayerStateAtom);
-    }
-});
-
-export const volumeFrameAtom = atom<{ volume: number, mute: boolean }>({
-    key: 'volumeFrame', default: {
-        volume: 1, mute: false
-    }
-})
-
 export const VolumeSelector = selector({
     key: 'VolumeSelector', get: ({get}) => {
         const {volume, mute} = get(volumeFrameAtom);
@@ -106,47 +164,14 @@ export const VolumeSelector = selector({
     }
 });
 
-export const displaySidesAtom = atom<{ left: boolean, right: boolean, info: boolean, controls: boolean }>({
-    key: 'displaySides', default: {
-        left: true, info: false, right: true, controls: true
+export const framesPlayerStateSelector = selector({
+    key: 'framesPlayerStateSelector', get: ({get}) => {
+        const state = get(CastEventAtom);
+        if (state?.connected) return state.buffering ? 'BUFFERING' : state.paused ? 'PAUSED' : 'PLAYING';
+
+        return get(framesPlayerStateAtom);
     }
-})
-
-export const shareAndDownloadAtom = atom<{ share: boolean, download: boolean }>({
-    key: 'shareAndDownload', default: {
-        share: false, download: false,
-    }
-})
-
-export const PipAndFullscreenAtom = atom<{ pip: boolean, fullscreen: boolean, difference: boolean }>({
-    key: 'PipAndFullscreen', default: {
-        pip: false, fullscreen: false, difference: false
-    }
-})
-
-export const SubtitlesAndUpNextAtom = atom<{ subtitles: boolean, upNext: boolean, settings: boolean }>({
-    key: 'SubtitlesAndUpNext', default: {
-        settings: false, subtitles: false, upNext: false
-    }
-})
-
-export const UpNextAtom = atom<UpNext | null>({
-    key: 'UpNext', default: null
-})
-
-export const HideImageAtom = atom<boolean>({
-    key: 'HideImage', default: false
-})
-
-export const framesSubtitlesAtom = atom<{ subtitles: FramesSubs[], activeSub: string }>({
-    key: 'framesSubtitles', default: {
-        subtitles: [], activeSub: 'none',
-    }
-})
-
-export const SubtitlesSyncAtom = atom<{ language: string, sync: number }[]>({
-    key: 'SubtitlesSync', default: []
-})
+});
 
 export const SubtitlesAtom = selector({
     key: 'SubtitlesAtom', get: ({get}) => {
@@ -155,6 +180,7 @@ export const SubtitlesAtom = selector({
         const subSync = get(SubtitlesSyncAtom);
         const {subtitles, activeSub} = get(framesSubtitlesAtom);
         const moveSub = get(displaySidesAtom).controls;
+        const casting = get(AirplaySelector).casting;
 
         if (current > 0 && subtitles.length) {
             const sub = subtitles.find(e => e.language === activeSub);
@@ -162,7 +188,10 @@ export const SubtitlesAtom = selector({
             current = (current * 1000) + (sync?.sync || 0);
             if (sub) {
                 const display = sub.data.find(e => e.start <= current && current <= e.end);
-                if (display && playing) return {move: moveSub, display: display.text, style: display.style};
+                if (display && playing && !casting)
+                    return {
+                        move: moveSub, display: display.text, style: display.style
+                    }
             }
         }
 
@@ -176,48 +205,18 @@ export const differance = selector<string | null>({
         const autoplay = get(framesVideoStateAtom)?.autoPlay || false;
         const {difference} = get(PipAndFullscreenAtom);
 
-        if ((autoplay && (duration > current) && (duration - current < 60)) || difference) return Math.ceil(duration - current) + 's';
+        if ((duration > current) && (difference || (autoplay && (duration - current < 60))))
+            return Math.ceil(duration - current) + 's';
 
         return null;
     }
 });
-
-export const FramesPlayerErrorAtom = atom<string | null>({
-    key: 'FramesPlayerError', default: null
-});
-
-const AirplayAtom = atom<{ available: boolean, casting: boolean }>({
-    key: 'Airplay', default: {
-        available: false, casting: false
-    }
-})
-
-export const AirplaySelector = selector<{ available: boolean, casting: boolean, protocol: 'cast' | 'airplay' }>({
-    key: 'AirplaySelector', get: ({get}) => {
-        const airplay = get(AirplayAtom);
-        const state = get(CastConnectionAtom);
-        const castVideoState = get(CastEventAtom);
-
-        return {
-            available: airplay.available || state.available,
-            casting: airplay.casting || castVideoState?.connected || state.connected,
-            protocol: airplay.available ? 'airplay' : 'cast'
-        }
-    }
-});
-
-export const fullscreenAddressAtom = atom<{ fullscreen: string | null, startTime: number }>({
-    key: 'fullscreenAddress', default: {
-        fullscreen: null, startTime: 0
-    }
-})
 
 function playing(video: HTMLVideoElement) {
     return (video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 3);
 }
 
 export const cleanUp = () => {
-    const {user, signOut} = useUser();
     const response = useRecoilValue(framesVideoStateAtom);
     const fullscreenReset = useResetRecoilState(fullscreenAddressAtom);
     const framesVideoStateReset = useResetRecoilState(framesVideoStateAtom);
@@ -233,21 +232,13 @@ export const cleanUp = () => {
     const HideImageReset = useResetRecoilState(HideImageAtom);
     const framesSubtitlesReset = useResetRecoilState(framesSubtitlesAtom);
     const SubtitlesSyncReset = useResetRecoilState(SubtitlesSyncAtom);
-    const FramesPlayerErrorReset = useResetRecoilState(FramesPlayerErrorAtom);
     const CastEventReset = useResetRecoilState(CastEventAtom);
     const CastStateReset = useResetRecoilState(VideoStateAtom);
     const AirplayReset = useResetRecoilState(AirplayAtom);
     const alreadyStreamingReset = useResetRecoilState(AlreadyStreamingAtom);
-    const {channel} = useGroupWatch();
-    const {globalChannel} = useNotification();
 
-    return  () => {
-        channel.modifyPresenceState('online');
-        globalChannel.modifyPresenceState('online');
-        fetch('/api/stream/verifyStream?action=done');
-        if (user?.role === Role.GUEST && response?.frame)
-            signOut();
-
+    return (cb?: (a: SpringPlay | null) => void) => {
+        cb && cb(response);
         fullscreenReset();
         framesVideoStateReset();
         currentReset();
@@ -262,7 +253,6 @@ export const cleanUp = () => {
         HideImageReset();
         framesSubtitlesReset();
         SubtitlesSyncReset();
-        FramesPlayerErrorReset();
         CastEventReset();
         CastStateReset();
         AirplayReset();
@@ -270,47 +260,49 @@ export const cleanUp = () => {
     }
 }
 
-export default function usePlayback(inform = true) {
-    const cast = useCast();
-    const base = useBase();
-    const router = useRouter();
-    const {signOut} = useUser();
-    const {isMounted} = useBasics();
-    const dispatch = useInfoDispatch();
+export const useDefaultControls = () => {
     const player = useRecoilValue(framesPlayer);
-    const [pos, setPos] = useState(0);
-    const setVolumeState = useSetRecoilState(volumeFrameAtom);
     const response = useRecoilValue(framesVideoStateAtom);
-    const castState = useRecoilValue(AirplaySelector);
-    const setSides = useSetRecoilState(displaySidesAtom);
-    const [upNext, setUpNext] = useRecoilState(UpNextAtom);
-    const [fsADDR, setFsADDR] = useRecoilState(fullscreenAddressAtom);
-    const shareAndDownload = useSetRecoilState(shareAndDownloadAtom);
-    const setSubtitlesAndUpNext = useSetRecoilState(SubtitlesAndUpNextAtom);
-    const chromecastEvent = useRecoilValue(CastEventAtom);
-    const chromecastState = useRecoilValue(VideoStateAtom);
-    const setSubtitles = useSetRecoilState(framesSubtitlesAtom);
-    const setSubSync = useSetRecoilState(SubtitlesSyncAtom);
-    const setCurrent = useSetRecoilState(currentDuration);
-    const setHideImage = useSetRecoilState(HideImageAtom);
-    const setError = useSetRecoilState(FramesPlayerErrorAtom);
-    const setPState = useSetRecoilState(framesPlayerStateAtom);
-    const twoSecs = useRef<NodeJS.Timeout | null>(null);
+    const groupWatch = useGroupWatch();
     const fiveSecs = useRef<NodeJS.Timeout | null>(null);
     const tenSecs = useRef<NodeJS.Timeout | null>(null);
+    const setSides = useSetRecoilState(displaySidesAtom);
+    const shareAndDownload = useSetRecoilState(shareAndDownloadAtom);
+    const setSubtitlesAndUpNext = useSetRecoilState(SubtitlesAndUpNextAtom);
     const playerState = useRef<PLAYER_TYPE>('NOT_BEGUN');
-    const {globalChannel} = useNotification();
-    const {sendMessage: send, pushNext, lobbyOpen, channel} = useGroupWatch();
+    const setPState = useSetRecoilState(framesPlayerStateAtom);
+
+    const showControls = useCallback(() => {
+        fiveSecs.current && clearTimeout(fiveSecs.current);
+        tenSecs.current && clearTimeout(tenSecs.current);
+        setSides(prev => ({...prev, info: false, controls: true}));
+
+        fiveSecs.current = setTimeout(() => {
+            setSides(prev => ({...prev, info: false, controls: false}));
+            setSubtitlesAndUpNext({settings: false, subtitles: false, upNext: false});
+        }, 5000);
+
+        tenSecs.current = setTimeout(() => {
+            if (playerState.current === 'PAUSED') setSides(prev => ({...prev, info: true}));
+        }, 10000);
+    }, [setSides, setSubtitlesAndUpNext, shareAndDownload]);
 
     const setPlayerState = useCallback((state: PLAYER_TYPE | ((p: PLAYER_TYPE) => PLAYER_TYPE)) => {
-            const val = typeof state === 'function' ? state(playerState.current) : state;
-            setPState(val);
-            playerState.current = val;
-        }, [setPState]);
+        const val = typeof state === 'function' ? state(playerState.current) : state;
+        setPState(val);
+        playerState.current = val;
+    }, [setPState]);
 
-    const sendMessage = useCallback((message: Message) => {
-        if (inform) send(message);
-    }, [send]);
+    return {showControls, groupWatch, setPlayerState, response, player, setSides, shareAndDownload};
+}
+
+export const useLeftControls = () => {
+    const cast = useCast();
+    const castState = useRecoilValue(AirplaySelector);
+    const chromecastEvent = useRecoilValue(CastEventAtom);
+    const twoSecs = useRef<NodeJS.Timeout | null>(null);
+    const volumeDisplay = useRecoilValue(VolumeSelector);
+    const {response, showControls, setSides, player, shareAndDownload} = useDefaultControls();
 
     const castToDevice = useCallback(async () => {
         if (castState.available) {
@@ -321,29 +313,6 @@ export default function usePlayback(inform = true) {
             } else if (castState.protocol === 'cast') await cast.handleCastBtnClick();
         }
     }, [response, castState, cast.handleCastBtnClick]);
-
-    const showControls = useCallback(() => {
-        fiveSecs.current && clearTimeout(fiveSecs.current);
-        tenSecs.current && clearTimeout(tenSecs.current);
-        setSides(prev => ({...prev, info: false, controls: true}));
-
-        fiveSecs.current = setTimeout(() => {
-            setSides(prev => ({...prev, info: false, controls: false}));
-            setSubtitlesAndUpNext({settings: false, subtitles: false, upNext: false});
-            shareAndDownload({share: false, download: false});
-        }, 5000);
-        tenSecs.current = setTimeout(() => {
-            if (playerState.current === 'PAUSED') setSides(prev => ({...prev, info: true}));
-        }, 10000);
-    }, [setSides, setSubtitlesAndUpNext, shareAndDownload]);
-
-    const hideControls = useCallback(() => {
-        fiveSecs.current && clearTimeout(fiveSecs.current);
-        tenSecs.current && clearTimeout(tenSecs.current);
-        setSides({info: false, controls: true, left: true, right: true});
-        setSubtitlesAndUpNext({settings: false, subtitles: false, upNext: false});
-        shareAndDownload({share: false, download: false});
-    }, [setSides, setSubtitlesAndUpNext, shareAndDownload]);
 
     const setVolume = useCallback((current: number, add = true) => {
         if (player) {
@@ -364,6 +333,132 @@ export default function usePlayback(inform = true) {
         }
         showControls();
     }, [player, cast.connected, cast.setCastVolume, setSides, showControls]);
+
+    const muteUnmute = useCallback(() => {
+        const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
+        if (player) {
+            setSides(prev => ({...prev, left: true}));
+            if (cast.connected) cast.muteUnmute(); else player.muted = !player.muted;
+
+            twoSecs.current && clearTimeout(twoSecs.current);
+            twoSecs.current = setTimeout(() => {
+                setSides(prev => ({...prev, left: false}));
+            }, 2000);
+        }
+        showControls();
+    }, [response, cast.connected, cast.muteUnmute, setSides, showControls]);
+
+    const toggleShare = useCallback(() => {
+        shareAndDownload(prev => ({...prev, share: !prev.share}));
+    }, [shareAndDownload]);
+
+    const toggleDownload = useCallback(() => {
+        shareAndDownload(prev => ({...prev, download: !prev.download}));
+    }, [shareAndDownload]);
+
+    return {setVolume, muteUnmute, toggleShare, toggleDownload, volumeDisplay, mirroring: castState, castToDevice};
+}
+
+export const useRightControls = () => {
+    const router = useRouter();
+    const {user, signOut} = useUser();
+    const base = useBase();
+    const upNext = useRecoilValue(UpNextAtom);
+    const fsADDR = useRecoilValue(fullscreenAddressAtom);
+    const setSubtitles = useSetRecoilState(framesSubtitlesAtom);
+    const {
+        response,
+        showControls,
+        player,
+        groupWatch: {pushNext, disconnect, connected, openSession: open, openCHat, channel: {online}}
+    } = useDefaultControls();
+    const setState = useSetRecoilState(SideBarAtomFamily('framesSettings'));
+    const setSubtitlesAndUpNext = useSetRecoilState(SubtitlesAndUpNextAtom);
+    const dispatch = useConfirmDispatch();
+
+    const toggleFS = useCallback(async () => {
+        const holder = document.getElementById(fsADDR.fullscreen || '') as HTMLDivElement | null;
+        if (holder) {
+            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                if (holder.requestFullscreen) await holder.requestFullscreen();
+
+                else if (holder.webkitRequestFullscreen) await holder.webkitRequestFullscreen();
+
+                else if (holder.msRequestFullscreen) await holder.msRequestFullscreen();
+
+                else if (holder.mozRequestFullscreen) await holder.mozRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) await document.exitFullscreen();
+
+                else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+
+                else if (document.msExitFullscreen) await document.msExitFullscreen();
+
+                else if (document.mozCancelFullScreen) await document.mozCancelFullScreen();
+            }
+        }
+        showControls();
+    }, [fsADDR.fullscreen, showControls]);
+
+    const togglePip = useCallback(async () => {
+        const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
+        if (player) {
+            if (document.pictureInPictureElement)
+                await document.exitPictureInPicture();
+            else if (document.pictureInPictureEnabled)
+                await player.requestPictureInPicture();
+        }
+        showControls();
+    }, [response, showControls]);
+
+    const playNext = useCallback(async () => {
+        if (upNext) {
+            const location = upNext.location;
+            await pushNext(location);
+            await router.push(location);
+        }
+    }, [pushNext, router, upNext]);
+
+    const toggleSettings = useCallback(() => {
+        setState(state => !state);
+    }, [setState]);
+
+    const toggleSession = useCallback(async () => {
+        if (response) {
+            if (connected) {
+                disconnect();
+                await router.replace(`/watch=${response.location}`, undefined, {shallow: true});
+
+            } else {
+                if (user?.role === Role.GUEST) {
+                    dispatch({
+                        type: "error",
+                        heading: "Unauthorised action attempt",
+                        message: 'Guest accounts cannot create or join GroupWatch'
+                    })
+
+                    return;
+                }
+
+                player && player.pause();
+                await open({location: response.location, id: response.mediaId});
+            }
+        }
+    }, [connected, dispatch, player, router, open, user]);
+
+    const hoverSubtitle = useCallback((hovering: boolean) => {
+        if (hovering)
+            setSubtitlesAndUpNext(prev => ({...prev, subtitles: true}));
+        else
+            setTimeout(() => setSubtitlesAndUpNext(prev => ({...prev, subtitles: false})), 200);
+    }, [setSubtitlesAndUpNext]);
+
+    const hoverUpNext = useCallback((hovering: boolean) => {
+        if (hovering)
+            setSubtitlesAndUpNext(prev => ({...prev, upNext: true}));
+        else
+            setTimeout(() => setSubtitlesAndUpNext(prev => ({...prev, upNext: false})), 200);
+    }, [setSubtitlesAndUpNext]);
 
     const switchLanguage = useCallback(async (activeSub?: string) => {
         if (response) {
@@ -388,18 +483,36 @@ export default function usePlayback(inform = true) {
         }
     }, [response, setSubtitles]);
 
-    const informDB = useCallback(async (current: number, duration: number) => {
-        if (response?.guest && current > 299 && !response.frame) {
-            await signOut();
-            cast.disconnect();
-        } else if (response?.inform) {
-            setPos(current);
-            const position = Math.floor((current / duration) * 1000);
-            await base?.makeRequest('/api/stream/inform', {auth: response.location, position}, 'POST');
-        }
-    }, [response, base, cast.disconnect, signOut]);
+    return {
+        signOut,
+        switchLanguage,
+        playNext,
+        toggleFS,
+        togglePip,
+        toggleSettings,
+        toggleSession,
+        hoverSubtitle,
+        hoverUpNext,
+        connected, users: online,
+        toggleChat: openCHat,
+        isGuest: user?.role === Role.GUEST
+    };
+}
+
+export const useCentreControls = (inform: boolean) => {
+    const cast = useCast();
+    const dispatch = useConfirmDispatch();
+    const chromecastEvent = useRecoilValue(CastEventAtom);
+    const chromecastState = useRecoilValue(VideoStateAtom);
+    const {response, showControls, groupWatch: {sendMessage: send, lobbyOpen}} = useDefaultControls();
+    const display = useRecoilValue(PlaybackDisplayInformation);
+
+    const sendMessage = useCallback((message: Message) => {
+        if (inform) send(message);
+    }, [send]);
 
     const seekVideo = useCallback((current: number, val: 'current' | 'add' | 'multiply') => {
+        const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
         if (player) {
             let newVal = cast.connected ? (chromecastState?.time || 0) : player.currentTime;
             switch (val) {
@@ -418,65 +531,71 @@ export default function usePlayback(inform = true) {
             sendMessage({action: "skipped", data: newVal + 1});
         }
         showControls();
-    }, [player, cast.connected, sendMessage, cast.seek, chromecastState, showControls]);
+    }, [response, cast.connected, sendMessage, cast.seek, chromecastState, showControls]);
 
-    const muteUnmute = useCallback(() => {
-        if (player) {
-            setSides(prev => ({...prev, left: true}));
-            if (cast.connected) cast.muteUnmute(); else player.muted = !player.muted;
+    const playPause = useCallback(async (action?: boolean) => {
+        const video = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
+        try {
+            if (action !== undefined) {
+                if (cast.connected)
+                    cast.playPause();
 
-            twoSecs.current && clearTimeout(twoSecs.current);
-            twoSecs.current = setTimeout(() => {
-                setSides(prev => ({...prev, left: false}));
-            }, 2000);
-        }
-        showControls();
-    }, [player, cast.connected, cast.muteUnmute, setSides, showControls]);
-
-    const toggleFS = useCallback(async (maximised: boolean) => {
-        const holder = document.getElementById(fsADDR.fullscreen || '') as HTMLDivElement | null;
-        if (holder) {
-            if (maximised && !document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
-                if (holder.requestFullscreen) await holder.requestFullscreen();
-
-                else if (holder.webkitRequestFullscreen) await holder.webkitRequestFullscreen();
-
-                else if (holder.msRequestFullscreen) await holder.msRequestFullscreen();
-
-                else if (holder.mozRequestFullscreen) await holder.mozRequestFullscreen();
-            } else {
-                if (document.exitFullscreen) await document.exitFullscreen();
-
-                else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
-
-                else if (document.msExitFullscreen) await document.msExitFullscreen();
-
-                else if (document.mozCancelFullScreen) await document.mozCancelFullScreen();
-            }
-        }
-        showControls();
-    }, [fsADDR.fullscreen, showControls]);
-
-    const togglePip = useCallback(async (bool: boolean) => {
-        if (player) {
-            if (document.pictureInPictureElement && !bool) {
-                await document.exitPictureInPicture();
-            } else {
-                if (document.pictureInPictureEnabled && bool) {
-                    await player.requestPictureInPicture();
+                else if (video) {
+                    if (action)
+                        await video.play();
+                    else
+                        video.pause();
                 }
-            }
-        }
-        showControls();
-    }, [player, showControls]);
+            } else if (video && !cast.connected) {
+                if (video.paused) {
+                    await video.play();
+                    sendMessage({action: "playing", data: true, playData: video.currentTime});
+                } else {
+                    video.pause();
+                    sendMessage({action: "playing", data: false, playData: video.currentTime});
+                }
 
-    const playNext = useCallback(async () => {
-        if (upNext) {
-            const location = upNext.location;
-            await pushNext(location);
-            await router.push(location);
+            } else if (cast.connected) {
+                sendMessage({action: "playing", data: !chromecastEvent?.paused, playData: chromecastState?.progress});
+                cast.playPause();
+            }
+        } catch (e: any) {
+            dispatch({
+                type: "error",
+                heading: "Playback Error",
+                message: e.message
+            })
         }
-    }, [pushNext, router, upNext]);
+
+    }, [response, cast.connected, cast.playPause, sendMessage]);
+
+    return {playPause, seekVideo, display, sendMessage, lobbyOpen};
+}
+
+export const usePlaybackControlsListener = (inform: boolean) => {
+    const cast = useCast();
+    const base = useBase();
+    const setVolumeState = useSetRecoilState(volumeFrameAtom);
+    const dispatch = useConfirmDispatch();
+    const {isMounted} = useBasics();
+    const [pos, setPos] = useState(0);
+    const {sendMessage, lobbyOpen} = useCentreControls(inform);
+    const {playNext, signOut} = useRightControls();
+    const {response, showControls, player, setPlayerState, setSides} = useDefaultControls();
+    const setCurrent = useSetRecoilState(currentDuration);
+    const setHideImage = useSetRecoilState(HideImageAtom);
+    const setSubtitles = useSetRecoilState(framesSubtitlesAtom);
+
+    const informDB = useCallback(async (current: number, duration: number) => {
+        if (response?.guest && current > 299 && !response.frame) {
+            await signOut();
+            cast.disconnect();
+        } else if (response?.inform) {
+            setPos(current);
+            const position = Math.floor((current / duration) * 1000);
+            await base?.makeRequest('/api/stream/inform', {auth: response.location, position}, 'POST');
+        }
+    }, [response, base, cast.disconnect, signOut]);
 
     const handleVolumeChange = useCallback(() => {
         if (player) setVolumeState({
@@ -485,64 +604,26 @@ export default function usePlayback(inform = true) {
         showControls();
     }, [player, setVolumeState, showControls]);
 
-    const syncSub = useCallback((language: string, sync: number) => {
-        setSubSync(prev => {
-            const temp = prev.filter(sub => sub.language !== language);
-            temp.push({
-                language, sync
-            });
-            return temp;
-        });
-    }, [setSubSync]);
-
-    const getSubtitles = useCallback(async (response: SpringPlay) => {
-        if (response && base) {
-            const subtitles: FramesSubs[] = [];
-            const subSync: { language: string, sync: number }[] = [];
-
-            for await (const sub of response.subs) {
-                const temp = await base.makeRequest<Sub[]>(sub.url, null, 'GET');
-                subtitles.push({language: sub.language, data: temp || []});
-                subSync.push({language: sub.language, sync: -50});
-            }
-
-            setSubSync(subSync);
-            setSubtitles(prev => ({...prev, subtitles}));
-        }
-    }, [base, setSubtitles, setSubSync]);
-
-    const getUpNext = useCallback(async (response: SpringPlay, tries = 0,) => {
-        if (response && base) {
-            const temp = await base.makeRequest<UpNext>('/api/stream/upNext?auth=' + response.location, null);
-            if (temp) setUpNext(temp);
-
-            else if (tries < 5) setTimeout(() => getUpNext(response, tries + 1), 1000);
-        }
-    }, [base, setUpNext]);
-
-    const getEverything = useCallback((response: SpringPlay) => {
-        let promises: any[] = [];
-        promises.push(getUpNext(response));
-        promises.push(getSubtitles(response));
-        setFsADDR({fullscreen: base.generateKey(5, 13), startTime: Date.now()});
-        return Promise.all(promises);
-    }, [getUpNext, getSubtitles, setFsADDR, base]);
-
     const handleLoadedMetadata = useCallback(async () => {
+        const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
         if (player) {
             setCurrent({current: player.currentTime, duration: player.duration, buffered: player.buffered});
             setSubtitles(prev => ({...prev, activeSub: response?.activeSub || 'none'}));
             if (!lobbyOpen) {
                 try {
+                    await informDB(player.currentTime, player.duration);
                     await player.play();
                     setPlayerState('PLAYING');
                     setHideImage(true);
 
                 } catch (e: any) {
                     const error = e as DOMException;
-                    setError(error.message);
                     setPlayerState('FAILED_TO_START');
-                    setHideImage(false);
+                    dispatch({
+                        type: "error",
+                        heading: "Playback Error",
+                        message: error.message
+                    });
                 }
             }
 
@@ -550,7 +631,7 @@ export default function usePlayback(inform = true) {
                 setSides(prev => ({...prev, left: false, right: false}));
             }, 1000);
         }
-    }, [player, setCurrent, sendMessage, setError, setPlayerState, setHideImage, response, setSubtitles, lobbyOpen]);
+    }, [response, informDB, setCurrent, sendMessage, setPlayerState, setHideImage, response, setSubtitles, lobbyOpen]);
 
     const handleTimeUpdate = useCallback(async (event: SyntheticEvent) => {
         const player = event.target as HTMLVideoElement;
@@ -582,11 +663,12 @@ export default function usePlayback(inform = true) {
     }, [playNext, sendMessage, informDB, pos, setCurrent, setPlayerState, setHideImage, response]);
 
     const handlePlayPause = useCallback(async () => {
+        const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
         showControls();
         if (player && !player.paused) {
             setPlayerState("PLAYING");
         } else if (player) setPlayerState("PAUSED");
-    }, [sendMessage, player, setPlayerState, showControls]);
+    }, [sendMessage, response, setPlayerState, showControls]);
 
     const handleWaiting = useCallback(() => {
         if (player) {
@@ -600,6 +682,7 @@ export default function usePlayback(inform = true) {
     }, [player, setPlayerState]);
 
     const handleDurationChange = useCallback(async () => {
+        const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
         if (player && response) {
             const current = player.currentTime = (response.position / 1000) * player.duration;
             setCurrent({current, duration: player.duration, buffered: player.buffered});
@@ -609,203 +692,85 @@ export default function usePlayback(inform = true) {
                     await player.pause();
                 } catch (e: any) {
                     const error = e as DOMException;
-                    setError(error.message);
                     setPlayerState('FAILED_TO_START');
-                    setHideImage(false);
+                    dispatch({
+                        type: "error",
+                        heading: "Playback Error",
+                        message: error.message
+                    });
                 }
         }
-    }, [setPlayerState, player, response, setCurrent, lobbyOpen]);
+    }, [setPlayerState, response, setCurrent, lobbyOpen]);
 
     const handleError = useCallback(() => {
-        if (player && player.error) setError(player.error.message);
-    }, [player, setError]);
-
-    const playPause = useCallback(async (action?: boolean) => {
-        const video = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
-        try {
-            if (action !== undefined) {
-                if (cast.connected)
-                    cast.playPause();
-
-                else if (video) {
-                    if (action)
-                        await video.play();
-                    else
-                        video.pause();
-                }
-            } else if (video && !cast.connected) {
-                if (video.paused) {
-                    await video.play();
-                    sendMessage({action: "playing", data: true, playData: video.currentTime});
-                } else {
-                    video.pause();
-                    sendMessage({action: "playing", data: false, playData: video.currentTime});
-                }
-
-            } else if (cast.connected) {
-                sendMessage({action: "playing", data: !chromecastEvent?.paused, playData: chromecastState?.progress});
-                cast.playPause();
-            }
-        } catch (e: any) {
-            setError(e.message);
-        }
-
-        channel.modifyPresenceState(`watching ${response?.name}`);
-        globalChannel.modifyPresenceState(`watching ${response?.name}`);
-    }, [response, cast.connected, cast.playPause, sendMessage]);
+        if (player && player.error) dispatch({
+            type: "error",
+            heading: "Playback Error",
+            message: player.error.message
+        })
+    }, [player, dispatch]);
 
     return {
-        switchLanguage,
-        seekVideo,
-        player,
-        playPause,
-        handlePlayPause,
-        handleWaiting,
-        handleEnded,
-        handleDurationChange,
-        handleTimeUpdate,
-        hideControls,
-        getEverything,
-        syncSub,
-        handleError,
-        castToDevice,
-        showControls,
-        handleLoadedMetadata,
-        togglePip,
-        toggleFS,
-        setVolume,
-        muteUnmute,
-        handleVolumeChange,
-        playNext
+        response,
+        handleLoadedMetadata, handleDurationChange,
+        handleVolumeChange, handleTimeUpdate, handlePlayPause,
+        handleWaiting, handleEnded, handleError, showControls,
+    };
+}
+
+export default function usePlaybackControls(inform = true) {
+    const base = useBase();
+    const defaultControls = useDefaultControls();
+    const leftControls = useLeftControls();
+    const rightControls = useRightControls();
+    const centerControls = useCentreControls(inform);
+    const listener = usePlaybackControlsListener(inform);
+    const setSubSync = useSetRecoilState(SubtitlesSyncAtom);
+    const setSubtitles = useSetRecoilState(framesSubtitlesAtom);
+    const setUpNext = useSetRecoilState(UpNextAtom);
+    const setFsADDR = useSetRecoilState(fullscreenAddressAtom);
+
+    const getSubtitles = useCallback(async (response: SpringPlay) => {
+        if (response && base) {
+            const subtitles: FramesSubs[] = [];
+            const subSync: { language: string, sync: number }[] = [];
+
+            for await (const sub of response.subs) {
+                const temp = await base.makeRequest<Sub[]>(sub.url, null, 'GET');
+                if (temp) {
+                    subtitles.push({language: sub.language, data: temp || []});
+                    subSync.push({language: sub.language, sync: -50});
+                }
+            }
+
+            setSubSync(subSync);
+            setSubtitles(prev => ({...prev, subtitles}));
+        }
+    }, [base, setSubtitles, setSubSync]);
+
+    const getUpNext = useCallback(async (response: SpringPlay, tries = 0,) => {
+        if (response && base) {
+            const temp = await base.makeRequest<UpNext>('/api/stream/upNext?auth=' + response.location, null);
+            if (temp) setUpNext(temp);
+
+            else if (tries < 5) setTimeout(() => getUpNext(response, tries + 1), 1000);
+        }
+    }, [base, setUpNext]);
+
+    const getEverything = useCallback((response: SpringPlay) => {
+        let promises: any[] = [];
+        promises.push(getUpNext(response));
+        promises.push(getSubtitles(response));
+        setFsADDR({fullscreen: base.generateKey(5, 13), startTime: Date.now()});
+        return Promise.all(promises);
+    }, [getUpNext, getSubtitles, setFsADDR, base]);
+
+    return {
+        ...defaultControls,
+        ...centerControls, ...leftControls,
+        ...rightControls, ...listener, getEverything,
     }
 }
 
-export const VideoListener = () => {
-    const playback = usePlayback();
-    const player = useRecoilValue(framesPlayer);
-    const error = useRecoilValue(FramesPlayerErrorAtom);
-    const groupWatch = useRecoilValue(GroupWatchSide);
-    const {share, download} = useRecoilValue(shareAndDownloadAtom);
-    const {pip, fullscreen} = useRecoilValue(PipAndFullscreenAtom);
-    const setSubtitlesAndUpNext = useSetRecoilState(SubtitlesAndUpNextAtom);
-    const setPipAndFullscreen = useSetRecoilState(PipAndFullscreenAtom);
-    const setAirplay = useSetRecoilState(AirplayAtom);
-    const dispatch = useInfoDispatch();
 
-    useEffect(() => {
-        error && dispatch({
-            type: 'error', heading: 'An error occurred', message: error
-        })
-    }, [error])
 
-    useEventListener('enterpictureinpicture', () => {
-        setPipAndFullscreen(prev => ({...prev, pip: true}));
-    }, player)
-
-    useEventListener('leavepictureinpicture', () => {
-        setPipAndFullscreen(prev => ({...prev, pip: false}));
-    }, player)
-
-    useEventListener('fullscreenchange', () => {
-        const full = !!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement;
-        setPipAndFullscreen(prev => ({...prev, fullscreen: full}));
-    });
-
-    useEventListener('msfullscreenchange', () => {
-        const full = !!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement;
-        setPipAndFullscreen(prev => ({...prev, fullscreen: full}));
-    });
-
-    useEventListener('mozfullscreenchange', () => {
-        const full = !!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement;
-        setPipAndFullscreen(prev => ({...prev, fullscreen: full}));
-    });
-
-    useEventListener('webkitfullscreenchange', () => {
-        const full = !!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement;
-        setPipAndFullscreen(prev => ({...prev, fullscreen: full}));
-    });
-
-    useEventListener('webkitplaybacktargetavailabilitychanged', event => {
-        switch (event.availability) {
-            case "available":
-                setAirplay({available: true, casting: false});
-                break;
-            case "not-available":
-                setAirplay({available: false, casting: false});
-                break;
-        }
-    }, player);
-
-    useEventListener('webkitcurrentplaybacktargetiswirelesschanged', event => {
-        if (event.target.remote.state === "connected") setAirplay({
-            available: true,
-            casting: true
-        }); else setAirplay({available: true, casting: false});
-    }, player);
-
-    useEventListener('keyup', async e => {
-        if (!groupWatch && !download && !share) {
-            switch (e.code) {
-                case 'Space':
-                    await playback.playPause();
-                    break;
-
-                case 'ArrowLeft':
-                    await playback.seekVideo(-15, 'add');
-                    break;
-
-                case 'ArrowRight':
-                    await playback.seekVideo(15, 'add');
-                    break;
-
-                case 'ArrowUp':
-                    await playback.setVolume(0.1);
-                    break;
-
-                case 'ArrowDown':
-                    await playback.setVolume(-0.1);
-                    break;
-
-                case 'KeyZ':
-                    await playback.togglePip(!pip);
-                    break;
-
-                case 'KeyF':
-                    await playback.toggleFS(!fullscreen);
-                    break;
-
-                case 'KeyS':
-                    await playback.switchLanguage();
-                    break;
-
-                case 'KeyC':
-                    setSubtitlesAndUpNext(prev => ({...prev, settings: !prev.settings}));
-                    break;
-
-                case 'KeyD':
-                    await playback.playNext();
-                    break;
-
-                case 'KeyM':
-                    await playback.muteUnmute();
-                    break;
-
-            }
-        }
-
-        await playback.showControls();
-    })
-
-    useEventListener('keydown', async e => {
-        if (!groupWatch && !download && !share) {
-            switch (e.code) {
-                case 'KeyN':
-                    //await playback.showNext(true);
-                    break;
-            }
-        }
-    })
-
-    return null;
-}

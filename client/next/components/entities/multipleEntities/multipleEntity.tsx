@@ -4,14 +4,14 @@ import Editor from "../singleEntity/editor";
 import styles from '../Sections.module.css';
 import $ from "jquery";
 import SectionDetails from "./sectiondetails";
-import {SectionType} from "../../../../../server/classes/listEditors";
+import {SectionType} from "../../../../../server/classes/pickAndFrame";
 
 export default function Entities({response, type, section}: { response: any[], type: SectionType, section?: boolean }) {
     const [left, setLeft] = useState(false);
     const [right, setRight] = useState(true);
     const [position, setPosition] = useState(0);
     const entities = useRef<HTMLUListElement>(null);
-    const val = type === 'EDITOR' ? 3: 4;
+    const val = type === 'EDITOR' ? 3 : 4;
 
     useEffect(() => {
         setLeft(false);
@@ -33,11 +33,11 @@ export default function Entities({response, type, section}: { response: any[], t
             if (entities.current) entities.current.style.overflow = 'scroll';
 
             if (direction === 'right') {
-                index = dbl? children.length - val : position + val;
+                index = dbl ? children.length - val : position + val;
                 setLeft(true);
                 setRight(index + val < children.length);
             } else if (direction === 'left') {
-                index = dbl? 0 : position - val;
+                index = dbl ? 0 : position - val;
                 setRight(true)
                 setLeft(index - val >= 0);
             } else index = 0;
@@ -57,9 +57,7 @@ export default function Entities({response, type, section}: { response: any[], t
 
                     else
                         element.animate({scrollLeft: entities.current.scrollWidth}, 400)
-                }
-
-                else if (index + val < children.length)
+                } else if (index + val < children.length)
                     if (type === 'BASIC')
                         element.animate({scrollLeft: (element.scrollLeft() || 0) + (direction === 'right' ? (1100 - 40) : -(1100 - 40))}, 400);
 

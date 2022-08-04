@@ -52,6 +52,7 @@
     width: 100%;
     display: flex;
     justify-content: center;
+    z-index: 5;
 }
 
 .carousel svg {
@@ -66,7 +67,7 @@
 
 .bannerHouse p {
     max-height: 150px;
-    overflow : hidden;
+    overflow: hidden;
     text-overflow: ellipsis;
 }
 

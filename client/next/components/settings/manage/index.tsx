@@ -11,15 +11,15 @@ export default function Manage() {
     const [side, setSide] = useManageSections(response);
 
     return (<div className={ss.display}>
-            <ul className={ss.side}>
-                {response?.map((e, v) => <li key={v} onClick={() => setSide(e)}
-                                             className={e === side ? `${ss.li} ${ss.ac}` : ss.li}>
-                    {e}
-                </li>)}
-            </ul>
-            <div className={ss.infH}>
-                {side === 'library' ? <Library/> : side === 'manage keys' ? <ManageKeys/> : side === 'manage picks' ?
-                    <Picks/> : side === 'get contents' ? <GetContents/> : null}
-            </div>
-        </div>)
+        <ul className={ss.side}>
+            {response?.map((e, v) => <li key={v} onClick={() => setSide(e)}
+                                         className={e === side ? `${ss.li} ${ss.ac}` : ss.li}>
+                {e}
+            </li>)}
+        </ul>
+        <div className={ss.infH}>
+            {side === 'library' ? <Library/> : side === 'manage keys' ? <ManageKeys/> : side === 'manage picks' ?
+                <Picks/> : side === 'get contents' ? <GetContents/> : null}
+        </div>
+    </div>)
 }

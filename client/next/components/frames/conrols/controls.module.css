@@ -1,0 +1,223 @@
+.a {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all .2s ease-in-out;
+    opacity: 0;
+}
+
+.a:hover {
+    opacity: 1;
+}
+
+.left {
+    left: 3%;
+}
+
+.right {
+    right: 3%;
+}
+
+.right button {
+    margin-right: 10px;
+}
+
+.nf {
+    width: 25px;
+    height: 25px;
+    margin: 0 5px !important;
+    position: relative;
+}
+
+.f {
+    width: 35px;
+    height: 35px;
+    margin: 0 5px !important;
+}
+
+.nf svg {
+    stroke: rgba(255, 255, 255, .5);
+    transition: all 0.2s;
+    fill: rgba(0, 0, 0, 0);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    cursor: pointer;
+}
+
+.nf:hover svg {
+    stroke: rgba(144, 197, 240, .9);
+    transform: scale(1.2);
+}
+
+.con svg {
+    stroke: rgba(105, 201, 141, 0.7);
+}
+
+.con:hover svg {
+    stroke: rgba(105, 201, 141, 1);
+}
+
+.f svg {
+    fill: rgba(255, 255, 255, .5);
+    stroke: none;
+    stroke-width: 1px;
+    transition: all 0.2s ease-in-out;
+}
+
+.f:hover svg {
+    fill: rgba(144, 197, 240, .9);
+    transform: scale(1.2);
+}
+
+.download svg {
+    max-width: 25px;
+    max-height: 25px;
+}
+
+.vg {
+    width: 130px;
+    height: 5px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background: rgba(144, 197, 240, .2);
+    transition: all .2s ease-in-out;
+}
+
+.vf {
+    background: rgba(144, 197, 240, .9);
+    display: inline-block;
+    transition: all 0.2s;
+    height: 100%;
+    width: 30%;
+}
+
+.vh {
+    background: white;
+    display: inline-block;
+    transition: all 0.2s;
+    height: 3vw;
+    width: 3vw;
+    max-height: 11px;
+    max-width: 11px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+}
+
+.vpb svg {
+    height: 5vmax;
+    stroke: rgba(144, 197, 240, .5);
+    transition: all 0.2s ease-in-out;
+    fill: none;
+}
+
+.vpb:hover svg {
+    stroke: rgba(144, 197, 240, .9);
+}
+
+.center {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.c {
+    display: flex;
+    padding: 1vmax 0;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.c button {
+    background: none;
+    outline: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    border: none;
+}
+
+.muted {
+    background-color: rgba(245, 78, 78, .9);
+    fill: rgba(245, 78, 78, .9);
+}
+
+.muted:hover svg {
+    fill: rgba(245, 78, 78, .9);
+    transform: scale(1.2);
+}
+
+.sdbrHldr {
+    margin: 30% 10px 10px 10px;
+    color: rgba(255, 255, 255, .7);
+    width: calc(100% - 30px);
+    font-size: 18px;
+    font-family: "Baloo 2", cursive;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sHldr {
+    width: 100%;
+    padding: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, .7);
+}
+
+.hdr {
+    font-size: 18px;
+    font-family: "Baloo 2", cursive;
+    color: rgba(255, 255, 255, .7);
+    width: calc(100% - 20px);
+    padding: 5px 10px;
+}
+
+.sqr {
+    margin: 10px 0;
+    border-radius: 5px;
+    padding: 5px;
+    width: calc(100% - 20px);
+    border: 1px solid rgba(255, 255, 255, .7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    box-shadow: 2px 12px 12px -12px #000000;
+}
+
+.sel {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 5px 0;
+}
+
+.sel li {
+    margin: 0 2px;
+    min-width: 40%;
+    padding: 5px 0;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, .7);
+}
+
+.sel li:hover {
+    background-color: rgba(255, 255, 255, .1);
+    box-shadow: 2px 12px 12px -12px #000000;
+    color: white;
+    border: 1px solid white;
+}
+
+.active {
+    background: rgba(144, 197, 240, .3);
+}

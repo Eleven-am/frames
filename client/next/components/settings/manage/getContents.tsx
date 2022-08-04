@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from "react";
 import ss from "../ACCOUNT.module.css";
-import {Template} from "../../buttons/Buttons";
+import {FramesButton} from "../../buttons/Buttons";
 import {useFetcher} from "../../../../utils/customHooks";
-import {GetContentSearch} from "../../../../../server/classes/modify";
 import {useRecoilState} from "recoil";
 import {GetSearchContext, useGetContext} from "../../../../utils/modify";
 import {Loading} from "../../misc/Loader";
 import {MediaType} from "@prisma/client";
 import {SearchRes} from "./library";
+import {GetContentSearch} from "../../../../../server/classes/springboard";
 
 export default function GetContents() {
     const [text, setText] = useState('');
@@ -56,10 +56,10 @@ export default function GetContents() {
             <div className={ss.butContainers}>
                 {search.data.length ? null :
                     <div className={ss.buttons}>
-                        <Template onClick={() => libraryScan('EPISODES')} id={0} name={'Download missing episodes'}
-                                  type={'scan'}/>
-                        <Template onClick={() => libraryScan('MEDIA')} id={1} name={'Download new media'}
-                                  type={'down'}/>
+                        <FramesButton onClick={libraryScan} type='primary' label={'Download missing episodes'}
+                                  icon={'scan'} state='EPISODES'/>
+                        <FramesButton onClick={libraryScan} type='primary' label={'Download new media'}
+                                  icon={'down'} state='MEDIA'/>
                     </div>
                 }
                 {search.loading || (loading && text !== '') ?
@@ -72,7 +72,7 @@ export default function GetContents() {
                                     name: e.name, overview: e.overview,
                                     id: e, onClick: manageRec, backdrop: e.backdrop || ''
                                 }
-                                return <SearchRes {...obj}/>
+                                return <SearchRes {...obj} key={v}/>
                             })}
                         </div> : null
                 }

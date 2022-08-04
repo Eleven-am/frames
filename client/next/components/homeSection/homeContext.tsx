@@ -1,22 +1,22 @@
-import {atom, selector, useRecoilState, useRecoilValue, useResetRecoilState} from 'recoil';
-import React, {useEffect, useRef} from "react";
+import {atom, selector, useResetRecoilState} from 'recoil';
+import React from "react";
 
-export const pGraphAtom = atom<HTMLParagraphElement|null>({
+export const pGraphAtom = atom<HTMLParagraphElement | null>({
     key: 'pGraphHomeAtom',
     default: null
 })
 
-export const imageAtom = atom<HTMLImageElement|null>({
+export const imageAtom = atom<HTMLImageElement | null>({
     key: 'imageHomeAtom',
     default: null
 })
 
-export const sectionAtom = atom<number|undefined>({
+export const sectionAtom = atom<number | undefined>({
     key: 'sectionHomeAtom',
     default: undefined
 })
 
-export const startHeight = atom<number|undefined>({
+export const startHeight = atom<number | undefined>({
     key: 'startHomeAtom',
     default: undefined
 })
@@ -29,7 +29,7 @@ export const OpacityHomeAtom = selector({
         const pGraph = get(pGraphAtom);
         const image = get(imageAtom);
 
-        if (start && value && pGraph && image){
+        if (start && value && pGraph && image) {
             let holderOpacity = value === 1 || start === 1 ? 1 : (value - pGraph.getBoundingClientRect().bottom) / (start - pGraph.getBoundingClientRect().bottom);
             let imageOpacity = value === 1 || start === 1 ? 1 : (value - image.getBoundingClientRect().top) / (start - image.getBoundingClientRect().top);
 

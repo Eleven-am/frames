@@ -1,15 +1,60 @@
 import styles from './Navbar.module.css';
-import {useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
+import {useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
 import {NavConTextAtom, NavSectionAndOpacity, SearchContextAtom, SideMenu} from "./navigation";
-import useUser from "../../../utils/userTools";
 import {Role} from "@prisma/client";
-import React, {useRef, useState} from "react";
-import {Link, Image} from "../misc/Loader";
+import React, {useCallback, useEffect, useRef, useState} from "react";
+import {Image, Link} from "../misc/Loader";
 import frames from "../../assets/frames.png";
-import {useSearch} from "../../../utils/customHooks";
-import {notificationCount} from "../../../utils/notificationConext";
 import {SettingsSegmentContext} from "../../../utils/modify";
 import {useRouter} from "next/router";
+import useNotifications, {notificationCount} from "../../../utils/notifications";
+import useUser, {ContextType} from "../../../utils/user";
+import {SearchPicker} from "../../../../server/classes/media";
+import {useFetcher} from "../../../utils/customHooks";
+
+export const useSearch = () => {
+    const [errorState, setError] = useState('');
+    const [search, setSearch] = useRecoilState(SearchContextAtom);
+    const {
+        response,
+        abort,
+        error,
+        loading
+    } = useFetcher<SearchPicker<'list'>>('/api/load/search?node=list&value=' + search);
+    const {
+        response: searchResponse,
+        error: error2,
+        loading: load,
+        abort: abort2
+    } = useFetcher<SearchPicker<'grid'>>('/api/load/search?node=grid&value=' + search);
+
+    useEffect(() => {
+        if (search === '') {
+            abort.cancel();
+            abort2.cancel();
+            setError('');
+        }
+
+        return () => {
+            abort.cancel();
+            abort2.cancel();
+        }
+    }, [search])
+
+    useEffect(() => {
+        if (error || error2)
+            setError(error?.message || error2?.message)
+    }, [error, error])
+
+    return {
+        active: search !== '',
+        loading: loading && load,
+        grid: searchResponse || [],
+        list: response || [],
+        error: errorState,
+        setSearch
+    };
+}
 
 function Account() {
     const {user} = useUser();
@@ -42,28 +87,46 @@ function Account() {
                         C447.904,412.512,445.728,408.448,442.272,405.696z"/>
                 </svg>
             </button>
-            {count ? <div className={styles.notification}>{count}</div>: null}
+            {count ? <div className={styles.notification}>{count}</div> : null}
         </div>
     )
 }
 
-export function AccountInfo() {
+function OnlineUsersComponent() {
+    const {globalNotification: {online: users}} = useNotifications();
+
+    return (
+        <Link href={'/lobby'}>
+            <div className={styles.online}
+                 title={`${users.length - 1 > 0 ? users.length - 1 : 'No'} user${users.length - 1 > 1 ? 's' : ''} online`}>
+                <svg viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                {users.length - 1 > 0 ? <div className={styles.onlineCounter}>{users.length - 1}</div> : null}
+            </div>
+        </Link>
+    )
+}
+
+function AccountInfo({user, signOut}: {user: ContextType & {username: string} | null, signOut: () => void}) {
     const count = useRecoilValue(notificationCount);
     const setSides = useSetRecoilState(SettingsSegmentContext);
     const accountContext = useRecoilValue(SideMenu);
     const [visible, setVisible] = useState(false);
     const router = useRouter();
-    const {user, signOut} = useUser();
     const win = useRef<Window | null>(null);
 
-    const handleClick = () => {
+    const handleClick = useCallback(() => {
         win.current = window.open('https://www.paypal.com/paypalme/RoyOssai', '_blank');
-    }
+    }, [])
 
-    const setSidesAndPush = async (step1: string, step2: string) => {
+    const setSidesAndPush = useCallback(async (step1: string, step2: string) => {
         setSides({step1, step2});
         router.asPath !== '/settings' && await router.push('/settings');
-    }
+    }, [setSides, router])
 
     if (user)
         return (
@@ -74,18 +137,23 @@ export function AccountInfo() {
                     setVisible(false);
                 }, 200)
             }}>
-                <div className={styles.text} onClick={() => setSidesAndPush('account', 'watch history')}>{user.role === Role.GUEST ? 'Guest: ': ''}{user.username || user.email}</div>
+                <div className={styles.text}
+                     onClick={() => setSidesAndPush('account', 'watch history')}>{user.role === Role.GUEST ? 'Guest: ' : ''}{user.username || user.email}</div>
                 <div className={styles.spacer}/>
-                <div className={styles.text} onClick={() => setSidesAndPush('account', 'notifications')}>Notifications{count ? `: ${count}`: ''}</div>
+                <div className={styles.text}
+                     onClick={() => setSidesAndPush('account', 'notifications')}>Notifications{count ? `: ${count}` : ''}</div>
                 <div className={styles.text} onClick={() => setSidesAndPush('about', 'feedback')}>Make Suggestions</div>
                 <div className={styles.text} onClick={handleClick}>Buy me coffee</div>
-                <div className={styles.text} onClick={() => setSidesAndPush('about', 'privacy policy')}>Privacy & TOS</div>
+                <div className={styles.text} onClick={() => setSidesAndPush('about', 'privacy policy')}>Privacy & TOS
+                </div>
                 {user.role === Role.ADMIN ?
                     <>
                         <div className={styles.spacer}/>
-                        <div className={styles.text} onClick={() => setSidesAndPush('manage', 'get contents')}>Manage contents</div>
+                        <div className={styles.text} onClick={() => setSidesAndPush('manage', 'get contents')}>Manage
+                            contents
+                        </div>
                     </>
-                : null}
+                    : null}
                 <div className={styles.spacer}/>
                 <div className={styles.text} onClick={signOut}>log out</div>
             </div>
@@ -108,10 +176,10 @@ function Search() {
     const {section} = useRecoilValue(NavSectionAndOpacity);
     const {setSearch} = useSearch();
 
-    const handleSearch = () => {
+    const handleSearch = useCallback(() => {
         const search = myRef.current;
         search?.focus();
-    };
+    }, [])
 
     return (
         <div className={styles.searchContainer}>
@@ -126,6 +194,7 @@ function Search() {
                     <input ref={myRef} onChange={e => setSearch(e.currentTarget.value)} type="text"
                            placeholder="see what's available" className={styles['search-input']}/>
                 </div> : null}
+            <OnlineUsersComponent/>
             <Account/>
         </div>
     );
@@ -137,12 +206,8 @@ function Sections() {
     const paths = ["/", "/movies", "/shows", "/playlist", "/collections"];
     const resetSearch = useResetRecoilState(SearchContextAtom);
 
-    const reset = () => {
-        resetSearch();
-    };
-
     return (
-        <div className={styles.navSections} onClick={reset}>
+        <div className={styles.navSections} onClick={resetSearch}>
             {sections.map((item, v) => {
                 return (
                     <Link key={v} href={paths[v]}>
@@ -155,7 +220,7 @@ function Sections() {
     );
 }
 
-export default function Navbar() {
+export default function Navbar({user, signOut}: {user: ContextType & {username: string} | null, signOut: () => void}) {
     const {opacity, section} = useRecoilValue(NavSectionAndOpacity);
     if (section === 'watch')
         return null;
@@ -169,7 +234,7 @@ export default function Navbar() {
                 } : {background: `linear-gradient(to bottom, rgba(1, 16, 28, 1),  rgba(1, 16, 28, ${opacity}))`}}>
                     <div className={styles['nav-holder']}>
                         <Logo/>
-                        {section === 'auth' ? null :
+                        {section === 'auth' || !user ? null :
                             <>
                                 <Sections/>
                                 <Search/>
@@ -177,9 +242,7 @@ export default function Navbar() {
                         }
                     </div>
                 </div>
-                <AccountInfo/>
+                <AccountInfo user={user} signOut={signOut}/>
             </>
         )
 }
-
-//https://frames.maix.ovh/room=0faUkbSNndJk5-zz6pt5Bw0U0oc-LkDcK9Ax7nvnm-BpzJK2JbI28z9-ObSwBdpbrik5f

@@ -18,7 +18,7 @@ export default function Element(item: SpringEpisode) {
             else await router.push('/watch?episodeId=' + id);
         }}>
             <div className={styles.d}>
-                <img src={backdrop ? backdrop: type === 'EPISODE' ? show.backdrop: show.poster} alt={name}/>
+                <img src={backdrop ? backdrop : type === 'EPISODE' ? show.backdrop : show.poster} alt={name}/>
                 <div style={position && position > 0 ? {display: "block"} : {}} className={styles.e}>
                     <div className={styles.fill} style={{width: position + '%'}}/>
                 </div>

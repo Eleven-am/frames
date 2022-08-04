@@ -1,9 +1,9 @@
 import styles from './Sections.module.css';
 import Entities from "./multipleEntities/multipleEntity";
 import {useFetcher} from "../../../utils/customHooks";
-import {SectionPick, SectionType} from "../../../../server/classes/listEditors";
-import useUser from "../../../utils/userTools";
 import {useState} from "react";
+import {SectionPick, SectionType} from "../../../../server/classes/pickAndFrame";
+import useUser from "../../../utils/user";
 
 const Loading = () => {
     return (

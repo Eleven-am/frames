@@ -1,5 +1,16 @@
-import {atom, selector, useResetRecoilState} from 'recoil';
-import {SpringMedUserSpecifics} from "../../../../server/classes/media";
+import {atom, selector, useRecoilState, useResetRecoilState} from 'recoil';
+import {SpringMedUserSpecifics} from "../../../../server/classes/user";
+import {SpringMedia} from "../../../../server/classes/media";
+import useNotifications from "../../../utils/notifications";
+import {useCallback} from "react";
+import useBase from "../../../utils/provider";
+import {mutate} from "swr";
+import {MediaType} from "@prisma/client";
+
+export const InfoContext = atom<SpringMedia | null>({
+    key: 'InfoContext',
+    default: null
+})
 
 export const InfoSeasonContext = selector({
     key: 'InfoSeasonContext',
@@ -18,16 +29,6 @@ export const infoUserContext = atom<SpringMedUserSpecifics | null>({
     default: null
 })
 
-export const InfoSeasonsContext = atom<any[]>({
-    key: 'InfoSeasonsContext',
-    default: []
-})
-
-export const InfoMediaIdContext = atom({
-    key: 'InfoMediaIdContext',
-    default: 0
-})
-
 export const InfoSectionContext = atom({
     key: 'InfoSectionContext',
     default: '1'
@@ -41,9 +42,10 @@ export const InfoSectionsContext = atom<string[]>({
 export const InfoEpisodesContext = selector({
     key: 'InfoEpisodesContext',
     get: async ({get}) => {
-        const defSeasons = get(InfoSeasonsContext);
+        const info = get(InfoContext);
+        const defSeasons = info?.seasons ?? [];
         const season = get(InfoSeasonContext);
-        const media = get(InfoMediaIdContext);
+        const media = info?.id ?? 0;
         const section = get(InfoSectionContext);
         if (season === 0)
             return {seasons: defSeasons, section};
@@ -61,11 +63,10 @@ export const InfoEpisodesContext = selector({
     }
 })
 
-
 export const InformSeasonContext = selector<string[]>({
     key: 'InformSeasonContext',
     get: ({get}) => {
-        const defSeasons = get(InfoSeasonsContext);
+        const defSeasons = get(InfoContext)?.seasons ?? [];
         const sections = get(InfoSectionsContext);
         const season = get(InfoSeasonContext);
         return season === 0 ? sections : defSeasons.map(e => e.name);
@@ -73,17 +74,61 @@ export const InformSeasonContext = selector<string[]>({
 })
 
 export const resetInfo = () => {
-    const season = useResetRecoilState(InfoSeasonsContext);
-    const media = useResetRecoilState(InfoMediaIdContext);
     const section = useResetRecoilState(InfoSectionContext);
     const sections = useResetRecoilState(InfoSectionsContext);
     const info = useResetRecoilState(infoUserContext);
+    const media = useResetRecoilState(InfoContext);
+    const {modifyPresence} = useNotifications();
 
     return () => {
         section();
-        season();
-        media();
         sections();
         info();
+        media();
+        modifyPresence('online');
     }
+}
+
+export const useInfoContext = () => {
+    const base = useBase();
+    const [info, setInfo] = useRecoilState(InfoContext);
+    const [infoUser, setInfoUser] = useRecoilState(infoUserContext);
+
+    const getUserInfo = useCallback(async () => {
+        const data = await base.makeRequest<SpringMedUserSpecifics>('/api/media/specificUserData', {mediaId: info?.id});
+        setInfoUser(data);
+    }, [base, info]);
+
+    const updateInfo = useCallback(async () => {
+        const moddedMedia = await base.makeRequest<SpringMedia>('/api/modify/getModdedMedia', {mediaId: info?.id}, 'POST');
+        setInfo(moddedMedia);
+    }, [base, info]);
+
+    const toggleSeen = useCallback(async () => {
+        if (!info)
+            return;
+
+        if (infoUser) {
+            const seen = !infoUser.seen;
+            setInfoUser({...infoUser, seen});
+        }
+        await fetch(`/api/media/seen?mediaId=${info.id}`);
+        await mutate('/api/load/continue')
+        if (info.type !== MediaType.MOVIE)
+            await updateInfo();
+    }, [info, infoUser, setInfoUser, setInfo]);
+
+    const toggleAddToList = useCallback(async () => {
+        if (!info)
+            return;
+
+        if (infoUser) {
+            const myList = !infoUser.myList;
+            setInfoUser({...infoUser, myList});
+        }
+        await fetch(`/api/media/addToList?mediaId=${info.id}`);
+        await mutate('/api/load/myList');
+    }, [info, infoUser, setInfoUser, setInfo]);
+
+    return {getUserInfo, updateInfo, toggleSeen, toggleAddToList}
 }

@@ -1,10 +1,10 @@
 import styles from "./Auth.module.css";
 import {useRecoilValue, useSetRecoilState} from "recoil";
 import {AuthContextHandler, AuthContextProcessAtom, Authenticated, useReset} from "./authContext";
-import useUser from "../../../utils/userTools";
-import {useEffect} from "react";
-import Background from "../production/back";
+import {useCallback, useEffect} from "react";
 import {AuthCP} from "../../../../server/classes/middleware";
+import Background from "../misc/back";
+import useUser from "../../../utils/user";
 
 function Information({response}: { response: AuthCP }) {
     const setAuth = useSetRecoilState(Authenticated);
@@ -42,15 +42,15 @@ export default function AuthImages({response, auth}: { response: string[], auth:
     const {signAsGuest} = useUser();
     const reset = useReset();
 
-    const handleClick = () => {
+    const handleClick = useCallback(() => {
         reset();
         setAuth(auth.authentication);
-    }
+    }, [auth, reset, setAuth]);
 
-    const handleGuest = async () => {
+    const handleGuest = useCallback(async () => {
         dispatch({fade: true});
         dispatch({error: await signAsGuest()});
-    }
+    }, [dispatch, signAsGuest]);
 
     return (
         <>
@@ -58,7 +58,7 @@ export default function AuthImages({response, auth}: { response: string[], auth:
             {process !== 'pick' ?
                 <div id={styles["signIn-button"]} className={styles['signIn-button']} onClick={handleClick}>
                     select a provider
-                </div> : null }
+                </div> : null}
 
             <Information response={auth}/>
             <div id={styles.guest} className={styles['signIn-button']} onClick={handleGuest}>continue as guest</div>

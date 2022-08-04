@@ -1,10 +1,15 @@
 import {NextApiRequest, NextApiResponse} from "next";
-import {ListEditors, Playlist} from "../classes/listEditors";
-import {Modify} from "../classes/modify";
+import MediaClass from "../classes/media";
+import Playlist from "../classes/playlist";
+import PickAndFrame from "../classes/pickAndFrame";
+import Springboard from "../classes/springboard";
+import User from "../classes/user";
 
-const list = new ListEditors();
-const modify = new Modify();
+const user = new User()
+const springboard = new Springboard();
 const playlist = new Playlist();
+const media = new MediaClass();
+const list = new PickAndFrame();
 
 export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
     let response: any;
@@ -14,19 +19,19 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
     switch (type) {
         case 'getSections':
             const otherArray = ['about', 'account'];
-            response = await modify.userIsAdmin(userId) ? [...otherArray, 'manage'] : otherArray;
+            response = await user.isAdmin(userId) ? [...otherArray, 'manage'] : otherArray;
             break;
 
         case 'getManage':
-            response = await modify.getManage(userId);
+            response = await springboard.getManage(userId);
             break;
 
         case 'libUnScanned':
-            response = await modify.getUnScanned(userId);
+            response = await springboard.getUnScanned(userId);
             break;
 
         case 'libSearch':
-            response = await modify.searchLib(body.value);
+            response = await springboard.searchLib(body.value);
             break;
 
         case 'getPicks':
@@ -34,7 +39,8 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'getPlaylists':
-            response = await playlist.getAllPlaylists(userId);
+            const type = body.tab === 'playlists' ? 'PLAYLISTS' : body.tab === 'shared' ? 'SHARED' : 'PUBLIC';
+            response = await playlist.getAllPlaylists(userId, type);
             break;
 
         case 'getPlaylist':
@@ -45,17 +51,21 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             response = await playlist.getVideosForMedia(+body.mediaId);
             break;
 
-       case 'getVideoForPlaylist':
+        case 'getVideoForPlaylist':
             response = await playlist.getVideoForPlaylist(+body.videoId);
             break;
 
+        case 'getVideoForPlayback':
+            response = await playlist.getVideoForPlayback(+body.videoId, body.identifier);
+            break;
+
         case 'outSearch':
-            response = await modify.totalSearch(body.value);
+            response = await springboard.totalSearch(body.value);
             break;
 
         case 'download':
             const downBool = body.value === 'media';
-            downBool ? await modify.getNewContent(userId) : await modify.getMissingEpisodes(userId);
+            downBool ? await media.getNewContent() : await media.getMissingEpisodes();
             response = true;
             break;
     }

@@ -1,13 +1,19 @@
 import {NextApiRequest, NextApiResponse} from "next";
-import {Modify} from "../classes/modify";
 import {Aggregate} from "../classes/tmdb";
 import {regrouped} from "../lib/environment";
-import {ListEditors, Playlist} from "../classes/listEditors";
 import Magnet from "../classes/deluge";
-const modify = new Modify();
-const listEditor = new ListEditors();
+import Playlist from "../classes/playlist";
+import User from "../classes/user";
+import MediaClass from "../classes/media";
+import PickAndFrame from "../classes/pickAndFrame";
+import Springboard from "../classes/springboard";
+
 const playlist = new Playlist();
 const deluge = new Magnet();
+const user = new User();
+const listEditor = new PickAndFrame();
+const modify = new Springboard();
+const media = new MediaClass();
 const aggregate = new Aggregate(regrouped.tmdbToken!);
 
 export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
@@ -17,15 +23,15 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
 
     switch (type) {
         case 'modifyMedia':
-            response = await modify.modifyMedia(userId, body.media);
+            response = await media.modifyMedia(userId, body.media);
             break;
 
         case 'getMedia':
-            response = await modify.getMediaForMod(userId, +body.mediaId);
+            response = await media.getMediaForMod(+body.mediaId);
             break;
 
         case 'checkMedia':
-            response = await modify.checkIfMediaExists(body.tmdbId, body.type);
+            response = await media.checkIfMediaExists(body.tmdbId, body.type);
             break;
 
         case 'getImages':
@@ -37,38 +43,38 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'searchMedia':
-            response = await modify.searchForMedia(body.query, body.type);
+            response = await media.searchForMedia(body.query, body.mediaType);
             break;
 
         case 'getEpisodes':
-            response = await modify.getEpisodes(+body.mediaId, userId);
+            response = await media.getEpisodes(+body.mediaId, userId);
             break;
 
         case 'modifyEpisode':
-            response = await modify.modifyEpisode(userId, body.episode);
+            response = await media.modifyEpisode(userId, body.episode);
             break;
 
         case 'scanSubs':
-            response = await modify.scanSubs(userId, +body.mediaId);
+            response = await media.getSubtitles(+body.mediaId);
             break;
 
         case 'scanEpisodes':
-            await modify.scanShow(+body.mediaId, body.thorough, !body.thorough);
+            await media.scanShow(+body.mediaId, body.thorough, !body.thorough);
             response = true;
             break;
 
         case 'scanAllMedia':
-            await modify.autoScan();
+            await media.autoScan();
             response = true;
             break;
 
         case 'scanAllSubs':
-            await modify.scanAllSubs();
+            await media.scanAllSubs();
             response = true;
             break;
 
         case 'scanAllEpisodes':
-            await modify.scanAllEpisodes(false, true);
+            await media.scanAllEpisodes(false, true);
             response = true;
             break;
 
@@ -87,11 +93,11 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'watchHistory':
-            response = await modify.getWatchHistory(userId, +req.query.page, +req.query.limit);
+            response = await user.getWatchHistory(userId, +req.query.page, +req.query.limit);
             break;
 
         case 'myList':
-            response = await modify.getMyList(userId, +req.query.page, +req.query.limit);
+            response = await user.getMyList(userId, +req.query.page, +req.query.limit);
             break;
 
         case 'addToPlaylist':
@@ -104,6 +110,22 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
 
         case 'deletePlaylist':
             response = await playlist.deletePlaylist(userId, body.identifier);
+            break;
+
+        case 'sharePlaylist':
+            response = await playlist.sharePlaylist(userId, body.identifier, body.email);
+            break;
+
+        case 'getModdedMedia':
+            response = await media.getMedia(+body.mediaId, userId);
+            break;
+
+        case 'deleteMedia':
+            response = await modify.deleteMedia(userId, body.location);
+            break;
+
+        case 'getUserSettings':
+            response = await user.getUserPlaybackSettings(userId);
             break;
     }
 

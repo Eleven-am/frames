@@ -1,12 +1,24 @@
-import {atom, DefaultValue, selector, useResetRecoilState} from 'recoil';
+import {
+    atom,
+    DefaultValue,
+    selector,
+    useRecoilState,
+    useRecoilValue,
+    useResetRecoilState,
+    useSetRecoilState
+} from 'recoil';
 import NProgress from "nprogress";
+import {Role} from "@prisma/client";
+import {useCallback, useEffect, useState} from "react";
+import useUser from "../../../utils/user";
+import {subscribe} from "../../../utils/customHooks";
 
 export const AuthContextErrorAtom = atom<string | null>({
     key: 'AuthContextErrorAtom',
     default: null
 })
 
-export type Process = 'pick' | 'email' | 'password' | 'create' | 'authKey' | 'reset';
+export type Process = 'pick' | 'email' | 'password' | 'create' | 'authKey' | 'reset' | 'resetPassword' | 'verify';
 
 export const AuthContextProcessAtom = atom<Process>({
     key: 'AuthContextProcessAtom',
@@ -43,7 +55,7 @@ export const AuthContextHandler = selector<{ fade?: boolean, process?: Process, 
     get: ({get}) => {
         const errors = get(AuthErrors);
         const error = get(AuthContextErrorAtom);
-        let newError: string = '';
+        let newError = '';
 
         if (errors.emailError)
             newError = 'enter a valid email address';
@@ -62,14 +74,15 @@ export const AuthContextHandler = selector<{ fade?: boolean, process?: Process, 
     }, set: ({set, get}, newValue) => {
         const auth = get(Authenticated);
         if (!(newValue instanceof DefaultValue)) {
-            newValue.process && NProgress.start();
-            if (newValue.process && auth)
+            if (newValue.process && auth) {
+                NProgress.start();
                 set(AuthContextProcessAtom, newValue.process);
+            }
 
             if (newValue.error !== undefined)
                 set(AuthContextErrorAtom, newValue.error);
 
-            if (newValue.fade !== undefined && auth) {
+            if (newValue.fade !== undefined && auth !== false) {
                 set(AuthFade, newValue.fade);
                 NProgress.done();
             }
@@ -77,8 +90,19 @@ export const AuthContextHandler = selector<{ fade?: boolean, process?: Process, 
     }
 })
 
+export const AuthErrors = selector({
+    key: 'AuthErrors',
+    get: ({get}) => {
+        const email = get(AuthContextEmailAtom);
+        const pass = get(AuthContextPasswordAtom);
+        const auth = get(AuthKeyAtom);
+
+        return {authError: !confirmAuth(auth), passError: !validatePass(pass), emailError: !validateEmail(email)}
+    }
+})
+
 const validateEmail = (email: string) => {
-    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}])|(([a-zA-Z\-\d]+\.)+[a-zA-Z]{2,}))$/;
     return email === '' ? true : re.test(email);
 };
 
@@ -96,10 +120,10 @@ const validatePass = (pass: string) => {
         return false;
 
     else return /[A-Z]/.test(pass);
-}
+};
 
 const confirmAuth = (key: string) => {
-    let rgx = new RegExp(/^[A-Za-z0-9]{1,4}$/);
+    let rgx = new RegExp(/^[A-Za-z\d]{1,4}$/);
     let nonRgx = new RegExp(/[$-/:-?{-~!"^_`\[\]\s+]/);
 
     if (key === '')
@@ -110,18 +134,7 @@ const confirmAuth = (key: string) => {
         return matches.every(match => rgx.test(match) && !nonRgx.test(match));
 
     } else return rgx.test(key) && !nonRgx.test(key);
-}
-
-export const AuthErrors = selector({
-    key: 'AuthErrors',
-    get: ({get}) => {
-        const email = get(AuthContextEmailAtom);
-        const pass = get(AuthContextPasswordAtom);
-        const auth = get(AuthKeyAtom);
-
-        return {authError: !confirmAuth(auth), passError: !validatePass(pass), emailError: !validateEmail(email)}
-    }
-})
+};
 
 export const useReset = () => {
     const error = useResetRecoilState(AuthContextErrorAtom);
@@ -141,4 +154,112 @@ export const useReset = () => {
         fade();
         authKey();
     }
+};
+
+export function useAuth() {
+    const {user, confirmAuthKey} = useUser();
+    const [lAuth, setLAuth] = useState(false);
+    const [valid, setValid] = useState(false);
+    const [auth, setAuth] = useRecoilState(AuthKeyAtom);
+    const {authError} = useRecoilValue(AuthErrors);
+    const {error} = useRecoilValue(AuthContextHandler);
+    const setError = useSetRecoilState(AuthContextErrorAtom);
+
+    const confirmKey = useCallback(async () => {
+        const res = await confirmAuthKey(auth);
+        if (res !== 0) {
+            const error = res === -1 ? 'invalid auth key' : 'this auth key has already been used';
+            setError(error);
+            setLAuth(true);
+
+        } else {
+            setValid(true);
+            setError(null);
+            setLAuth(false);
+        }
+    }, [auth, confirmAuthKey, setError]);
+
+    const manageAuth = useCallback(async (auth: string) => {
+        if (auth.length === 24)
+            await confirmKey();
+
+        else if (auth === 'homeBase') {
+            if (user?.role === Role.ADMIN) {
+                setError(null);
+                setLAuth(false);
+                setValid(true);
+
+            } else {
+                setError('invalid auth key')
+                setLAuth(true);
+                setValid(false);
+            }
+        } else {
+            setError(null);
+            setLAuth(false);
+            setValid(false);
+        }
+    }, [auth, confirmKey, user]);
+
+    subscribe(manageAuth, auth);
+
+    return {authError: authError || lAuth, auth, setAuth, valid, error}
+}
+
+export function usePassword() {
+    const {passError} = useRecoilValue(AuthErrors);
+    const [pass, setPass] = useRecoilState(AuthContextPasswordAtom);
+    const [cPass, setCPass] = useState(false);
+    const [passValid, setPassValid] = useState(false);
+    const dispatch = useSetRecoilState(AuthContextHandler);
+    const [confirmPass, setConfirmPass] = useState('');
+
+    useEffect(() => {
+        if (confirmPass !== pass && confirmPass !== '') {
+            dispatch({error: 'Passwords do not match'});
+            setCPass(true);
+        } else {
+            dispatch({error: null});
+            setCPass(false);
+            if (pass !== '' && !passError)
+                setPassValid(true);
+            else
+                setPassValid(false);
+        }
+    }, [confirmPass])
+
+    return {passError, pass, setPass, valid: cPass, confirmPass, setConfirmPass, passValid}
+}
+
+export function useEmail(confirmEmail = false) {
+    const [isValid, setIsValid] = useState(false);
+    const [validating, setValidating] = useState(true);
+    const [email, setEmail] = useRecoilState(AuthContextEmailAtom);
+    const {emailError} = useRecoilValue(AuthErrors);
+    const {confirmMail} = useUser();
+
+    const confirm = useCallback(async () => {
+        if (!emailError)
+            if (confirmEmail) {
+                setValidating(true);
+                const res = await confirmMail(email);
+                if (res !== 'create')
+                    setIsValid(true);
+
+                else
+                    setIsValid(false);
+
+            } else
+                setValidating(true);
+
+        else if (email === '')
+            setValidating(true);
+
+        else
+            setValidating(false);
+    }, [email, emailError, confirmMail]);
+
+    subscribe(confirm, {confirmEmail, emailError, email})
+
+    return {isValid, validating, email, setEmail}
 }

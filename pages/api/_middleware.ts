@@ -1,15 +1,15 @@
 import {NextRequest, NextResponse} from "next/server";
-import Middleware, {CookiePayload} from "../../server/classes/middleware";
-import {Role} from "@prisma/client";
+import Middleware from "../../server/classes/middleware";
 
 const middleware = new Middleware();
 
 export default async function (request: NextRequest) {
-    const userToken = await middleware.confirmContent<CookiePayload>(request.cookies,'frames-cookie') || {email: 'unknown', context: Role.GUEST, session: 'unknown', validUntil: 0, userId: 'unknown'};
+    const userToken = await middleware.readCookie(request.cookies, 'frames-cookie');
     const url = request.nextUrl.clone();
+    const host = url.hostname;
 
-    if (url.pathname === '/api/streamVideo' && url.searchParams.has('auth'))
-        return await middleware.streamFile(url.searchParams.get('auth')!, request.headers.get('range')!);
+    if (url.pathname === '/api/streamVideo' && url.searchParams.has('auth') && userToken.validUntil > Date.now())
+        return await middleware.streamFile(host, url.searchParams.get('auth')!, request.headers.get('range')!);
 
     return NextResponse.next();
 }
