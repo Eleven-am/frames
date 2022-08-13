@@ -37,7 +37,7 @@ export interface SpringLoad {
     episodeName: string | null;
     location: string;
     inform: boolean;
-    autoPlay: boolean;
+    autoplay: boolean;
     position: number;
     guest: boolean;
     playerId: string;
@@ -365,9 +365,8 @@ export default class Playback extends Base {
                 });
         }
 
-        const user = await this.prisma.user.findFirst({where: {userId}});
+        const user = await this.prisma.user.findUnique({where: {userId}});
         if (user) {
-            inform = user.inform ? inform : false;
             const obj = {
                 inform,
                 playlistId,
@@ -391,11 +390,12 @@ export default class Playback extends Base {
                 videoId: video.id,
                 mediaId: media.id,
                 episodeId: episode?.id || null,
-                autoPlay: user.autoplay,
+                autoplay: user.autoplay,
+                inform: user.inform ? inform : false,
                 playerId: this.createUUID(), frame: false,
-                location, inform, overview, activeSub: user.defaultLang,
+                location, overview, activeSub: user.defaultLang,
                 logo, backdrop, name, poster, cdn: this.regrouped.user?.cdn || '/api/streamVideo?auth=',
-                position: inform ? (watched?.position || 0) > 939 ? 0 : (watched?.position || 0) : 0,
+                position: inform? (watched?.position || 0) > 939 ? 0 : (watched?.position || 0): 0,
                 episodeName, subs, guest: user.role === Role.GUEST
             };
         }

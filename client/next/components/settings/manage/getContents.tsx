@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import ss from "../ACCOUNT.module.css";
 import {FramesButton} from "../../buttons/Buttons";
 import {useFetcher} from "../../../../utils/customHooks";
@@ -20,7 +20,7 @@ export default function GetContents() {
         }
     });
 
-    const manageRec = async (obj: GetContentSearch) => {
+    const manageRec = useCallback(async (obj: GetContentSearch) => {
         if (!obj.download)
             await searchRecommendations(obj.id, obj.type);
 
@@ -28,7 +28,7 @@ export default function GetContents() {
             const type = obj.type === "MOVIE" ? MediaType.MOVIE : MediaType.SHOW;
             await downloadMedia(obj.id, type, obj.libraryName, obj.name);
         }
-    };
+    }, [searchRecommendations, downloadMedia]);
 
     useEffect(() => {
         if (text === '') {
@@ -58,7 +58,7 @@ export default function GetContents() {
                     <div className={ss.buttons}>
                         <FramesButton onClick={libraryScan} type='primary' label={'Download missing episodes'}
                                   icon={'scan'} state='EPISODES'/>
-                        <FramesButton onClick={libraryScan} type='primary' label={'Download new media'}
+                        <FramesButton onClick={libraryScan} type='secondary' label={'Download new media'}
                                   icon={'down'} state='MEDIA'/>
                     </div>
                 }

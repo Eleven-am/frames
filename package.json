@@ -6,14 +6,14 @@
     "dev": "next dev -p 5000",
     "build": "next build",
     "start": "next start",
-    "generate-env": "npx ts-node ./framesConfig.ts",
+    "generate-env": "npm install && npx prisma generate && npx ts-node ./framesConfig.ts",
     "vercel-build": "npx prisma generate && npm run build",
     "setup": "npm install && next build && pm2 start ecosystem.config.js",
     "update": "npm install && npx prisma db push && npx prisma generate && next build",
     "pm2": "pm2 start ecosystem.config.js"
   },
   "dependencies": {
-    "@prisma/client": "^4.0.0",
+    "@prisma/client": "^4.1.1",
     "bcrypt": "^5.0.1",
     "chomecast-sender": "^0.0.33",
     "cookie": "^0.4.2",
@@ -22,7 +22,7 @@
     "googleapis": "^75.0.0",
     "jquery": "^3.6.0",
     "locutus": "^2.0.15",
-    "next": "^12.0.10",
+    "next": "12.1.0",
     "next-pwa": "^5.5.2",
     "node-abort-controller": "^3.0.1",
     "nprogress": "^0.2.0",
@@ -57,7 +57,7 @@
     "@types/ua-parser-js": "^0.7.36",
     "eslint-plugin-react": "^7.23.2",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "prisma": "^4.0.0",
+    "prisma": "^4.1.1",
     "typescript": "^4.3.4"
   }
 }

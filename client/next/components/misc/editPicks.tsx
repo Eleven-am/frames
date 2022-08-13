@@ -37,8 +37,8 @@ function Image({obj}: { obj: UpdateSearch }) {
     const {modifyPick} = useEditorPicks();
     const {type} = useRecoilValue(EditPickContext);
 
-    const handleClick = useCallback(() => {
-        modifyPick(obj);
+    const handleClick = useCallback(async () => {
+        await modifyPick(obj);
     }, [obj, modifyPick]);
 
     if (type === PickType.BASIC)

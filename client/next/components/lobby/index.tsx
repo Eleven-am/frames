@@ -10,13 +10,33 @@ import useUser from "../../../utils/user";
 import useBase from "../../../utils/provider";
 import useNotifications from "../../../utils/notifications";
 import Background from "../misc/back";
+import {UserPlaybackSettingsContext} from "../../../utils/modify";
+import {ErrorPage} from "../production/person";
 
 const metadataAtom = atom<{ logo: string | null, backdrop: string, name: string, poster: string, overview: string } | null>({
     key: 'metadataAtom',
     default: null,
 })
 
-export default function Lobby({response}: { response: string[] }) {
+export default function IncognitoPage ({response}: { response: string[] }) {
+    const userState = useRecoilValue(UserPlaybackSettingsContext);
+
+    if (userState?.incognito) {
+        return (
+            <>
+                <Background response={response}/>
+                <ErrorPage error={{
+                    name: 'GroupWatch Incognito',
+                    message: "You are in incognito mode, you can't see other active users."
+                }}/>
+            </>
+        )
+    }
+
+    return <Lobby response={response}/>
+}
+
+function Lobby({response}: { response: string[] }) {
     const changeState = useSetRecoilState(SideBarAtomFamily('groupWatchLobby'));
 
     useEffect(() => changeState(true), [])
@@ -54,7 +74,7 @@ const LobbySideBar = () => {
     const base = useBase();
     const {user} = useUser();
     const setMetadata = useSetRecoilState(metadataAtom);
-    const {globalNotification: {online: users}, requestToJoinSession} = useNotifications();
+    const {users, requestToJoinSession} = useNotifications();
     const [hovered, setHovered] = React.useState('');
     const [hovering, setHovering] = React.useState(false);
     const setState = useSetRecoilState(SideBarAtomFamily('groupWatchLobby'));

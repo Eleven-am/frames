@@ -11,10 +11,9 @@ const framesCast = new PickAndFrame();
 const springboard = new Springboard();
 
 export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePayload & { userId: string }) => {
-    const body = req.body;
-    const query = req.query;
     let response: any;
     const type = req.query.type[1];
+    const body = {...req.body, ...req.query, type: req.query.type[2] || req.body.type};
     const {userId, session} = data;
 
     switch (type) {
@@ -24,17 +23,17 @@ export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePay
             break;
 
         case 'pureSub':
-            response = await playBack.getSub(query.auth as string, query.language as string, true);
+            response = await playBack.getSub(body.auth as string, body.language as string, true);
             res.setHeader('Content-type', 'text/vtt');
             res.status(200).end(response);
             return;
 
         case 'subtitles':
-            response = await playBack.getSub(query.auth as string, query.language as string, false);
+            response = await playBack.getSub(body.auth as string, body.language as string, false);
             break;
 
         case 'upNext':
-            response = await springboard.getUpNext(query.auth as string, query.language as string);
+            response = await springboard.getUpNext(body.auth as string, body.language as string);
             break;
 
         case 'groupWatch':
@@ -55,12 +54,12 @@ export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePay
             break;
 
         case 'worker':
-            response = await playBack.getWorkerInfo(query.auth as string);
+            response = await playBack.getWorkerInfo(body.auth as string);
             break;
 
         case 'getInfo':
-            const save = query.save === 'true';
-            response = await playBack.getMediaLite(+query.id, userId, save);
+            const save = body.save === 'true';
+            response = await playBack.getMediaLite(+body.id, userId, save);
             break;
 
         case 'meta':

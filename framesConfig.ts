@@ -1,8 +1,16 @@
-import { RestAPI } from "./server/classes/stringExt";
-import { MiddleWareInterface , FRAMES_INTERFACE} from "./server/lib/environment";
+import { BaseClass } from "./server/classes/base";
+import {MiddleWareInterface, FRAMES_INTERFACE, GoogleToken} from "./server/lib/environment";
 import * as fs from "fs";
+import {google} from "googleapis";
+import readline from "readline";
 
-const restAPI = new RestAPI();
+const restAPI = new BaseClass();
+
+const scopes = [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile'
+];
 
 const framesConfig = {
     databaseURL: '', // Your Postgress database url
@@ -25,53 +33,74 @@ const framesConfig = {
         username: '', // The username for the open subtitles api.
         password: '' // The password for the open subtitles api.
     },
-    token: { // Your token object returned from the google api after you have authenticated.
-        access_token: '', // The access token for the google api.
-        refresh_token: '', // The refresh token for the google api.
-        scope: '', // The scope for the google api.
-        token_type: '', // The token type for the google api.
-        id_token: '', // The id token for the google api.
-        expiry_date: 0 // The expiry date for the google api.
-    },
     credentials: { // Your google api credentials.
-        client_id: '', // The client id for the google api.
-        project_id:'', // The project id for the google api.
-        auth_uri: '', // The auth uri for the google api.
-        token_uri: '', // The token uri for the google api.
-        auth_provider_x509_cert_url: '', // The auth provider x509 cert url for the google api.
-        client_secret: '', // The client secret for the google api.
-        redirect_uris: '' // The redirect uris for the google api.
+        client_id: "", // Your client id.
+        project_id: "", // Your project id.
+        auth_uri: "", // Your auth uri.
+        token_uri: "", // Your token uri.
+        auth_provider_x509_cert_url: "", // Your auth provider x509 cert url.
+        client_secret: "", // Your client secret.
+        redirect_uris: [""] // Your redirect uris.
     },
     privateConfig: {
         cdn: '/api/streamVideo?auth=', // The url to stream a file from || could also be a link to a cloudflare worker.
-        cypher: '', // The cypher to use for encrypting the private config.
         admin_mail: '', // The email address of the admin.
         admin_pass: '', // The admin password. This is used to login to frames as admin.
         deleteAndRename: true, // if true, frames would be able to delete and rename files. Repeated files or unspported files like .srt would be deleted.
     }
 }
 
-const configFunction = () => {
+const getAccessToken = (clientId: string, clientSecret: string, redirect_uri: string) => {
+    return new Promise<GoogleToken | null>((resolve) => {
+        const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirect_uri);
+        const authUrl = oAuth2Client.generateAuthUrl({
+            access_type: 'offline',
+            scope: scopes
+        });
+        console.log('Authorize this app by visiting this url:', authUrl);
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+        rl.question('Enter the code from that page here: ', (code) => {
+            rl.close();
+            oAuth2Client.getToken(code, (err, token) => {
+                if (err) {
+                    console.error('Error retrieving access token', err);
+                    resolve(null);
+                }
+                resolve(token as GoogleToken);
+            });
+        });
+    });
+}
+
+const configFunction = async () => {
     const secret  = restAPI.createUUID(); // Create a secret for the rest api.
-    const notificationId = restAPI.generateKey(13, 5); // Create a notification id for the rest api.
+    const notificationId = restAPI.generateKey(32, 1); // Create a notification id for the rest api.
+    const cypher = restAPI.createUUID(); // Create a cypher for the rest api.
+    const googleToken = await getAccessToken(framesConfig.credentials.client_id, framesConfig.credentials.client_secret, framesConfig.credentials.redirect_uris[0]); // Get the google token.
+    if (googleToken === null)
+        throw new Error('Could not get google token.');
+
     const middleWareData: MiddleWareInterface = {
         client_id: framesConfig.credentials.client_id,
         client_secret: framesConfig.credentials.client_secret,
-        accessToken: framesConfig.token.access_token,
-        refresh_token: framesConfig.token.refresh_token,
-        expiry_date: framesConfig.token.expiry_date,
-        cypher: framesConfig.privateConfig.cypher,
+        accessToken: googleToken.access_token,
+        refresh_token: googleToken.refresh_token,
+        expiry_date: googleToken.expiry_date,
+        cypher: cypher,
         secret: secret,
-        externalApis: {...framesConfig.externalApis, databaseUrl: framesConfig.databaseURL},
+        externalApis: {...framesConfig.externalApis},
         globalNotification: notificationId
     };
 
     const encryptedMiddleWareData = restAPI.encrypt(secret, middleWareData);
 
     const otherData: FRAMES_INTERFACE = {
-        privateConfig: {...framesConfig.privateConfig, notificationId, library: framesConfig.library, secret},
+        privateConfig: {...framesConfig.privateConfig, notificationId, cypher, library: framesConfig.library, secret},
         externalApis: {...framesConfig.externalApis},
-        token: framesConfig.token,
+        token: googleToken,
         credentials: framesConfig.credentials,
         others: {deluge: framesConfig.deluge, openSubtitles: framesConfig.openSubtitles}
     };

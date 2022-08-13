@@ -22,6 +22,12 @@ const sourceAtom = atom({
     key: 'castSourceAtom', default: ''
 })
 
+export const ChromeCastStateAtom = atom<{ available: boolean, casting: boolean }>({
+    key: 'ChromeCastState', default: {
+        available: false, casting: false
+    }
+})
+
 export default function useCast() {
     const cast = useBaseCast();
     const [source, setSource] = useRecoilState(sourceAtom);

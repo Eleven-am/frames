@@ -342,31 +342,11 @@ export default class Playlist extends Playback {
      * @param itemId - the item identifier
      * @param userId - the user identifier
      */
-    public async generatePlaylist(type: 'PERSON' | 'COLLECTION' | 'COMPANY', itemId: number | string, userId: string) {
+    public async generatePlaylist(type: 'PERSON' | 'COMPANY', itemId: number | string, userId: string) {
         const user = await this.prisma.user.findUnique({where: {userId}});
         let videoId: PlayListResponse | null = null;
         if (user) {
             switch (type) {
-                case "COLLECTION":
-                    let collection = await this.prisma.media.findMany({
-                        where: {
-                            collection: {
-                                path: ['id'], equals: itemId
-                            }
-                        }, orderBy: {release: 'asc'}, include: {videos: true}
-                    });
-
-                    collection = this.shuffle(collection, collection.length, 0);
-                    const videosIds = collection.map(e => e.videos.map(e => e.id)).flat();
-                    if (videosIds.length) {
-                        const collection1 = collection[0].collection as { name: string };
-                        const overview = `Frames created a playlist for the ${collection1.name} Collection: with ${videosIds.length} items`;
-                        const playlistId = await this.createPlaylists(videosIds, collection1.name, user.userId, overview, Generator.FRAMES, false);
-                        videoId = await this.findFirstVideo(playlistId, user.userId);
-                    }
-
-                    break;
-
                 case "PERSON":
                     const personMedia = await this.prisma.media.findMany({
                         where: {
@@ -413,9 +393,7 @@ export default class Playlist extends Playback {
 
         if (playVideo && await this.canUserAccessPlaylist(userId, playVideo.playlist.identifier, 'READ')) {
             const inform = playVideo.playlist.name !== 'shuffle';
-            console.log('generatePlayback', playVideo.video);
             const data = await this.setPlayBack(playVideo.video.id, userId, inform, playlistId);
-            console.log('generatePlayback', data);
             if (data) return {...data, playlistId, position: 0};
         }
 

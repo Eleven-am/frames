@@ -1,7 +1,7 @@
 import {Link, Loading} from "../misc/Loader";
 import styles from "./back.module.css";
 import {SectionBone} from "../entities/section";
-import {useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import useOnScroll from "../../../utils/opacityScroll";
 import {useFetcher} from "../../../utils/customHooks";
 import {HoverContainer} from "../buttons/Buttons";
@@ -51,13 +51,13 @@ function MinHolder({data, person}: { data: number, person: PersonInterface }) {
 export const ErrorPage = ({error, offline}: { error: ErrorProps, offline?: boolean }) => {
     const [name, setName] = useState(error.name);
 
-    const hovering = (b: boolean) => {
+    const hovering = useCallback((b: boolean) => {
         if (b) {
             setName('Return to the home page');
         } else {
             setName(error.name);
         }
-    }
+    } , [])
 
     return (
         <div className={styles.bar2}>

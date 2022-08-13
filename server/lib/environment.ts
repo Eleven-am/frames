@@ -1,4 +1,4 @@
-import {RestAPI} from "../classes/stringExt";
+import {BaseClass} from "../classes/base";
 
 export type tmdbToken = { apiKey: string, fanArtApiKey: string, realTimeApiKey: string };
 
@@ -71,7 +71,6 @@ export interface MiddleWareInterface {
         tmdbApiKey: string;
         fanArtApiKey: string;
         realTimeApiKey: string;
-        databaseUrl: string;
     };
     globalNotification: string;
 }
@@ -86,13 +85,13 @@ export interface FRAMES_INTERFACE {
     token: GoogleToken;
     credentials: GoogleCred;
     others: {
-        deluge: DelugeCred;
-        openSubtitles: OpenSubs;
+        deluge: DelugeCred | null;
+        openSubtitles: OpenSubs | null;
     };
 }
 
 function readFramesEnv() {
-    const restApi = new RestAPI();
+    const restApi = new BaseClass();
     const secret = process.env.SECRET || '';
     const data = process.env.FRAMES_CONFIG || '';
 

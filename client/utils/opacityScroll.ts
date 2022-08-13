@@ -38,7 +38,6 @@ export default function useOnScroll() {
     const setCurrent = useSetRecoilState(CurrentRefHeight);
     const values = useRecoilValue(OpacitySelector);
     const setNavOpacity = useSetRecoilState(NavOpacityAtom);
-
     const refReset = useResetRecoilState(OnScrollReference);
     const currentReset = useResetRecoilState(CurrentRefHeight);
     const startRefReset = useResetRecoilState(StartRefHeight);

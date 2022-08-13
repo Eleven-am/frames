@@ -4,12 +4,12 @@ import {PrismaClient, Role, UseCase} from '@prisma/client';
 import requestIp from "request-ip";
 import parser from "ua-parser-js";
 import {NextApiRequest, NextApiResponse} from "next";
-import {RestAPI} from "./stringExt";
 import {Regrouped, regrouped} from "../lib/environment";
 import {prisma} from "./utils";
 import {Aggregate} from "./tmdb";
 import {NotificationInterface} from "./user";
 import cookie from "cookie";
+import {BaseClass} from "./base";
 
 const Phoenix = require("phoenix-channels");
 
@@ -67,7 +67,7 @@ type Required<T, K extends keyof T> = T & { [P in K]-?: T[P] }
 
 export type WithRequired<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>> & Required<T, K>;
 
-export class Base extends RestAPI {
+export class Base extends BaseClass {
     protected readonly fetch: (input: RequestInfo, init?: (RequestInit | undefined)) => Promise<Response>;
     protected readonly prisma: PrismaClient;
     protected tmdb: Aggregate | null;
@@ -682,11 +682,10 @@ export default class AuthService extends Auth {
             return {
                 response: 'Password reset successful',
                 payLoad: {
-                    session: '',
                     email: user.email,
                     context: user.role,
-                    validUntil: 0, identifier: '',
                     notificationChannel: user.notificationChannel,
+                    ...await this.generateSession(user.userId)
                 }
             };
 

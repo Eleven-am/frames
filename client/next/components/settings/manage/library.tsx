@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import ss from "../ACCOUNT.module.css";
 import {useFetcher} from "../../../../utils/customHooks";
 import useModify, {EditFrontMediaAtom, UnsavedFrontMediaAtom} from "../../../../utils/modify";
@@ -59,19 +59,19 @@ export default function Library() {
         }
     }, []);
 
-    const getUnScanned = async () => {
+    const getUnScanned = useCallback(async () => {
         setText('');
         setUnScan([]);
         setLoad(true);
         const res = await base.makeRequest<MedForMod[]>('/api/settings/libUnScanned', null);
         setLoad(false);
         setUnScan(res || []);
-    }
+    }, [base, setUnScan]);
 
-    const onScanClick = (id: string) => {
+    const onScanClick = useCallback((id: string) => {
         const file = unScan.find(x => x.file!.location === id);
         file && setMedia({...file, location: file.file!.location});
-    }
+    } , [setMedia, unScan]);
 
     return (
         <div className={ss.data}>

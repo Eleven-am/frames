@@ -1,8 +1,8 @@
 import {Aggregate} from "./tmdb";
 import {NextRequest} from "next/server";
 import {Role} from "@prisma/client";
-import {RestAPI} from "./stringExt";
 import {MiddleWareInterface} from "../lib/environment";
+import {BaseClass} from "./base";
 
 export interface AuthCP {
     cpRight: string;
@@ -61,7 +61,7 @@ export default class Middleware extends Aggregate {
      * @private
      */
     private static readMiddleWareEnv() {
-        const restApi = new RestAPI();
+        const restApi = new BaseClass();
         const SECRET = process.env.SECRET || '';
         const MIDDLEWARE = process.env.MIDDLEWARE || '';
         const middleware = restApi.decrypt<MiddleWareInterface>(SECRET, MIDDLEWARE);
@@ -115,7 +115,7 @@ export default class Middleware extends Aggregate {
         if (response) return response;
 
         return {
-            cpRight: 'Copyright © 2021 Roy Ossai.',
+            cpRight: 'Copyright © 2022 Roy Ossai.',
             aReserved: 'All rights reserved. No document may be reproduced for commercial use without written approval from the author.',
             authentication: false
         }

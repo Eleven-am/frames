@@ -10,17 +10,14 @@ import {
     useRightControls
 } from "../../../../utils/playback";
 import {useManageUserInfo} from "../../../../utils/modify";
-import {useConfirmDispatch} from "../../../../utils/notifications";
 import {subscribe} from "../../../../utils/customHooks";
 
 export default function Settings() {
     const player = useRightControls();
     const user = useManageUserInfo();
-    const infoDispatch = useConfirmDispatch();
     const setSubSync = useSetRecoilState(SubtitlesSyncAtom);
     const [subTime, setSubTime] = useState(0);
     const response = useRecoilValue(framesVideoStateAtom);
-    const [visible, setVisible] = useState(true);
     const activeSub = useRecoilValue(framesSubtitlesAtom).activeSub;
     const setState = useSetRecoilState(SideBarAtomFamily('framesSettings'));
 
@@ -32,14 +29,6 @@ export default function Settings() {
             return temp;
         })
     }, {activeSub, subTime});
-
-    const handleGroup = async (b: boolean) => {
-        infoDispatch({
-            type: 'error',
-            heading: 'Feature not available',
-            message: 'This feature is currently not available'
-        })
-    }
 
     const handleClose = useCallback(async () => {
         setState(false);
@@ -79,10 +68,12 @@ export default function Settings() {
                 <div className={ss.sqr}>
                     <div className={ss.hdr}>Save player activity</div>
                     <ul className={ss.sel}>
-                        <li className={user.settings?.inform ? ss.active : ''} onClick={() => user.goIncognito(true)}>
+                        <li className={user.settings?.inform ? ss.active : ''}
+                            onClick={() => user.goIncognito(true)}>
                             archive
                         </li>
-                        <li className={!user.settings?.inform ? ss.active : ''} onClick={() => user.goIncognito(false)}>
+                        <li className={!user.settings?.inform ? ss.active : ''}
+                            onClick={() => user.goIncognito(false)}>
                             incognito
                         </li>
                     </ul>
@@ -90,10 +81,12 @@ export default function Settings() {
                     <div className={ss.hdr}>GroupWatch</div>
 
                     <ul className={ss.sel}>
-                        <li className={visible ? ss.active : ''} onClick={() => handleGroup(true)}>
+                        <li className={!user.settings?.incognito ? ss.active : ''}
+                            onClick={() => user.channelIncognito(false)}>
                             visible
                         </li>
-                        <li className={!visible ? ss.active : ''} onClick={() => handleGroup(false)}>
+                        <li className={user.settings?.incognito ? ss.active : ''}
+                            onClick={() => user.channelIncognito(true)}>
                             hidden
                         </li>
                     </ul>
@@ -101,7 +94,8 @@ export default function Settings() {
                     <div className={ss.hdr}>Autoplay</div>
 
                     <ul className={ss.sel}>
-                        <li className={user.settings?.autoplay ? ss.active : ''} onClick={() => user.setAutoPlay(true)}>
+                        <li className={user.settings?.autoplay ? ss.active : ''}
+                            onClick={() => user.setAutoPlay(true)}>
                             Autoplay
                         </li>
                         <li className={!user.settings?.autoplay ? ss.active : ''}

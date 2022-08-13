@@ -1,6 +1,6 @@
-import {RestAPI} from "./stringExt";
 import {CastType, MediaType} from "@prisma/client";
 import {tmdbToken} from "../lib/environment";
+import {BaseClass} from "./base";
 
 export enum CompType {
     COMPANY = 'COMPANY', NETWORK = 'NETWORK',
@@ -229,7 +229,7 @@ export interface FrontImages {
     logos: FrontImage[];
 }
 
-export class TmdbApi extends RestAPI {
+export class TmdbApi extends BaseClass {
     private readonly apiKey: string;
     private readonly fanArtApiKey: string;
     private readonly fanArtBaseUrl: string;
@@ -714,7 +714,7 @@ export class Aggregate extends TmdbApi {
         const apple = await this.getAppleImages(media, type);
         for (const item of apple) {
             const name = item.title;
-            const drift = item.title.Levenshtein(media);
+            const drift = this.levenshtein(item.title, media);
             const likes = Math.ceil(200 / (drift === 0 ? 1 : drift));
             const language = 'en';
             const entry = results.find(result => result.artistName === name);
@@ -1114,7 +1114,7 @@ export class Aggregate extends TmdbApi {
                 id: e.id,
                 type: 'person',
                 popularity: e.popularity,
-                drift: e.name.Levenshtein(name),
+                drift: this.levenshtein(e.name, name),
                 backdrop: 'https://image.tmdb.org/t/p/original' + e.profile_path,
                 overview: e.known_for,
                 name: e.name

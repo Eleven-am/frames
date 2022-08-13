@@ -1,4 +1,17 @@
 import {MediaType} from "@prisma/client";
+import rename from "locutus/php/strings/strtr";
+
+export const dicDo = {
+    "mp4": "", "m4v": "", "264": "",
+    "1080p": "", "bluray": "", "x264": "",
+    "h264": "", "hddvd": "", "brrip": "",
+    "bitloks": "", "extended": "", "webrip": "",
+    "theatrical": "", "edition": "", "4k": "", "x265": "",
+    "10bit": "", "rarbg": "", "anoxmous": "", "10-bit": "",
+    "Deceit": "", "imax": "", "unrated": "",
+    "aac2": "", "0pr1nce": "", "yify": "", "aac": "", "yts": "",
+    "directors cut": "",
+};
 
 type sortType = 'asc' | 'desc';
 
@@ -13,11 +26,6 @@ type ExtractSameValueType<A, B, C extends keyof A> = {
 }[keyof B]
 
 export class BaseClass {
-    protected readonly fetch: (input: RequestInfo, init?: (RequestInit | undefined)) => Promise<Response>;
-
-    constructor() {
-        this.fetch = fetch;
-    }
 
     /**
      * @desc attempts to normalize an array
@@ -174,6 +182,32 @@ export class BaseClass {
             dt = Math.floor(dt / 16);
             return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
         });
+    }
+
+    /**
+     * @desc returns a grouped array of objects
+     * @param array - the array to group
+     * @param key - the key to group by
+     * @param sortType - the type of sorting to use (asc or desc)
+     */
+    public groupBy<T extends { [p: string]: any }, K extends keyof T>(array: T[], key: K, sortType?: sortType) {
+        const map = new Map<T[K], T[]>();
+        sortType = sortType ? sortType : 'asc';
+
+        array.forEach(item => {
+            const val = map.get(item[key]);
+            if (val)
+                val.push(item);
+            else
+                map.set(item[key], [item]);
+        });
+
+        const result: {key: T[K], value: T[], length: number}[] = [];
+        map.forEach((value, key) => {
+            result.push({key, value, length: value.length});
+        });
+
+        return this.sortArray(result, 'length', sortType);
     }
 
     /**
@@ -531,5 +565,21 @@ export class BaseClass {
                 resolve(null);
             });
         })
+    }
+
+    /**
+     * @desc fixes a file name to be valid
+     * @param str - the file name
+     * @private
+     */
+    protected prepareString(str: string) {
+        str = str.replace(/NaN/g, '');
+        str = str.replace(/\d{3,4}p.*?$/gi, ' ');
+        str = str.replace(/\(.*?\)|\[.*?]/g, ' ');
+        str = str.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ0-9]/g, ' ').toLowerCase();
+        str = str.replace(/\s+/g, ' ');
+        str = rename(str, dicDo);
+        str = str.trim();
+        return str;
     }
 }

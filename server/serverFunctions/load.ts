@@ -12,10 +12,11 @@ const user = new User();
 export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
     let response: any;
     const type = req.query.type[1];
+    const body = {...req.body, ...req.query, type: req.query.type[2] || req.body.type};
 
     switch (type) {
         case 'search':
-            const {node, value} = req.query;
+            const {node, value} = body;
             response = await media.search(value as string, node as gridOpt);
             break;
 
@@ -43,6 +44,10 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
                 type: 'EDITOR',
                 display: 'continue watching'
             }
+            break;
+
+        case 'getRelevant':
+            response = await user.getRelevantMedia(userId);
             break;
 
         case 'trending':
@@ -116,7 +121,7 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'collection':
-            response = await springBoard.searchCollections(+req.query.page);
+            response = await springBoard.searchCollections(+body.page);
             break;
 
         case 'collections':

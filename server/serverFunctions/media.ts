@@ -10,8 +10,9 @@ const user = new User();
 export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
     let response: any = {};
     const type = req.query.type[1];
-    const mediaId = +(Array.isArray(req.query.mediaId) ? req.query.mediaId[0] : req.query.mediaId);
-    const mediaString = Array.isArray(req.query.mediaId) ? req.query.mediaId[0] : req.query.mediaId;
+    const body = {...req.body, ...req.query, type: req.query.type[2] || req.body.type};
+    const mediaId = +body.mediaId;
+    const mediaString = body.mediaId;
 
     switch (type) {
         case 'specificUserData':
@@ -23,7 +24,7 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'rate':
-            response = await user.rateThis(mediaId, userId, +req.query.rate);
+            response = await user.rateThis(mediaId, userId, +body.rate);
             break;
 
         case 'addToList':
@@ -31,11 +32,11 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'episodes':
-            response = await mediaClass.getSeason(mediaId, +req.query.season, userId);
+            response = await mediaClass.getSeason(mediaId, +body.season, userId);
             break;
 
-        case 'collectionPlaylist':
-            response = await playlist.generatePlaylist('COLLECTION', mediaId, userId);
+        case 'firstVideoInCollection':
+            response = await mediaClass.getFirstVideoInCollection(mediaId);
             break;
 
         case 'prodPlaylist':
@@ -52,7 +53,7 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'browse':
-            response = await user.getBrowse(req.body, +req.query.page, userId);
+            response = await user.getBrowse(req.body, +body.page, userId);
             break;
     }
 

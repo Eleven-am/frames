@@ -2,7 +2,7 @@ import ss from '../misc.module.css';
 import style from './misc.module.css';
 import {BackButton, FramesButton} from "../../buttons/Buttons";
 import {useRecoilState, useRecoilValue} from "recoil";
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import cd from "../frames.module.css";
 import {
     differance,
@@ -27,7 +27,6 @@ import useNotifications, {AlreadyStreamingAtom} from "../../../../utils/notifica
 import {useAuth} from "../../auth/authContext";
 import {GroupWatchSlide} from "../../lobby/groupWatchHandler";
 import useBase from "../../../../utils/provider";
-import {useRouter} from "next/router";
 
 export const Toppers = () => {
     const response = useRecoilValue(framesVideoStateAtom);
@@ -248,16 +247,15 @@ export const UpNextHolder = () => {
     const response = useRecoilValue(framesVideoStateAtom);
     const diff = useRecoilValue(differance);
     const data = useRecoilValue(UpNextAtom);
-    const router = useRouter();
 
-    const handleClick = useCallback(async () => {
-        if (response) {
-            const url = '/' + (response.episodeName ? 'show' : 'movie') + '=' + response.name.replace(/\s/g, '+');
-            await router.push('/info?mediaId=' + response.mediaId, url);
-        }
-    }, [response, router]);
+    const asPath = useMemo(() => {
+        if (data) {
+            const address = '/' + (data.episodeName ? 'show' : 'movie') + '=' + data.name.replace(/\s/g, '+');
+            return {as: address, href: '/info?mediaId=' + data.mediaId}
+        } else return null;
+    }, [data]);
 
-    if (data && response)
+    if (data && response && asPath)
         return (
             <>
                 <img src={data.backdrop} className={cd.pf} alt={data.episodeName || data.name}/>
@@ -273,7 +271,7 @@ export const UpNextHolder = () => {
                     <div className={cd.but}>
                         <FramesButton type='primary' label={`plays in: ${diff}`} icon='play'
                                       link={{href: data.location}}/>
-                        <FramesButton type='secondary' label='see details' icon='info' onClick={handleClick}/>
+                        <FramesButton type='secondary' label='see details' icon='info' link={asPath}/>
                     </div>
                 </div>
             </>

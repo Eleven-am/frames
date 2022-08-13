@@ -1,16 +1,22 @@
 import styles from './Navbar.module.css';
-import {useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
-import {NavConTextAtom, NavSectionAndOpacity, SearchContextAtom, SideMenu} from "./navigation";
+import {atom, useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
+import {navSection, NavSectionAndOpacity, SearchContextAtom} from "./navigation";
 import {Role} from "@prisma/client";
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Image, Link} from "../misc/Loader";
 import frames from "../../assets/frames.png";
 import {SettingsSegmentContext} from "../../../utils/modify";
 import {useRouter} from "next/router";
-import useNotifications, {notificationCount} from "../../../utils/notifications";
-import useUser, {ContextType} from "../../../utils/user";
+import {notificationCount} from "../../../utils/notifications";
+import {ContextType, globalChannelSelector} from "../../../utils/user";
 import {SearchPicker} from "../../../../server/classes/media";
-import {useFetcher} from "../../../utils/customHooks";
+import {useBasics, useFetcher, useTimer} from "../../../utils/customHooks";
+import {HoverContainer} from "../buttons/Buttons";
+
+const SideMenu = atom({
+    key: 'sideMenuNav',
+    default: false
+})
 
 export const useSearch = () => {
     const [errorState, setError] = useState('');
@@ -56,21 +62,29 @@ export const useSearch = () => {
     };
 }
 
-function Account() {
-    const {user} = useUser();
+function Account({user}: {user: ContextType & {username: string} | null}) {
     const setAccountContext = useSetRecoilState(SideMenu);
+    const {start, stop} = useTimer();
     const count = useRecoilValue(notificationCount);
 
+    const onHover = useCallback((bool: boolean) => {
+        stop();
+        if (bool)
+            setAccountContext(true);
+        else {
+            start(() =>{
+                setAccountContext(false);
+            } , 400)
+        }
+    }, [setAccountContext, start, stop]);
+
+    const onClick = useCallback(() => {
+        setAccountContext(val => !val);
+    }, [setAccountContext]);
+
     return (
-        <div className={styles['user-account']} onMouseEnter={() => {
-            if (user)
-                setAccountContext(1)
-        }} onMouseLeave={() => {
-            setTimeout(() => {
-                setAccountContext(0);
-            }, 400)
-        }}>
-            <button className={styles["account-image"]} onClick={() => setAccountContext(val => val !== 0 ? 0 : 1)}>
+        <HoverContainer onHover={onHover} className={styles['user-account']} onClick={onClick}>
+            <button className={styles["account-image"]}>
                 <svg viewBox="0 0 512 512">
                     <circle className={styles['ac-circle']} cx="256" cy="256" r="256"/>
                     <path
@@ -87,40 +101,41 @@ function Account() {
                         C447.904,412.512,445.728,408.448,442.272,405.696z"/>
                 </svg>
             </button>
-            {count ? <div className={styles.notification}>{count}</div> : null}
-        </div>
+            {count && <div className={styles.notification}>{count}</div>}
+        </HoverContainer>
     )
 }
 
 function OnlineUsersComponent() {
-    const {globalNotification: {online: users}} = useNotifications();
+    const users = useRecoilValue(globalChannelSelector);
 
     return (
         <Link href={'/lobby'}>
             <div className={styles.online}
-                 title={`${users.length - 1 > 0 ? users.length - 1 : 'No'} user${users.length - 1 > 1 ? 's' : ''} online`}>
+                 title={`${users.length > 0 ? users.length - 1 : 'No'} user${users.length > 1 ? 's' : ''} online`}>
                 <svg viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                {users.length - 1 > 0 ? <div className={styles.onlineCounter}>{users.length - 1}</div> : null}
+                {users.length > 0 ? <div className={styles.onlineCounter}>{users.length}</div> : null}
             </div>
         </Link>
     )
 }
 
 function AccountInfo({user, signOut}: {user: ContextType & {username: string} | null, signOut: () => void}) {
+    const {openPopup} = useBasics();
+    const {start, stop} = useTimer();
     const count = useRecoilValue(notificationCount);
     const setSides = useSetRecoilState(SettingsSegmentContext);
     const accountContext = useRecoilValue(SideMenu);
     const [visible, setVisible] = useState(false);
     const router = useRouter();
-    const win = useRef<Window | null>(null);
 
     const handleClick = useCallback(() => {
-        win.current = window.open('https://www.paypal.com/paypalme/RoyOssai', '_blank');
+        openPopup('https://www.paypal.com/paypalme/RoyOssai', 'PayPal', 500, 650);
     }, [])
 
     const setSidesAndPush = useCallback(async (step1: string, step2: string) => {
@@ -128,15 +143,28 @@ function AccountInfo({user, signOut}: {user: ContextType & {username: string} | 
         router.asPath !== '/settings' && await router.push('/settings');
     }, [setSides, router])
 
+    const shouldDisplay = useMemo(() => {
+        return accountContext || visible;
+    }, [accountContext, visible]);
+
+    const onHover = useCallback((bool: boolean) => {
+        stop();
+        if (!bool)
+            start( () => setVisible(false), 200);
+        else
+            setVisible(true);
+    }, [setVisible, start, stop]);
+
+    const onSignOut = useCallback(() => {
+        setVisible(false);
+        signOut();
+    }, [signOut]);
+
     if (user)
         return (
-            <div className={styles.holderContainer}
-                 style={accountContext === 0 && !visible ? {opacity: "0", pointerEvents: 'none'} : {opacity: "1"}}
-                 onMouseEnter={() => setVisible(true)} onMouseLeave={() => {
-                setTimeout(() => {
-                    setVisible(false);
-                }, 200)
-            }}>
+            <HoverContainer className={styles.holderContainer} onHover={onHover}
+                style={shouldDisplay ? {opacity: "1"} : {opacity: "0", pointerEvents: 'none'}}
+            >
                 <div className={styles.text}
                      onClick={() => setSidesAndPush('account', 'watch history')}>{user.role === Role.GUEST ? 'Guest: ' : ''}{user.username || user.email}</div>
                 <div className={styles.spacer}/>
@@ -155,8 +183,8 @@ function AccountInfo({user, signOut}: {user: ContextType & {username: string} | 
                     </>
                     : null}
                 <div className={styles.spacer}/>
-                <div className={styles.text} onClick={signOut}>log out</div>
-            </div>
+                <div className={styles.text} onClick={onSignOut}>log out</div>
+            </HoverContainer>
         )
 
     else return null;
@@ -171,9 +199,8 @@ function Logo() {
     )
 }
 
-function Search() {
+function Search({user, section}: {user: ContextType & {username: string} | null, section: navSection | null}) {
     const myRef = useRef<HTMLInputElement>(null);
-    const {section} = useRecoilValue(NavSectionAndOpacity);
     const {setSearch} = useSearch();
 
     const handleSearch = useCallback(() => {
@@ -195,15 +222,14 @@ function Search() {
                            placeholder="see what's available" className={styles['search-input']}/>
                 </div> : null}
             <OnlineUsersComponent/>
-            <Account/>
+            <Account user={user}/>
         </div>
     );
 }
 
-function Sections() {
-    const navContext = useRecoilValue(NavConTextAtom);
-    const sections = ["home", "movies", "tv shows", "playlists", "collections"];
-    const paths = ["/", "/movies", "/shows", "/playlist", "/collections"];
+function Sections({navContext}: {navContext: navSection}) {
+    const sections = useMemo(() => ["home", "movies", "tv shows", "playlists", "collections"], []);
+    const paths = useMemo(() => ["/", "/movies", "/shows", "/playlist", "/collections"], []);
     const resetSearch = useResetRecoilState(SearchContextAtom);
 
     return (
@@ -211,8 +237,7 @@ function Sections() {
             {sections.map((item, v) => {
                 return (
                     <Link key={v} href={paths[v]}>
-                        <span
-                            className={item === navContext ? styles.activeSection : styles.passiveSections}>{item}</span>
+                        <span className={item === navContext ? styles.activeSection : styles.passiveSections}>{item}</span>
                     </Link>
                 );
             })}
@@ -236,8 +261,8 @@ export default function Navbar({user, signOut}: {user: ContextType & {username: 
                         <Logo/>
                         {section === 'auth' || !user ? null :
                             <>
-                                <Sections/>
-                                <Search/>
+                                <Sections navContext={section!}/>
+                                <Search user={user} section={section!}/>
                             </>
                         }
                     </div>

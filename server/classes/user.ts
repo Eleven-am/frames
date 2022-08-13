@@ -1,12 +1,13 @@
 import {Episode, Media, MediaType, Role} from "@prisma/client";
 import {Base} from "./auth";
 import {WatchHistory} from "./playback";
-import MediaClass, {SpringMedia} from "./media";
+import MediaClass, {Banner, SpringMedia} from "./media";
 
 export interface PlaybackSettings {
     defaultLang: string;
     autoplay: boolean;
     inform: boolean;
+    incognito: boolean;
 }
 
 export interface WatchHistoryResult {
@@ -96,11 +97,11 @@ export default class User extends Base {
      * @param settings - settings to be modified
      */
     public async modifyUserPlaybackSettings(userId: string, settings: PlaybackSettings) {
-        const data = this.prisma.user.update({
+        const payLoad = await this.prisma.user.update({
             where: {userId}, data: {...settings}
         })
 
-        return !!data;
+        return !!payLoad;
     }
 
     /**
@@ -109,9 +110,29 @@ export default class User extends Base {
      */
     public async getUserPlaybackSettings(userId: string): Promise<PlaybackSettings> {
         const user = await this.prisma.user.findUnique({where: {userId}});
-        if (user) return {defaultLang: user.defaultLang, autoplay: user.autoplay, inform: user.inform};
+        if (user) return {
+            defaultLang: user.defaultLang,
+            autoplay: user.autoplay,
+            inform: user.inform,
+            incognito: user.incognito
+        };
 
-        return {defaultLang: 'en', autoplay: false, inform: false};
+        return {defaultLang: 'en', autoplay: false, inform: false, incognito: false};
+    }
+
+    /**
+     * @desc deletes a specific watched media from the user's watch history
+     * @param userId - user identifier
+     * @param watchedId - watched media identifier
+     */
+    public async deleteWatchEntry(userId: string, watchedId: number) {
+        const watched = await this.prisma.watched.findUnique({where: {id: watchedId}});
+        if (watched?.userId === userId) {
+            await this.prisma.watched.delete({where: {id: watchedId}});
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -391,6 +412,42 @@ export default class User extends Base {
             });
 
             return true;
+        }
+
+        return null;
+    }
+
+    /**
+     * @desc gets the most relevant media for a user based on his previous history
+     * @param userId - the user identifier
+     */
+    public async getRelevantMedia(userId: string): Promise<Banner | null> {
+        let index = 1;
+        const time = ['1Day', '1Week', '1Month', '1Year'];
+        const watched: (Media & { length: number })[] = [];
+
+        while (watched.length < 1) {
+            const data = await this.getRecentlyViewed(userId, time[index] as '1Day' | '1Week' | '1Month' | '1Year');
+            if (data)
+                watched.push(...data);
+            else
+                index++;
+        }
+
+        const medias = watched.filter(e => e.logo);
+
+        if (medias.length > 0) {
+            const media = watched[0];
+            if (media.type === MediaType.SHOW)
+                return {
+                    type: media.type,
+                    id: media.id,
+                    name: media.name,
+                    logo: media.logo!,
+                    backdrop: media.backdrop,
+                    overview: media.overview,
+                    trailer: media.trailer,
+                }
         }
 
         return null;
@@ -865,7 +922,7 @@ export default class User extends Base {
         });
         const shuffled = this.shuffle(suggestions, 12, 0);
 
-        const data = this.sortArray(shuffled, ['times'], ['desc']);
+        const data = this.sortArray(shuffled, 'times', 'desc');
         return {
             display: seen ? 'a second go round?' : 'just for you',
             type: 'BASIC', data: data.map(e => {
@@ -882,8 +939,8 @@ export default class User extends Base {
      * @param position - the current position of the video
      */
     public async saveInformation(auth: string, userId: string, position: number): Promise<void> {
-        const user = await this.prisma.user.findFirst({where: {userId}});
-        const view = await this.prisma.view.findFirst({
+        const user = await this.prisma.user.findUnique({where: {userId}});
+        const view = await this.prisma.view.findUnique({
             where: {auth},
             include: {video: {include: {media: true, episode: true}}}
         });
@@ -977,6 +1034,46 @@ export default class User extends Base {
         }
 
         return null;
+    }
+
+    /**
+     * @desc gets the most recently viewed media in a pertinent order
+     * @param userId - user identifier
+     * @param time - timeframe to get
+     */
+    private async getRecentlyViewed(userId: string, time: '1Day' | '1Week' | '1Month' | '1Year'): Promise<(Media & { length: number })[]> {
+        let timeCount = new Date();
+
+        switch (time) {
+            case '1Day':
+                timeCount.setDate(timeCount.getDate() - 1);
+                break;
+            case '1Week':
+                timeCount.setDate(timeCount.getDate() - 7);
+                break;
+            case '1Month':
+                timeCount.setMonth(timeCount.getMonth() - 1);
+                break;
+            case '1Year':
+                timeCount.setFullYear(timeCount.getFullYear() - 1);
+                break;
+        }
+
+        const recentlyWatched = await this.prisma.view.findMany({
+            where: {userId, created: {gte: timeCount}},
+            include: {video: {include: {media: true}}},
+        });
+
+        const mapped = recentlyWatched.map(e => ({...e, mediaId: e.video.mediaId}));
+        const sortedGrouped = this.groupBy(mapped, 'mediaId', 'desc');
+
+        return sortedGrouped.map(e => {
+            const media = e.value[0].video.media;
+            return {
+                ...media,
+                length: e.value.length,
+            }
+        });
     }
 
     /**

@@ -1,63 +1,11 @@
 import styles from './Button.module.css';
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useMemo} from "react";
 import {Link} from "../misc/Loader";
 import {mutate} from "swr";
 import {useGroupWatch} from "../../../utils/groupWatch";
 import {useRouter} from "next/router";
 
-interface ButtonInterfaces {
-    id: number;
-    name?: string;
-    type?: string;
-    seen?: boolean;
-    myList?: boolean;
-    trailer?: boolean;
-    review?: number | null;
-    myRating?: string;
-    url?: string;
-    onClick?: React.MouseEventHandler<HTMLButtonElement>;
-    onHover?: (arg: boolean) => void;
-}
-
-const Rating = ({id, review, myRating}: ButtonInterfaces) => {
-    const [string, setString] = useState('Rating');
-    const [rate, setRate] = useState(((review || 0) * 10) + '%');
-    const [pos, setPos] = useState(myRating!);
-
-    useEffect(() => {
-        if (myRating)
-            setPos(myRating);
-
-    }, [myRating]);
-
-    const handleClick = useCallback(async (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        const box = event.currentTarget.getBoundingClientRect();
-        const pos = ((event.clientX - box.left) / (box.right - box.left)) * 100;
-        setPos(pos + '%');
-        setRate(pos + '%');
-        await fetch(`/api/media/rate?mediaId=${id}&rate=${Math.floor(pos / 10)}`);
-    }, [id]);
-
-    return (
-        <div className={styles.rc}
-             onMouseEnter={() => {
-                 setString('Rate it')
-                 setRate(pos)
-             }}
-             onMouseLeave={() => {
-                 setString('Rating')
-                 setRate(((review || 0) * 10) + '%')
-             }}
-        >
-            <div className={styles.rh}>{string}:</div>
-            <div className={styles.review} onClick={handleClick}>
-                <div className={styles.rf} style={{width: rate}}/>
-            </div>
-        </div>
-    )
-}
-
-const BackButton = ({response}: { response: { mediaId: number, episodeName: string | null, logo: string | null, name: string } }) => {
+export const BackButton = ({response}: { response: { mediaId: number, episodeName: string | null, logo: string | null, name: string } }) => {
     const router = useRouter();
     const {disconnect} = useGroupWatch();
 
@@ -83,39 +31,39 @@ const BackButton = ({response}: { response: { mediaId: number, episodeName: stri
     )
 }
 
-const Template = ({id, type, name, onClick, onHover}: ButtonInterfaces) => {
-    if (name === 'see details')
-        mutate('/api/load/continue');
-
-    return (
-        <button title={name} onMouseEnter={() => onHover ? onHover(true) : null}
-                onMouseLeave={() => onHover ? onHover(false) : null}
-                className={`${(id === 0 ? styles.playButton : id === 1 ? styles.trailerButton : styles.roundGuys)} ${type === 'add' || type === 'play' ? '' : styles.noFill}`}
-                onClick={onClick}>
-
-            {id !== 2 && name}
-        </button>
-    )
+interface HoverContainerProps<S = undefined> {
+    children: React.ReactNode;
+    className?: string;
+    state?: S;
+    style?: React.CSSProperties;
+    element?: keyof HTMLElementTagNameMap
+    onHover?: (isHover: boolean, state: S) => void;
+    onHoverEvent?: (e: React.MouseEvent<HTMLElement>, isHover: boolean, state: S) => void;
+    onClick?: (state: S) => void;
+    onClickEvent?: (e: React.MouseEvent<HTMLElement>, state: S) => void;
+    onMove?: (state: S) => void;
+    onMoveEvent?: (e: React.MouseEvent<HTMLElement>, state: S) => void;
+    tooltip?: string;
+    disabled?: boolean;
 }
 
-interface FramesButtonProps<S = undefined> {
-    onClick?: (state: S) => void;
-    onHover?: (arg: boolean, state: S) => void;
+interface FramesButtonProps<S = undefined> extends Omit<HoverContainerProps<S>, 'element' | 'children'> {
     type: 'primary' | 'secondary' | 'round';
-    isFill?: boolean;
-    tooltip?: string;
-    label?: string;
-    disabled?: boolean;
-    state?: S
-    onMove?: (state: S) => void;
     icon?: 'play' | 'square' | 'info' | 'add' | 'edit' | 'scan' | 'down' | 'user' | 'roll' | 'shuffle' | 'seen' | 'unseen' | 'close' | 'check';
-    children?: React.ReactNode;
-    className?: string;
+    isFill?: boolean;
+    label?: string;
     link?: { href: string, as?: string };
     style?: React.CSSProperties;
+    contentStyle?: React.CSSProperties;
+    children?: React.ReactNode;
 }
 
-export function Icon<S>({icon, style, onClick, state}: Pick<FramesButtonProps<S>, 'icon' | 'style' | 'onClick' | 'state'>) {
+export function Icon<S>({
+                            icon,
+                            style,
+                            onClick,
+                            state
+                        }: Pick<FramesButtonProps<S>, 'icon' | 'style' | 'onClick' | 'state'>) {
     const viewBox = icon === 'add' ? '0 0 409.6 409.6' : icon === 'play' || icon === 'shuffle' ? '0 0 494.148 494.148' : icon === 'roll' ? '0 0 461.492 461.492' : '0 0 24 24';
 
     const handleClick = useCallback(() => {
@@ -239,53 +187,35 @@ export function Icon<S>({icon, style, onClick, state}: Pick<FramesButtonProps<S>
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
             </>}
-            {icon === 'check' && <>
-                <polyline points="20 6 9 17 4 12"/>
-            </>}
+            {icon === 'check' && <polyline points="20 6 9 17 4 12"/>}
         </svg>
     )
 }
 
-export function FramesButton<S>({
-    onClick,
-    onHover,
-    type,
-    tooltip,
-    label,
-    disabled,
-    children,
-    icon,
-    isFill,
-    state,
-    link,
-    style: iconStyles,
-}: FramesButtonProps<S>) {
+export function FramesButton<S>(props: FramesButtonProps<S>) {
+    let {tooltip, label, icon, isFill, link, children, onClick, onClickEvent, ...rest} = props;
     label = label || tooltip;
     tooltip = tooltip || label;
-    isFill =  isFill || (icon === 'play' || icon === 'add' || icon === 'roll' || icon === 'shuffle');
+    isFill = isFill || (icon === 'play' || icon === 'add' || icon === 'roll' || icon === 'shuffle');
 
     return (
         <>
-            {link ?
-                <Link href={link.href} as={link.as}>
-                    <button onMouseEnter={() => onHover ? onHover(true, state as any) : null}
-                            onMouseLeave={() => onHover ? onHover(false, state as any) : null}
-                            className={`${(type === 'primary' ? styles.playButton : type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}
-                            title={tooltip} disabled={disabled}>
-                        {icon && <Icon icon={icon} style={iconStyles}/>}
+            {
+                link ?
+                    <Link href={link.href} as={link.as}>
+                        <HoverContainer element={'button'} {...rest} tooltip={tooltip} style={props.contentStyle}
+                            className={`${(props.type === 'primary' ? styles.playButton : props.type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}>
+                            {icon && <Icon icon={icon} style={props.style} state={props.state}/>}
+                            {children && !icon && children}
+                            {props.type !== 'round' && label}
+                        </HoverContainer>
+                    </Link> :
+                    <HoverContainer element={'button'} {...rest} tooltip={tooltip} onClick={onClick} onClickEvent={onClickEvent}
+                        className={`${(props.type === 'primary' ? styles.playButton : props.type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}>
+                        {icon && <Icon icon={icon} style={props.style} state={props.state}/>}
                         {children && !icon && children}
-                        {type !== 'round' && label}
-                    </button>
-                </Link>
-                :
-                <button onMouseEnter={() => onHover ? onHover(true, state as any) : null}
-                        onMouseLeave={() => onHover ? onHover(false, state as any) : null}
-                        className={`${(type === 'primary' ? styles.playButton : type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}
-                        onClick={() => onClick ? onClick(state as any) : null} title={tooltip} disabled={disabled}>
-                    {icon && <Icon icon={icon} style={iconStyles}/>}
-                    {children && !icon && children}
-                    {type !== 'round' && label}
-                </button>
+                        {props.type !== 'round' && label}
+                    </HoverContainer>
             }
         </>
     )
@@ -293,26 +223,64 @@ export function FramesButton<S>({
 
 export function HoverContainer<S>({
   children,
-  onHover,
   className,
-  state,
+  state, element,
+  onHover,
+  onHoverEvent,
   onClick,
-  onMove
-}: Omit<FramesButtonProps<S>, 'type'>) {
+  onClickEvent,
+  onMove,
+  onMoveEvent,
+  tooltip,
+  disabled, style,
+}: HoverContainerProps<S>) {
+
+    const handleOnMouseEnter = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        if (onHover)
+            onHover(true, state as any);
+
+        if (onHoverEvent)
+            onHoverEvent(e, true, state as any);
+    }, [onHover, onHoverEvent, state]);
+
+    const handleOnMouseLeave = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        if (onHover)
+            onHover(false, state as any);
+
+        if (onHoverEvent)
+            onHoverEvent(e, false, state as any);
+    }, [onHover, onHoverEvent, state]);
+
+    const handleOnClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        if (onClick)
+            onClick(state as any);
+
+        if (onClickEvent)
+            onClickEvent(e, state as any);
+    }, [onClick, onClickEvent, state]);
+
+    const handleOnMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        if (onMove)
+            onMove(state as any);
+
+        if (onMoveEvent)
+            onMoveEvent(e, state as any);
+    }, [onMove, onMoveEvent, state]);
+
+    const Element = useMemo(() => {
+        if (element === 'button')
+            return 'button';
+        else if (element === 'a')
+            return 'a';
+        else
+            return 'div';
+    }, [element]);
 
     return (
-        <div className={className ? className : ''}
-             onClick={() => onClick ? onClick(state as any) : null}
-             onMouseMove={() => onMove ? onMove(state as any) : null}
-             onMouseEnter={() => onHover ? onHover(true, state as any) : null}
-             onMouseLeave={() => onHover ? onHover(false, state as any) : null}>
+        <Element className={className ? className : ''} onClick={handleOnClick}
+                 onMouseEnter={handleOnMouseEnter} onMouseLeave={handleOnMouseLeave}
+                 onMouseMove={handleOnMove} title={tooltip} disabled={disabled} style={style}>
             {children}
-        </div>
+        </Element>
     )
 }
-
-export {
-    Template,
-    BackButton,
-    Rating
-};

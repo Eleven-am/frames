@@ -5,6 +5,7 @@ import {Settings} from "../manage/library";
 import {useManageUserInfo} from "../../../../utils/modify";
 import {WatchHistory} from "../../../../../server/classes/playback";
 import {useConfirmDispatch} from "../../../../utils/notifications";
+import {useCallback} from "react";
 
 export interface UserSettings<S> extends Settings<S> {
     timestamp: string;
@@ -57,22 +58,17 @@ export default function WatchedList() {
         handleScroll
     } = useInfiniteScroll<WatchHistory>('/api/modify/watchHistory?limit=75');
 
-    const onClick = (id: number) => {
+    const onClick = useCallback((id: number) => {
         confirmAction({
             type: 'warn',
             heading: "Delete watch entry?",
             message: "Are you sure you want to delete this watch entry?",
-            onOk: async () => {
-                await deleteWatchEntry(id, setResponse);
-            },
-            onCancel() {
-                console.log("Cancel");
-            },
+            onOk: () => deleteWatchEntry(id, setResponse),
             confirmText: "Delete",
             cancelText: "Cancel",
             confirm: true
         });
-    }
+    }, [deleteWatchEntry, confirmAction, setResponse]);
 
     if (response.length < 1)
         return <Loading/>

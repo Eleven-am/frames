@@ -34,11 +34,12 @@ const verifyAccess = async function (request: NextRequest, response: NextRespons
 
     if (path === '/midIn') {
         const defDetails = await middleware.getApiKey();
-        const {email, context, session, identifier} = userToken;
+        const {email, context, session, identifier, notificationChannel} = userToken;
         const user = !valid ? null : {
             context: {
+                identifier,
+                channel: notificationChannel,
                 email, session, role: context,
-                identifier
             }
         };
 

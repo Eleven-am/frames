@@ -1,12 +1,13 @@
-import {FramesButton, Rating} from "../../buttons/Buttons";
+import {FramesButton, HoverContainer} from "../../buttons/Buttons";
 import info from '../Info.module.css';
 import {useRecoilValue} from "recoil";
 import {InfoContext, infoUserContext, useInfoContext} from "../infoContext";
 import {MediaType, Role} from "@prisma/client";
 import useModify, {useGetContext} from "../../../../utils/modify";
 import useUser from "../../../../utils/user";
-import {useState} from "react";
+import React, {useState} from "react";
 import {useGroupWatch} from "../../../../utils/groupWatch";
+import styles from "../../buttons/Button.module.css";
 
 interface InfoType {
     trailer: boolean;
@@ -16,11 +17,12 @@ interface InfoType {
 export default function InfoDetails({loadTrailer, trailer}: InfoType) {
     const response = useRecoilValue(InfoContext);
     const infoUser = useRecoilValue(infoUserContext);
-    const {toggleSeen, toggleAddToList} = useInfoContext();
+    const {toggleSeen, toggleAddToList, rateMedia} = useInfoContext();
     const {getMedia} = useModify();
     const {downloadEpisodes} = useGetContext();
     const [seen, setSeen] = useState(false);
     const [list, setList] = useState(false);
+    const [rating, setRating] = useState(false);
     const {connected, openSession} = useGroupWatch();
     const {user} = useUser();
 
@@ -66,7 +68,12 @@ export default function InfoDetails({loadTrailer, trailer}: InfoType) {
                     <div>{response.genre}</div>
                     <span>-</span>
                     <div>{response.runtime}</div>
-                    <Rating {...{id: response.id, review: response.vote_average, myRating: infoUser?.rating}}/>
+                    <HoverContainer className={styles.rc} onHover={setRating}>
+                        <div className={styles.rh}>{rating ? 'Rate it' : 'Rating'}:</div>
+                        <div className={styles.review} onClick={rateMedia}>
+                            <div className={styles.rf} style={{width: rating ? (infoUser?.rating || '5%') : `${(response.vote_average || 0) * 10}%`}}/>
+                        </div>
+                    </HoverContainer>
                 </div>
             </div>
             <div className={info.infoOverview}>

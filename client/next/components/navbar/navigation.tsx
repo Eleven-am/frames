@@ -1,6 +1,6 @@
 import Head from "next/head";
 import {atom, DefaultValue, selector, useRecoilValue, useSetRecoilState} from 'recoil';
-import {ReactNode, useEffect} from "react";
+import {ReactNode, useCallback, useEffect} from "react";
 import {useRouter} from "next/router";
 import Navbar, {useSearch} from "./navbar";
 import {Image, Loading} from "../misc/Loader";
@@ -16,6 +16,7 @@ import background from "../../assets/background.jpg";
 interface NavSectionAndOpacity {
     opacity?: number;
     section?: navSection;
+    metaTags?: MetaTags;
 }
 
 export type navSection =
@@ -43,19 +44,14 @@ const metaTags = {
     poster: '/meta.png'
 }
 
-export const SideMenu = atom({
-    key: 'sideMenuNav',
-    default: 0
-})
-
-export const NavConTextAtom = atom<navSection>({
-    key: 'navConTextAtom',
-    default: 'watch'
-})
-
 export const SearchContextAtom = atom({
     key: 'searchContextAtom',
     default: ''
+})
+
+const NavConTextAtom = atom<navSection>({
+    key: 'navConTextAtom',
+    default: 'watch'
 })
 
 export const NavOpacityAtom = atom({
@@ -63,18 +59,40 @@ export const NavOpacityAtom = atom({
     default: 1
 })
 
+const MetaTagAtom = atom<MetaTags>({
+    key: 'MetaTagAtom',
+    default: metaTags
+})
+
+const PreviousNavStateAtom = atom<{section: navSection, opacity: number, meta?: MetaTags}>({
+    key: 'previousNavStateAtom',
+    default: {
+        section: 'watch',
+        opacity: 1,
+        meta: metaTags
+    }
+});
+
 export const NavSectionAndOpacity = selector<NavSectionAndOpacity>({
     key: 'NavSectionAndOpacity',
     get: ({get}) => {
         let opacity = get(NavOpacityAtom);
         const section = get(NavConTextAtom);
+        const metaTags = get(MetaTagAtom);
         opacity = opacity === 0 ? opacity : 1 - opacity > 1 ? 1 : 1 - opacity;
-        return {opacity, section}
+        return {opacity, section, metaTags}
     },
     set: ({get, set}, newValue) => {
         if (!(newValue instanceof DefaultValue)) {
+            const opacity = get(NavOpacityAtom);
+            const section = get(NavConTextAtom);
+            const metaTags = get(MetaTagAtom);
+            const previousNavState = {section, opacity, meta: metaTags};
+
+            set(PreviousNavStateAtom, previousNavState);
             newValue.section && set(NavConTextAtom, newValue.section);
             newValue.opacity && set(NavOpacityAtom, newValue.opacity);
+            newValue.metaTags && set(MetaTagAtom, newValue.metaTags);
             return;
         }
     }
@@ -85,18 +103,13 @@ export const addressAtom = atom<string | null>({
     default: null
 })
 
-export const MetaTagAtom = atom<MetaTags | null>({
-    key: 'MetaTagAtom',
-    default: null
-})
-
 export const hideAtom = atom({
     key: 'hideAtom',
     default: false
 })
 
 export function Header() {
-    const meta = useRecoilValue(MetaTagAtom) || metaTags;
+    const meta = useRecoilValue(MetaTagAtom);
 
     return (
         <>
@@ -164,12 +177,23 @@ export default function HomeLayout({children}: { children: ReactNode }) {
     )
 }
 
-export function useNavBar(section: navSection, opacity: number, meta?: MetaTags) {
+export function useNavBar(section?: navSection, opacity?: number, metaTag?: MetaTags) {
+    const prevState = useRecoilValue(PreviousNavStateAtom);
     const setNavBar = useSetRecoilState(NavSectionAndOpacity);
-    const setMetaTags = useSetRecoilState(MetaTagAtom);
+
+    const goBack = useCallback(() => {
+        const {section, opacity, meta} = prevState;
+        setNavBar({opacity, section, metaTags: meta});
+    }, [prevState, setNavBar])
+
+    const manualSet = useCallback((section1: navSection, opacity1: number, meta1?: MetaTags) => {
+        setNavBar({opacity: opacity1, section: section1, metaTags: meta1});
+    }, [setNavBar])
+
     useEffect(() => {
-        setNavBar({opacity, section});
-        setMetaTags(meta || metaTags);
-    }, [section, opacity]);
-    return null;
+        if (section && opacity)
+            manualSet(section, opacity, metaTag || metaTags);
+    }, []);
+
+    return {goBack, manualSet}
 }

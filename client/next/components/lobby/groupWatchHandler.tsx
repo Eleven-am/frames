@@ -88,7 +88,7 @@ export const GroupWatchSlide = () => {
     const base = useBase();
     const {user} = useUser();
     const [section, setSection] = useRecoilState(GroupWatchSection)
-    const {groupWatch: {online: users}, inviteUser, globalNotification: {online: globalUsers}} = useNotifications();
+    const {groupWatch: {online: users}, inviteUser, users: globalUsers} = useNotifications();
     const {closeGroupWatch, sendMessage, connected, room} = useGroupWatch();
 
     return (
@@ -99,7 +99,7 @@ export const GroupWatchSlide = () => {
                 <li className={section === 2 ? ss.actv : ''} onClick={() => setSection(2)}>chat</li>
             </ul>
             <div className={ss.cnt}>
-                {section === 0 && <GlobalOnline {...{base, user, room, inviteUser, users: globalUsers}}/>}
+                {section === 0 && <GlobalOnline {...{base, room, inviteUser, users: globalUsers}}/>}
                 {section === 1 && <GroupWatchOnline {...{base, user, users, room}}/>}
                 {section === 2 && <GroupWatchActivity {...{base, connected, user, send: sendMessage}}/>}
             </div>
@@ -109,11 +109,10 @@ export const GroupWatchSlide = () => {
 
 const GlobalOnline = ({
                           base,
-                          user,
                           inviteUser,
                           room,
                           users
-                      }: { users: PresenceInterface[], base: BaseClass, user: FramesContext, room: string, inviteUser: (address: string, username: string) => Promise<void> }) => {
+                      }: { users: PresenceInterface[], base: BaseClass, room: string, inviteUser: (address: string, username: string) => Promise<void> }) => {
     const {copy} = useClipboard();
     const {getBaseUrl} = useBasics();
     const saveToClipboard = useCallback(async () => {
@@ -121,7 +120,7 @@ const GlobalOnline = ({
         await copy(url, 'Video Session url copied to clipboard');
     }, [copy, getBaseUrl, room]);
 
-    if (users.filter(e => e.identifier !== user?.identifier).length < 1)
+    if (users.length < 1)
         return (
             <div className={ss.chtMsg}>
                 <div className={`${ss.chtMsgItm} ${ss.hvr}`} onClick={saveToClipboard}>
@@ -144,7 +143,7 @@ const GlobalOnline = ({
 
     return (
         <div className={ss.chtMsg}>
-            {users.filter(e => e.identifier !== user?.identifier).map(user => (
+            {users.map(user => (
                 <div className={`${ss.chtMsgItm} ${ss.hvr}`} key={user.phx_ref}
                      onClick={() => inviteUser(user.reference, user.username)}>
                     <div
@@ -155,7 +154,7 @@ const GlobalOnline = ({
                         </svg>
                     </div>
                     <div className={ss.onrHdr}>
-                        <div className={ss.onrHdrUsr}>{user.username}</div>
+                        <div className={ss.onrHdrUsr}>{user.identifier.startsWith('incognito:') ? '# ' : ''}{user.username}</div>
                         <div className={ss.onrHdrStm}>
                             <div>{user.presenceState}</div>
                             <div>{base.compareDates(new Date(+user.online_at * 1000))}</div>

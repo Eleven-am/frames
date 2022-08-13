@@ -3,19 +3,30 @@ import styles from './FullDetails.module.css';
 import info from '../Info.module.css';
 import {Link} from "../../misc/Loader";
 import {SpringMedia} from "../../../../../server/classes/media";
-import {useGenreContext} from "../../browse/browseContext";
+import {useDecadeContext, useGenreContext} from "../../browse/browseContext";
 import {useRouter} from "next/router";
 import {MediaType} from "@prisma/client";
 
 export default function Details({response}: { response: SpringMedia }) {
     const router = useRouter();
     const {splitGenres} = useGenreContext();
+    const {manageDecade} = useDecadeContext();
 
     const handleClick = useCallback(async () => {
         splitGenres(response.genre);
         const url = response.type === MediaType.MOVIE ? '/movies' : '/shows';
         await router.push(url);
     }, [response, router, splitGenres]);
+
+    const handleDecade = useCallback(async () => {
+        const year = response.release.match(/\d{4}$/);
+        if (year) {
+            const decade = year[0].replace(/\d$/, '0s');
+            const url = response.type === MediaType.MOVIE ? '/movies' : '/shows';
+            manageDecade(decade);
+            await router.push(url);
+        }
+    }, [response, router, manageDecade]);
 
     return (
         <div id={styles["info-extra"]}>
@@ -27,7 +38,7 @@ export default function Details({response}: { response: SpringMedia }) {
             <div id={styles["info-extras"]}>
                 <div id={styles["info-item-release"]}>
                     <div>Genre: <span className={styles.click} onClick={handleClick}>{response.genre}</span></div>
-                    <div>Release: <span className={styles["info-basic"]}>{response.release}</span></div>
+                    <div>Release: <span className={styles.click} onClick={handleDecade}>{response.release}</span></div>
                     <div>Runtime: <span className={styles["info-basic"]}>{response.runtime}</span></div>
                     {response.collection ?
                         <div>
@@ -99,17 +110,23 @@ export default function Details({response}: { response: SpringMedia }) {
                         </> : null
                     }
                 </div>
-                <div id={styles["item-cast"]}>
-                    <div>Cast:</div>
-                    <ul>{response.cast.slice(0, 20).map((person, v) =>
-                        <Link key={v} href={`/person?id=${person.id}`} as={'person=' + person.name.replace(/\s/g, '+')}>
-                            <li>
-                                <span className={styles.click}>{person.name}</span>
-                                <br/>
-                            </li>
-                        </Link>
-                    )}</ul>
-                </div>
+
+                {response.cast && response.cast.length ?
+                    <div id={styles["item-cast"]}>
+                        <div>Cast:</div>
+                        <ul>{response.cast.slice(0, 20).map((person, v) =>
+                            <Link key={v} href={`/person?id=${person.id}`}
+                                  as={'person=' + person.name.replace(/\s/g, '+')}>
+                                <li>
+                                    <span className={styles.click}>{person.name}</span>
+                                    <br/>
+                                </li>
+                            </Link>
+                        )}</ul>
+                    </div>
+                    :
+                    null
+                }
             </div>
         </div>
     )

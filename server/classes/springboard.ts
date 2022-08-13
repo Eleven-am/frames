@@ -190,7 +190,7 @@ export default class Springboard extends MediaClass {
                 popularity: e.popularity,
                 backdrop: e.profile_path ? `https://image.tmdb.org/t/p/original${e.profile_path}` : null,
                 libraryName: null,
-                drift: e.name.Levenshtein(value),
+                drift: this.levenshtein(e.name, value),
                 overview: e.known_for.map((entry, i) => `${entry.name ? entry.name : entry.title}${i === e.known_for.length - 2 ? ' and ' : ', '}`).join('').replace(/, $/, '.')
             }
         });
@@ -202,7 +202,7 @@ export default class Springboard extends MediaClass {
                 libraryName: med?.name || null,
                 popularity: e.popularity,
                 name: e.name ? e.name : e.title || '',
-                drift: value.Levenshtein(e.name ? e.name : e.title || ''),
+                drift: this.levenshtein(e.name ? e.name : e.title || '', value),
                 type: e.name ? 'SHOW' : 'MOVIE',
                 id: e.id,
                 overview: e.overview || '',
@@ -379,7 +379,7 @@ export default class Springboard extends MediaClass {
         const response = await this.prisma.media.findMany({where: {type, name: {contains: request}}});
         let data = response.map(item => {
             const year = item.release?.getFullYear();
-            const drift = item.name.Levenshtein(request);
+            const drift =  this.levenshtein(item.name, request);
             return {...item, drift, year};
         });
         data = this.sortArray(data, ['drift', 'year'], ['asc', 'desc']);
@@ -393,7 +393,7 @@ export default class Springboard extends MediaClass {
     public async findPerson(request: string): Promise<number> {
         let res = await this.tmdb?.searchPerson(request) || [];
         let people = this.sortArray(res.map(e => {
-            const drift = e.name.Levenshtein(request);
+            const drift = this.levenshtein(e.name, request);
             return {...e, drift};
         }), 'drift', 'asc');
 
@@ -415,7 +415,7 @@ export default class Springboard extends MediaClass {
 
         let data = media.map(e => e.collection as { name: string, id: number }).filter(e => e)
             .map(e => {
-                const drift = e.name.Levenshtein(request);
+                const drift = this.levenshtein(e.name, request);
                 return {...e, drift};
             });
 
@@ -430,7 +430,7 @@ export default class Springboard extends MediaClass {
     public async findProductionCompany(request: string): Promise<number> {
         const media = (await this.prisma.media.findMany()).map(e => e.production as { name: string, id: number }[]).flat().filter(e => e)
             .map(e => {
-                const drift = e.name.Levenshtein(request);
+                const drift = this.levenshtein(e.name, request);
                 return {...e, drift};
             });
 
@@ -750,7 +750,7 @@ export default class Springboard extends MediaClass {
 
             const response = media.map(item => {
                 const year = new Date(item.release || 0).getFullYear();
-                const drift = item.name.Levenshtein(value);
+                const drift = item.name.length - value.length;
                 return {...item, year, drift};
             })
 
@@ -817,7 +817,7 @@ export default class Springboard extends MediaClass {
 
             let data = media.map(e => e.collection as { name: string, id: number }).filter(e => e)
                 .map(e => {
-                    const drift = e.name.Levenshtein(value);
+                    const drift = this.levenshtein(e.name, value);
                     return {...e, drift};
                 });
 

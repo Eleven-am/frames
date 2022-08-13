@@ -211,6 +211,7 @@ model User {
   confirmToken        String?
   defaultLang         String           @default("none")
   notificationChannel String           @default("global")
+  incognito           Boolean          @default(false)
   revoked             Boolean          @default(false)
   auths               Auth[]
   frames              Frame[]

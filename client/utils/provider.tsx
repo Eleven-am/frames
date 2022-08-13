@@ -1,41 +1,41 @@
 import {BaseClass} from "../../server/classes/base";
-import {createContext, ReactNode, useContext, useEffect, useState} from "react";
+import {createContext, ReactNode, useCallback, useContext, useEffect, useState} from "react";
 import Cast from "chomecast-sender";
 import {ServerResponse, useUserContext} from "./user";
 import {subscribe, useDetectPageChange, useFetcher} from "./customHooks";
 import {RealtimeConsumer} from "./realtime";
 import {Role} from "@prisma/client";
-import {useSetRecoilState} from "recoil";
-import HomeLayout, {hideAtom, MetaTagAtom} from "../next/components/navbar/navigation";
+import {useSetRecoilState, useRecoilValue} from "recoil";
+import HomeLayout, {hideAtom} from "../next/components/navbar/navigation";
 import NProgress from "nprogress";
-import {Conformation, Listeners} from "./notifications";
-import {useManageUserInfo} from "./modify";
+import {Conformation, globalChannelKeyAtom, Listeners} from "./notifications";
 
-const BaseContext = createContext<{ base: BaseClass, cast: Cast | null, globalKey: string }>({
+const BaseContext = createContext<{ base: BaseClass, cast: Cast | null}>({
     base: new BaseClass(),
     cast: null,
-    globalKey: ''
 });
 
 export function FramesConsumers({children}: { children: ReactNode }) {
     const base = new BaseClass();
     const setUser = useUserContext();
-    const setMetaTags = useSetRecoilState(MetaTagAtom);
-    const {getUserDetails} = useManageUserInfo();
+    const [usr, setUsr] = useState<ServerResponse | null>(null);
+    const [token, setToken] = useState<string | null>(null);
     const [cast, setCast] = useState<Cast | null>(null);
-    const [globalKey, setGlobalKey] = useState('');
+    const setGlobalKey = useSetRecoilState(globalChannelKeyAtom);
     const setLoading = useSetRecoilState(hideAtom);
     NProgress.configure({trickleSpeed: 1200, showSpinner: false, easing: 'ease-in-out', speed: 500});
     useDetectPageChange(true, ({loading, shallow}) => {
         if (!shallow) {
             loading ? NProgress.start() : NProgress.done();
-            loading && setMetaTags(null);
             setLoading(loading);
         }
     });
 
     const {response} = useFetcher<{ token: string, globalKey: string, user: ServerResponse }>('/midIn', {
-        onSuccess: (data) => setGlobalKey(data.globalKey),
+        onSuccess: (data) => {
+            setGlobalKey(data.globalKey);
+            setToken(data.token);
+        },
         revalidateOnFocus: false
     });
 
@@ -44,30 +44,37 @@ export function FramesConsumers({children}: { children: ReactNode }) {
         setCast(tmp);
     }, [])
 
+    const getKeys = useCallback(async () => {
+        const data = await base.makeRequest<{ token: string, globalKey: string, user: ServerResponse }>('/midIn', null);
+        if (data) {
+            setToken(data.token);
+            setGlobalKey(data.globalKey);
+            setUsr(data.user);
+        }
+    }, [base]);
+
     subscribe(async (user: ServerResponse | undefined) => {
         if (user?.context) {
             if (user.context.role === Role.GUEST) {
-                setUser(null);
+                await setUser(null);
                 await fetch('/api/auth?action=logout');
                 await fetch('/midOut');
 
             } else {
-                setUser(user.context);
+                await setUser(user.context);
                 const confirm = await base.makeRequest<ServerResponse>('/api/auth', {process: 'context'}, 'POST');
-                if (confirm?.context) {
-                    setUser(confirm.context);
-                    await getUserDetails();
-
-                } else
-                    setUser(null);
+                if (confirm?.context)
+                    await setUser(confirm.context);
+                else
+                    await setUser(null);
             }
         } else
-            setUser(null);
-    }, response?.user);
+            await setUser(null);
+    }, (usr || response?.user));
 
     return (
-        <BaseContext.Provider value={{base, cast, globalKey}}>
-            <RealtimeConsumer token={response?.token || ''} endpoint={'wss://hopr.maix.ovh/socket'}>
+        <BaseContext.Provider value={{base, cast}}>
+            <RealtimeConsumer token={(token || response?.token) || ''} endpoint={'wss://hopr.maix.ovh/socket'} onError={getKeys}>
                 <Listeners/>
                 <HomeLayout>
                     {children}
@@ -87,5 +94,5 @@ export function useBaseCast() {
 }
 
 export function useGlobalKey() {
-    return useContext(BaseContext).globalKey;
+    return useRecoilValue(globalChannelKeyAtom);
 }

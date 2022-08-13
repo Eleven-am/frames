@@ -16,7 +16,6 @@ export default function Grid() {
         handleScroll
     } = useInfiniteScroll<Pick<SpringMedia, 'id' | 'type' | 'backdrop' | 'logo' | 'name'>>(gridSelector ? `/api/load/${gridSelector.type}?${gridSelector.type}=${gridSelector.value}` : '');
 
-
     if (loading && !data.length)
         return <Loading/>;
 

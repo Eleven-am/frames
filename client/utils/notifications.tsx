@@ -1,6 +1,6 @@
 import {atom, selector, useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
 import {NotificationInterface} from "../../server/classes/user";
-import useUser from "./user";
+import useUser, {ContextType, globalChannelSelector} from "./user";
 import {PresenceInterface, useChannel} from "./realtime";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import NProgress from "nprogress";
@@ -8,12 +8,11 @@ import {default_t, subscribe, useBasics, useEventEmitter, useEventListener} from
 import styles from "../next/components/entities/Sections.module.css";
 import {Image} from "../next/components/misc/Loader";
 import frames from "../next/assets/frames.png";
-import useBase, {useGlobalKey} from "./provider";
+import useBase, {useBaseCast, useGlobalKey} from "./provider";
 import {GroupRoom, GroupWatchMessage, GroupWatchMessages} from "./groupWatch";
 import {useRouter} from "next/router";
 import usePlaybackControls, {
     AirplayAtom,
-    FramesInformAtom,
     framesPlayer,
     framesVideoStateAtom,
     fullscreenAddressAtom,
@@ -22,6 +21,10 @@ import usePlaybackControls, {
     SubtitlesAndUpNextAtom,
     UpNextAtom
 } from "./playback";
+import {CastEvent, CastEventType} from "chomecast-sender";
+import {ChromeCastStateAtom} from "./castContext";
+import {CastEventAtom, VideoStateAtom} from "./castContext";
+import {UserPlaybackSettingsContext} from "./modify";
 
 interface Inform {
     type: 'user' | 'server' | 'error' | 'warn' | 'success';
@@ -48,7 +51,7 @@ const notificationsAtom = atom({
     default: [] as NotificationInterface[]
 });
 
-const PresenceStatusAtom = atom<{ state: string, metadata?: default_t<string | null> } | null>({
+export const PresenceStatusAtom = atom<{ state: string, metadata?: default_t<string | null> } | null>({
     key: 'PresenceStatusAtom',
     default: null
 })
@@ -63,28 +66,39 @@ export const notificationCount = selector({
     }
 });
 
+export const globalChannelKeyAtom = atom<string>({
+    key: 'globalChannelKeyAtom',
+    default: ''
+})
+
 export const AlreadyStreamingAtom = atom<{ name: string, backdrop: string; episodeName: string | null, logo: string | null } | null>({
     key: 'alreadyStreaming',
     default: null
 });
 
 export default function useNotifications() {
-    const {user, signOut, signAsGuest} = useUser();
     const key = useGlobalKey();
-    const room = useRecoilValue(GroupRoom);
     const {getBaseUrl} = useBasics();
+    const room = useRecoilValue(GroupRoom);
     const confirmDispatch = useConfirmDispatch();
+    const {user, signOut, signAsGuest} = useUser();
+    const userState = useRecoilValue(UserPlaybackSettingsContext);
     const [state, setPresenceStatus] = useRecoilState(PresenceStatusAtom);
-    const socket = useChannel(room || '', {username: user?.username || '', identifier: user?.identifier || ''});
+    const users = useRecoilValue(globalChannelSelector);
 
     const channel = useChannel(`notification:${user?.channel}`, {
         username: user?.username || '',
-        identifier: user?.identifier || ''
+        identifier: `${userState?.incognito ? 'incognito:' : ''}${user?.identifier}`
     });
 
     const globalChannel = useChannel(`globalNotification:${key}`, {
         username: user?.username || '',
-        identifier: user?.identifier || ''
+        identifier: `${userState?.incognito ? 'incognito:' : ''}${user?.identifier}`
+    });
+
+    const socket = useChannel(room || '', {
+        username: user?.username || '',
+        identifier: `${userState?.incognito ? 'incognito:' : ''}${user?.identifier}`
     });
 
     const broadcastToSelf = useCallback((temp: Omit<NotificationInterface, 'opened' | 'sender'>) => {
@@ -114,10 +128,17 @@ export default function useNotifications() {
         globalChannel.modifyPresenceState(presence, payload);
     }, [socket, channel, globalChannel, state]);
 
-    const connect = useCallback(() => {
-        channel.connect();
-        globalChannel.connect();
-    }, [globalChannel, channel]);
+    const connect = useCallback((user: (ContextType & {username: string}), incognito: boolean) => {
+        channel.forceConnect(`notification:${user.channel}`, {
+            username: user.username,
+            identifier: `${incognito ? 'incognito:' : ''}${user.identifier}`
+        });
+
+        globalChannel.forceConnect(`globalNotification:${key}`, {
+            username: user.username,
+            identifier: `${incognito ? 'incognito:' : ''}${user.identifier}`
+        });
+    }, [key, globalChannel, channel]);
 
     const disconnect = useCallback(() => {
         socket.disconnect();
@@ -164,7 +185,7 @@ export default function useNotifications() {
     }, [globalChannel, user, getBaseUrl, room]);
 
     return {
-        connect, user, signOut, signAsGuest,
+        connect, user, signOut, signAsGuest, users,
         modifyPresence, disconnect, groupWatch: socket,
         notification: channel, globalNotification: globalChannel,
         requestToJoinSession, inviteUser, signOutEveryWhere, broadcastToSelf
@@ -213,7 +234,7 @@ export const Conformation = () => {
     const {emit} = useEventEmitter<boolean | null>('ConfirmButtonContext');
     const [style, setStyle] = useState('');
 
-    useEffect(() => {
+    const manageState = useCallback(() => {
         setDrop(drop => {
             return drop === null ? drop : false
         });
@@ -257,7 +278,9 @@ export const Conformation = () => {
                     }, time * 1000);
             }, drop === null ? 0 : 100)
         }
-    }, [state])
+    }, [state, setState, drop, setDrop]);
+
+    subscribe(manageState, state);
 
     const click = useCallback((a: boolean) => {
         emit(a);
@@ -321,17 +344,65 @@ export const Conformation = () => {
 
 export const Listeners = () => {
     const router = useRouter();
+    const cast = useBaseCast();
     const {user, signOut} = useUser();
     const confirmDispatch = useConfirmDispatch();
     const presenceState = useRecoilValue(PresenceStatusAtom);
+    const userState = useRecoilValue(UserPlaybackSettingsContext);
+    const timeOut = useRef<NodeJS.Timeout>();
     const {connect, disconnect, notification, globalNotification, modifyPresence} = useNotifications();
+    const setVideo = useSetRecoilState(VideoStateAtom);
+    const setEventState = useSetRecoilState(CastEventAtom);
+    const setCastState = useSetRecoilState(ChromeCastStateAtom);
 
-    subscribe(user => {
-        if (user)
-            connect();
-        else
-            disconnect();
-    }, user?.channel);
+    useEffect(() => {
+        cast?.on(CastEventType.AVAILABLE, event => {
+            setCastState(prev => ({...prev, available: true}));
+            eventHandler(event);
+        })
+
+        cast?.on(CastEventType.DURATIONCHANGE, eventHandler)
+
+        cast?.on(CastEventType.PLAYING, eventHandler)
+
+        cast?.on(CastEventType.PAUSED, eventHandler)
+
+        cast?.on(CastEventType.VOLUMECHANGE, eventHandler)
+
+        cast?.on(CastEventType.CONNECT, event => {
+            setCastState(prev => ({...prev, casting: true}));
+            eventHandler(event);
+        })
+
+        cast?.on(CastEventType.DISCONNECT, () => {
+            setCastState(prev => ({...prev, casting: false}));
+            eventHandler(null);
+        })
+
+        cast?.on(CastEventType.TIMEUPDATE, eventHandler)
+
+        cast?.on(CastEventType.ERROR, event => {
+            confirmDispatch({
+                type: 'error', heading: 'Cast Error', message: event.error?.error || 'Unknown error'
+            })
+        })
+
+        cast?.on(CastEventType.END, () => eventHandler(null))
+
+        cast?.on(CastEventType.BUFFERING, eventHandler)
+
+        cast?.on(CastEventType.MUTED, eventHandler)
+    }, [cast]);
+
+    subscribe(({user , userState}) => {
+        disconnect();
+        timeOut.current && clearTimeout(timeOut.current);
+        if (user && userState !== undefined) {
+            timeOut.current = setTimeout(() => {
+                connect(user, userState);
+            }, 1000);
+        }
+    }, {user, userState: userState?.incognito});
 
     useEventListener('visibilitychange', () => {
         if (document.visibilityState !== 'visible')
@@ -342,6 +413,11 @@ export const Listeners = () => {
             modifyPresence('online');
     })
 
+    const eventHandler = useCallback((event: CastEvent | null) => {
+        setEventState(event);
+        if (event && event.state && event.state.time !== 0) setVideo(event.state);
+    }, [setEventState, setVideo])
+
     globalNotification.subscribe<NotificationInterface & { type: string }>('shout', data => {
         switch (data.type) {
             case 'maintenance':
@@ -349,8 +425,6 @@ export const Listeners = () => {
                     type: 'server',
                     heading: data.title,
                     message: data.message,
-                    onOk: () => {
-                    },
                 })
                 break;
             case 'error':
@@ -459,10 +533,10 @@ export const WatchListener = () => {
     const playback = usePlaybackControls(false);
     const confirmDispatch = useConfirmDispatch();
     const player = useRecoilValue(framesPlayer);
+    const userState = useRecoilValue(UserPlaybackSettingsContext);
     const setSubtitlesAndUpNext = useSetRecoilState(SubtitlesAndUpNextAtom);
     const setPipAndFullscreen = useSetRecoilState(PipAndFullscreenAtom);
     const setAirplay = useSetRecoilState(AirplayAtom);
-    const {current} = useRecoilValue(FramesInformAtom);
     const [upNext, setUpNext] = useRecoilState(UpNextAtom);
     const {share, download} = useRecoilValue(shareAndDownloadAtom);
     const setMessages = useSetRecoilState(GroupWatchMessages);
@@ -668,18 +742,20 @@ export const WatchListener = () => {
                 break;
 
             case 'request-sync':
-                if (leader) channel.send<GroupWatchMessage>('speak', {
-                    action: 'sync', username: user?.username || '', data: current, upNext: upNext,
+                if (leader) channel.send<GroupWatchMessage>('shout', {
+                    action: 'sync',
+                    username: user?.username || '',
+                    playData: playback.getCurrentTime(),
+                    upNext
                 });
+
+                await playback.playPause(true);
                 break;
 
             case 'sync':
-                const syncCurrent = Math.ceil(data as number);
-                const presentCurrent = Math.ceil(current);
-                if (presentCurrent + 1 < syncCurrent || presentCurrent - 1 > syncCurrent) {
-                    await playback.seekVideo(syncCurrent, 'current');
-                    setUpNext(msg || null);
-                }
+                if (playData) playback.seekVideo(playData, 'current');
+                await playback.playPause(true);
+                setUpNext(msg || upNext);
                 break;
 
             case 'says':
@@ -741,45 +817,48 @@ export const WatchListener = () => {
             case 'requestGroupWatchSession':
                 const stream = /\/(frame|watch|room)=\w/.test(router.asPath);
                 if (stream && videoState)
-                    confirmDispatch({
-                        type: 'user', heading: 'GroupWatch Session',
-                        message: `${user?.username} wants to join your GroupWatch Session`,
-                        confirm: true, confirmText: 'Accept', cancelText: 'Decline',
-                        onOk: async () => {
-                            let roomKey: string;
-                            if (!channel.connected) {
-                                const room = base.generateKey(13, 5);
-                                await genRoom(videoState.location, room);
-                                roomKey = room;
+                    if (userState?.incognito)
+                        globalNotification.whisper<NotificationInterface & { type: string }>(data.from, {
+                            type: 'error',
+                            title: 'User is incognito',
+                            message: `${user?.username} cannot GroupWatch because they are incognito`,
+                            opened: true,
+                            sender: user?.username || '',
+                            data: null
+                        })
+                    else
+                        confirmDispatch({
+                            type: 'user', heading: data.body.title, message: data.body.message,
+                            confirm: true, confirmText: 'Accept', cancelText: 'Decline',
+                            onOk: async () => {
+                                let roomKey: string;
+                                if (!channel.connected) {
+                                    const room = base.generateKey(13, 5);
+                                    await genRoom(videoState.location, room);
+                                    await router.replace(`/room=${room}`, undefined, {shallow: true})
+                                    roomKey = room;
 
-                            } else
-                                roomKey = room;
+                                } else
+                                    roomKey = room;
 
-                            globalNotification.whisper<NotificationInterface>(data.from, {
-                                type: 'groupWatchSession',
-                                data: {url: `${basics.getBaseUrl()}/room=${roomKey}`},
-                                title: 'GroupWatch session',
-                                message: `${user?.username} has accepted your request to join their GroupWatch session`,
-                                opened: true,
-                                sender: user?.username || '',
-                            })
-                            confirmDispatch({
-                                type: 'success',
-                                heading: 'GroupWatch session',
-                                message: `${data.body.sender} has joined a GroupWatch session with you`
-                            })
-                        },
-                        onCancel: async () => {
-                            globalNotification.whisper<NotificationInterface & { type: string }>(data.from, {
-                                type: 'error',
-                                title: 'Offer Declined',
-                                message: `${user?.username} declined your offer to join their GroupWatch session`,
-                                opened: true,
-                                sender: user?.username || '',
-                                data: null
-                            })
-                        }
-                    })
+                                globalNotification.whisper<NotificationInterface>(data.from, {
+                                    type: 'groupWatchSession',
+                                    data: {url: `${basics.getBaseUrl()}/room=${roomKey}`},
+                                    title: 'GroupWatch session',
+                                    message: `${user?.username} has accepted your request to join their GroupWatch session`,
+                                    opened: true,
+                                    sender: user?.username || '',
+                                });
+                            },
+                            onCancel: () => globalNotification.whisper<NotificationInterface & { type: string }>(data.from, {
+                                    type: 'error',
+                                    title: 'Offer Declined',
+                                    message: `${user?.username} declined your offer to join their GroupWatch session`,
+                                    opened: true,
+                                    sender: user?.username || '',
+                                    data: null
+                                })
+                        })
                 break;
         }
     });

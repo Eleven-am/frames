@@ -12,8 +12,9 @@ import {cleanUp, framesVideoStateAtom} from "../client/utils/playback";
 import {Role} from "@prisma/client";
 import {GroupWatchSlide} from "../client/next/components/lobby/groupWatchHandler";
 import {Loading} from "../client/next/components/misc/Loader";
+import {useGroupWatch} from "../client/utils/groupWatch";
 
-export default function Watch({media, metaTags, room}: { media: SpringPlay, metaTags: MetaTags, room?: string }) {
+export default function Watch({media, metaTags, room}: { media: SpringPlay, metaTags: MetaTags, room: string | null }) {
     const reset = cleanUp();
     const {isMounted} = useBasics();
     useNavBar('watch', 1, metaTags);
@@ -21,6 +22,7 @@ export default function Watch({media, metaTags, room}: { media: SpringPlay, meta
     const alreadyStreaming = useRecoilValue(AlreadyStreamingAtom);
     const {loading, router} = useDetectPageChange(false);
     const {modifyPresence, broadcastToSelf, user, signAsGuest, signOut} = useNotifications();
+    const {connected, openSession} = useGroupWatch();
 
     const {clear, restart} = useInterval(() => {
         if (isMounted())
@@ -50,9 +52,10 @@ export default function Watch({media, metaTags, room}: { media: SpringPlay, meta
     }, alreadyStreaming);
 
     useEffect(() => {
-        const {logo, name, overview, backdrop} = media;
         setResponse(media);
-        !media.frame && room === undefined && router.replace('/watch=' + media.location, undefined, {shallow: true});
+        const {logo, name, overview, backdrop} = media;
+        room && !connected && openSession({id: media.mediaId, auth: room});
+        !media.frame && room === null && router.replace('/watch=' + media.location, undefined, {shallow: true});
         modifyPresence(`watching ${name}`, {logo, name, overview, backdrop});
         return () => reset(async (response) => {
             await modifyPresence('online');
@@ -66,7 +69,7 @@ export default function Watch({media, metaTags, room}: { media: SpringPlay, meta
             if (user?.role === Role.GUEST && response?.frame)
                 await signOut();
         });
-    }, [media]);
+    }, [media, room]);
 
     if (display)
         return <Loading/>
@@ -132,6 +135,7 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
         if (response) {
             const location = playbackKey === 'FRAME' ? '/frame=' : playbackKey === 'ROOMKEY' ? '/room=' : '/watch=';
             const address = location === '/watch=' ? response.location : media;
+            const room = playbackKey === 'ROOMKEY' ? media : null;
             const metaTags: MetaTags = {
                 name: response.episodeName || response.name,
                 overview: response.overview,
@@ -145,7 +149,7 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
             return {
                 props: {
                     metaTags,
-                    media: response
+                    media: response, room
                 }
             }
         }

@@ -2,7 +2,7 @@ import {useFetcher} from "../../../../utils/customHooks";
 import ss from "../ACCOUNT.module.css";
 import Library from "./library";
 import ManageKeys from "./manageKeys";
-import Picks from "./Picks";
+import Picks from "./picks";
 import GetContents from "./getContents";
 import {useManageSections} from "../../../../utils/modify";
 

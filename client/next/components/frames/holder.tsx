@@ -13,15 +13,14 @@ import usePlaybackControls, {
 import {useRecoilValue} from "recoil";
 import Settings from "./conrols/settings";
 import {Loading} from "../misc/Loader";
+import {HoverContainer} from "../buttons/Buttons";
 
-export default function FrameHolder({room}: { room?: string }) {
+export default function FrameHolder({room}: { room: string | null }) {
     const diff = useRecoilValue(differance);
     const {
         showControls,
         getEverything,
         playPause,
-        toggleSession,
-        connected,
         lobbyOpen,
         groupWatch: {updateRoom}
     } = usePlaybackControls(true);
@@ -29,14 +28,13 @@ export default function FrameHolder({room}: { room?: string }) {
     const fsADDR = useRecoilValue(fullscreenAddressAtom);
     const media = useRecoilValue(framesVideoStateAtom);
 
-    subscribe(async media => {
+    subscribe(async ({media}) => {
         if (media) {
             await updateRoom(media.location);
-            room && !connected && await toggleSession();
-            showControls();
             await getEverything(media);
+            showControls();
         }
-    }, media);
+    }, {media, room});
 
     useEventListener('contextmenu', (ev) => {
         ev.preventDefault();
@@ -54,12 +52,12 @@ export default function FrameHolder({room}: { room?: string }) {
                     <>
                         <Buffer/>
                         <SubDisplay/>
-                        <div className={ss.ch} onMouseMove={showControls} onClick={() => playPause()}>
+                        <HoverContainer className={ss.ch} onMove={showControls} onClick={playPause}>
                             <Overview/>
                             <div className={controls ? ss.cc : `${ss.cc} ${ss.mvr}`}>
                                 <ControlsHolder/>
                             </div>
-                        </div>
+                        </HoverContainer>
                     </>
                 }
             </div>

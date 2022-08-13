@@ -27,14 +27,14 @@ export default function Holder({response}: { response: ProductionCompanyInterfac
 }
 
 export function CollectionHolder({response}: { response: FramesCollections }) {
-    const {response: data} = useFetcher<PlayListResponse | null>('/api/media/collectionPlaylist?mediaId=' + response.id, {
+    const {response: mediaId} = useFetcher<number | null>('/api/media/firstVideoInCollection?mediaId=' + response.id, {
         revalidateOnFocus: false,
     });
 
-    if (data)
+    if (mediaId)
         return (
             <>
-                <Link href={'/watch?playlistId=' + data.id}>
+                <Link href={'/watch?mediaId=' + mediaId}>
                     <span className={styles.image}>{response.name}</span>
                 </Link>
                 <div className={styles.holder}>

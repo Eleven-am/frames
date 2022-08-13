@@ -1,6 +1,6 @@
 import ss from './Styles.module.css';
 import styles from '../../grid/List.module.css';
-import {useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {GenreHolderContextAtom, useDecadeContext, useGenreContext} from "../browseContext";
 import useOnScroll from "../../../../utils/opacityScroll";
 import {useRecoilValue} from "recoil";
@@ -13,7 +13,7 @@ const useScroll = () => {
     const [atRight, setAtRight] = useState(false);
     const scrollTimeout = useRef<NodeJS.Timeout>();
 
-    const scrollLeft = () => {
+    const scrollLeft = useCallback(() => {
         if (list.current && childIndex > 0) {
             scrollTimeout.current && clearTimeout(scrollTimeout.current);
             const newIndex = childIndex - 1;
@@ -27,9 +27,9 @@ const useScroll = () => {
                     list.current.style.overflow = 'hidden';
             }, 200);
         }
-    }
+    } , [childIndex]);
 
-    const scrollRight = () => {
+    const scrollRight = useCallback(() => {
         if (list.current && childIndex < list.current.children.length - 1) {
             scrollTimeout.current && clearTimeout(scrollTimeout.current);
             const newIndex = childIndex + 1;
@@ -43,11 +43,11 @@ const useScroll = () => {
                     list.current.style.overflow = 'hidden';
             }, 200);
         }
-    }
+    } , [childIndex]);
 
-    const setList = (outList: HTMLUListElement) => {
+    const setList = useCallback((outList: HTMLUListElement) => {
         list.current = outList;
-    }
+    } , []);
 
     return {scrollLeft, scrollRight, setList, atLeft, atRight};
 }

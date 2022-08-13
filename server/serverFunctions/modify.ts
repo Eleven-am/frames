@@ -89,15 +89,16 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
 
         case 'download':
             const downRes = await deluge.addMagnet(body.tmdbId, body.type);
+            await deluge.download(downRes?.url || '');
             response = !!downRes;
             break;
 
         case 'watchHistory':
-            response = await user.getWatchHistory(userId, +req.query.page, +req.query.limit);
+            response = await user.getWatchHistory(userId, +body.page, +body.limit);
             break;
 
         case 'myList':
-            response = await user.getMyList(userId, +req.query.page, +req.query.limit);
+            response = await user.getMyList(userId, +body.page, +body.limit);
             break;
 
         case 'addToPlaylist':
@@ -126,6 +127,10 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
 
         case 'getUserSettings':
             response = await user.getUserPlaybackSettings(userId);
+            break;
+
+        case 'deleteWatchEntry':
+            response = await user.deleteWatchEntry(userId, +body.id);
             break;
     }
 

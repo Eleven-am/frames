@@ -80,7 +80,7 @@ export const useBrowseContext = (load = false) => {
                 return {genre};
             }).filter(item => item.genre !== '');
             genres = base.sortArray(base.uniqueId(genres, 'genre'), 'genre', 'asc');
-            setDefaultGenresAndDecades(genres.map(item => item.genre),);
+            setDefaultGenresAndDecades(genres.map(item => item.genre));
 
         } else
             setDefaultGenresAndDecades([]);

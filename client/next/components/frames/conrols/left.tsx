@@ -29,7 +29,7 @@ export default function LeftControls() {
         setVolume(pos, false);
     }, [setVolume]);
 
-    const handlePlaylistClick = async () => {
+    const handlePlaylistClick = useCallback( async () => {
         dispatch({
             type: 'error',
             heading: 'Feature Not Available',
@@ -39,7 +39,7 @@ export default function LeftControls() {
             // await playback.playPause(false);
             // await addVideoToPlaylist(response.videoId);
         }
-    }
+    }, [response, dispatch]);
 
     return (
         <div style={isMobile || left ? {opacity: 1} : {}} className={`${styles.a} ${styles.left}`}

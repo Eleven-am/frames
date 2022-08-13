@@ -61,7 +61,7 @@
     stroke-width: 3;
     margin: 0 4px;
     stroke: rgba(217, 238, 255, .4);
-    transition: all .2s ease-in-out;
+    transition: all .05s ease-in-out;
     cursor: pointer;
 }
 

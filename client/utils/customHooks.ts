@@ -1,5 +1,3 @@
-import {AbortController} from "node-abort-controller";
-import fetch from 'cross-fetch';
 import useSWR, {SWRConfiguration} from "swr";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {atomFamily, useRecoilState} from "recoil";
@@ -229,17 +227,18 @@ export const useLoop = (initialState: { start: number, end: number }) => {
 
     const {clear, restart} = useInterval(() => setState(state => {
         return {...state, start: state.end - 1 < state.start + 1 ? 0 : state.start + 1}
-    }), 5, false);
+    }), 20, false);
 
     const switchTo = useCallback((start: number, end: number) => {
+        clear();
         setState({start, end});
         restart();
-    }, []);
+    }, [clear, restart])
 
     return {current: state.start, prev: state.start === 0 ? state.end : state.start - 1, clear, restart, switchTo};
 }
 
-const hookChangeAtomFamily = atomFamily<any, string>({
+export const hookChangeAtomFamily = atomFamily<any, string>({
     key: 'hookChangeAtomFamily',
     default: undefined
 })
@@ -594,6 +593,22 @@ export function useInfiniteScroll<T>(address: string) {
     }, [hasMore, loading, loadMore]);
 
     return {data, loading, hasMore, setData, handleScroll};
+}
+
+export const useTimer = () => {
+    const timOut = useRef<NodeJS.Timeout>();
+
+    const start = useCallback((callback: () => void, time: number) => {
+        timOut.current = setTimeout(() => {
+            callback();
+        }, time);
+    }, []);
+
+    const stop = useCallback(() => {
+        timOut.current && clearTimeout(timOut.current);
+    }, []);
+
+    return {start, stop};
 }
 
 export const useHomeSegments = () => {

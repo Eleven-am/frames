@@ -6,7 +6,7 @@ import {tmdbEpisode, tmdbMedia} from "./tmdb";
 import Drive from "./drive";
 import path from "path";
 import rename from "locutus/php/strings/strtr";
-import {dicDo} from "./stringExt";
+import {dicDo} from "./base";
 
 const OS = require('opensubtitles-api');
 
@@ -234,13 +234,10 @@ export default class MediaClass extends Base {
                 .filter(e => !episodes.find(ep => ep.seasonId === e.season_number && ep.episode === e.episode_number))
                 .filter(e => Date.now() > new Date(e.air_date).getTime());
 
-            const data: ({ url: string, size: string } | null)[] = [];
-            for await (const m of missingSeason)
-                data.push(await this.deluge.addSeasonTorrent(media.tmdbId, m.seasonId));
+            let promises = missingSeason.map(e => this.deluge.addSeasonTorrent(media.tmdbId, e.seasonId))
+                .concat(missingEpisodes.map(e => this.deluge.addSeasonTorrent(media.tmdbId, e.season_number, e.episode_number)));
 
-            for await (const m of missingEpisodes)
-                data.push(await this.deluge.addSeasonTorrent(media.tmdbId, m.season_number, m.episode_number));
-
+            const data = await Promise.all(promises);
             await this.deluge.addTorrents(data);
         }
     }
@@ -856,8 +853,8 @@ export default class MediaClass extends Base {
             return {
                 tmdbId: item.id,
                 name: item.title || item.name || '',
-                drift: this.prepareString(item.title || item.name || '').Levenshtein(name),
                 popularity: item.popularity,
+                drift: this.levenshtein(name, this.prepareString(item.title || item.name || '')),
                 backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
                 year: new Date(type === MediaType.MOVIE ? item.release_date : item.first_air_date).getFullYear()
             }
@@ -1217,11 +1214,11 @@ export default class MediaClass extends Base {
         const intersection = media.filter(m => mediaDBs.find(db => db.tmdbId === m.id));
         const excluded = media.filter(m => !intersection.find(i => i.id === m.id));
         const mediaToAdd: FrontMediaSearch[] = excluded.map(m => ({
-            drift: query.Levenshtein(m.name || m.title || ''),
             tmdbId: m.id,
             name: m.name || m.title || '',
             inLibrary: false,
             libraryName: null,
+            drift: this.levenshtein(query, m.name || m.title || ''),
             year: new Date(m.release_date || m.first_air_date).getFullYear(),
             libraryLocation: null
         }));
@@ -1229,11 +1226,11 @@ export default class MediaClass extends Base {
         const existsInDb: FrontMediaSearch[] = intersection.map(m => {
             const media = mediaDBs.find(db => db.tmdbId === m.id);
             return {
-                drift: query.Levenshtein(m.name || m.title || ''),
                 tmdbId: m.id,
                 name: m.name || m.title || '',
                 inLibrary: true,
                 libraryName: media?.name || null,
+                drift: this.levenshtein(query, m.name || m.title || ''),
                 year: new Date(m.release_date || m.first_air_date).getFullYear(),
                 libraryLocation: media?.folder?.location || media?.videos[0].location || null
             }
@@ -1450,7 +1447,7 @@ export default class MediaClass extends Base {
                 const words = e.name.split(' ');
                 const data = this.sortArray(words.map(e => {
                     return {
-                        diff: searchValue.Levenshtein(e),
+                        diff: this.levenshtein(searchValue, e),
                     }
                 }), 'diff', 'asc');
                 return {...e, diff: data[0].diff}
@@ -1530,6 +1527,25 @@ export default class MediaClass extends Base {
         }
 
         return returnSubs;
+    }
+
+    /**
+     * @desc gets the first video of a media in a collection
+     * @param itemId - the id of the collection to get the video for
+     */
+    public async getFirstVideoInCollection(itemId: number): Promise<number | null> {
+        let collection = await this.prisma.media.findMany({
+            where: {
+                collection: {
+                    path: ['id'], equals: itemId
+                }
+            }, orderBy: {release: 'asc'}
+        });
+
+        if (collection.length > 0)
+            return collection[0].id;
+
+        else return null;
     }
 
     /**

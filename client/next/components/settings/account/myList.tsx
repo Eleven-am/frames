@@ -5,6 +5,7 @@ import ss from "../ACCOUNT.module.css";
 import {UserResponse, UserSettings} from "./watchHistory";
 import {MyList} from "../../../../../server/classes/user";
 import {useConfirmDispatch} from "../../../../utils/notifications";
+import {useCallback} from "react";
 
 export default function YourList() {
     const confirmAction = useConfirmDispatch();
@@ -15,22 +16,17 @@ export default function YourList() {
         handleScroll
     } = useInfiniteScroll<MyList>('/api/modify/myList?limit=75');
 
-    const onClick = (id: number) => {
+    const onClick = useCallback((id: number) => {
         confirmAction({
             type: 'warn',
             heading: "Delete watch entry?",
             message: "Are you sure you want to delete this watch entry?",
-            onOk: async () => {
-                await deleteFromMyList(id, setResponse);
-            },
-            onCancel() {
-                console.log("Cancel");
-            },
+            onOk: () => deleteFromMyList(id, setResponse),
             confirm: true,
             confirmText: "Delete",
             cancelText: "Cancel"
         });
-    }
+    } , [deleteFromMyList, confirmAction, setResponse]);
 
     if (response.length < 1)
         return <Loading/>

@@ -1,6 +1,6 @@
 import {Dispatch, SetStateAction, useCallback, useEffect, useState} from "react";
 import {atom, selector, useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
-import {FrontImages, tmdbMedia} from "../../server/classes/tmdb";
+import {tmdbMedia} from "../../server/classes/tmdb";
 import {MediaType, PickType} from "@prisma/client";
 import {WatchHistory} from "../../server/classes/playback";
 import {PickSummary, UpdateSearch} from "../../server/classes/pickAndFrame";
@@ -89,7 +89,7 @@ export const GetSearchContext = atom<{ data: GetContentSearch[], loading: boolea
     },
 })
 
-const UserPlaybackSettingsContext = atom<PlaybackSettings | null>({
+export const UserPlaybackSettingsContext = atom<PlaybackSettings & {timestamp: number} | null>({
     key: 'userPlaybackSettings',
     default: null,
 })
@@ -267,37 +267,64 @@ export const useManageSections = (response?: string[], step2 = true): [s: string
 
 export const useManageUserInfo = () => {
     const base = useBase();
+    const dispatch = useConfirmDispatch();
     const [playback, setPlaybackSettings] = useRecoilState(UserPlaybackSettingsContext);
 
     const deleteWatchEntry = useCallback(async (id: number, setResponse: Dispatch<SetStateAction<WatchHistory[]>>) => {
-        await base.makeRequest<boolean>(`/api/modify/deleteWatchEntry?id=${id}`, null);
-        setResponse(prev => prev.filter(e => e.watchedId !== id));
-    }, [base]);
+        const data = await base.makeRequest<boolean>(`/api/modify/deleteWatchEntry?id=${id}`, null);
+        if (data)
+            setResponse(prev => prev.filter(e => e.watchedId !== id));
+
+        dispatch({
+            type: data ? 'success' : 'error',
+            heading: data ? 'Watch entry deleted' : 'Watch entry failed to delete',
+            message: data ? 'The watch entry has been deleted' : 'The watch entry failed to delete, something went wrong'
+        })
+    }, [base, dispatch]);
 
     const deleteFromMyList = useCallback(async (id: number, setResponse: Dispatch<SetStateAction<MyList[]>>) => {
-        await base.makeRequest<boolean>(`/api/media/addToList?mediaId=${id}`, null);
-        setResponse(prev => prev.filter(e => e.id !== id));
-    }, [base]);
+        const data = await base.makeRequest<boolean>(`/api/media/addToList?mediaId=${id}`, null);
+        if (data === false)
+            setResponse(prev => prev.filter(e => e.id !== id));
+
+        dispatch({
+            type: data === false ? 'success' : 'error',
+            heading: data === false ? 'Media removed from list' : 'Media failed to remove from list',
+            message: data === false ? 'The media has been removed from the list' : 'The media failed to remove from the list, something went wrong'
+        })
+    }, [base, dispatch]);
 
     const getUserDetails = useCallback(async () => {
         const details = await base.makeRequest<PlaybackSettings>(`/api/modify/getUserSettings`, null);
         if (details)
-            setPlaybackSettings(details);
+            setPlaybackSettings({...details, timestamp: Date.now()});
     }, [base, setPlaybackSettings]);
 
     const goIncognito = useCallback(async (b: boolean) => {
-        const data = {...playback, inform: !b};
-        await base.makeRequest(`/api/modify/modifyPlaybackInfo`, data);
+        const playbackInfo: any = {...playback, inform: b};
+        delete playbackInfo.timestamp;
+        const data = {process: 'modifyPlaybackInfo', playbackInfo};
+        await base.makeRequest(`/api/auth`, data, 'POST');
         await getUserDetails();
-    }, [playback]);
+    }, [base, getUserDetails, playback]);
 
     const setAutoPlay = useCallback(async (b: boolean) => {
-        const data = {...playback, autoPlay: b};
-        await base.makeRequest(`/api/modify/modifyPlaybackInfo`, data);
+        const playbackInfo: any = {...playback, autoplay: b};
+        delete playbackInfo.timestamp;
+        const data = {process: 'modifyPlaybackInfo', playbackInfo};
+        await base.makeRequest(`/api/auth`, data, 'POST');
         await getUserDetails();
-    }, [playback]);
+    }, [base, getUserDetails, playback]);
 
-    return {deleteWatchEntry, deleteFromMyList, setAutoPlay, goIncognito, getUserDetails, settings: playback}
+    const channelIncognito = useCallback(async (b: boolean) => {
+        const playbackInfo: any = {...playback, incognito: b};
+        delete playbackInfo.timestamp;
+        const data = {process: 'modifyPlaybackInfo', playbackInfo};
+        await base.makeRequest(`/api/auth`, data, 'POST');
+        await getUserDetails();
+    }, [base, getUserDetails, playback]);
+
+    return {deleteWatchEntry, deleteFromMyList, setAutoPlay, goIncognito, getUserDetails, channelIncognito, settings: playback}
 }
 
 export default function useModify() {
@@ -315,10 +342,6 @@ export default function useModify() {
             setMedia({...med, location});
         }
     }, [base, setMedia]);
-
-    const getImages = useCallback(async (tmdbId: number, type: MediaType, name: string, year: number) => {
-        return await base.makeRequest<FrontImages>('/api/modify/getImages', {tmdbId, name, type, year}, 'POST');
-    }, [base]);
 
     const modifyMedia = useCallback(async (cb: () => void) => {
         if (isNaN(media.tmdbId) || media.poster === '' || media.backdrop === '' || media.name === '') {
@@ -446,6 +469,12 @@ export default function useModify() {
                 heading: `All media scanned successfully`,
                 message: `All media has been scanned successfully`,
             });
+        }).catch(() => {
+            dispatch({
+                type: 'error',
+                heading: 'Error scanning media',
+                message: `There was an error scanning all media`,
+            });
         }).finally(async () => {
             const moddedMedia = await base.makeRequest<SpringMedia>('/api/modify/getModdedMedia', {mediaId: media.mediaId}, 'POST');
             setMediaData(moddedMedia);
@@ -464,7 +493,13 @@ export default function useModify() {
                 heading: `All media scanned successfully`,
                 message: `All media has been scanned successfully`,
             });
-        });
+        }).catch(() => {
+            dispatch({
+                type: 'error',
+                heading: 'Error scanning media',
+                message: `There was an error scanning all media`,
+            });
+        })
     }, [base, dispatch]);
 
     const scanAllSubs = useCallback(() => {
@@ -478,6 +513,12 @@ export default function useModify() {
                 type: 'success',
                 heading: `All media scanned successfully`,
                 message: `All media has been scanned successfully`,
+            });
+        }).catch(() => {
+            dispatch({
+                type: 'error',
+                heading: 'Error scanning media',
+                message: `There was an error scanning all media`,
             });
         });
     }, [base, dispatch]);
@@ -494,11 +535,17 @@ export default function useModify() {
                 heading: `Episodes scanned successfully`,
                 message: `All episodes for all media has been scanned successfully`,
             });
-        });
+        }).catch(() => {
+            dispatch({
+                type: 'error',
+                heading: 'Error scanning episodes',
+                message: `There was an error scanning all episodes`,
+            });
+        })
     }, [base, dispatch]);
 
     return {
-        scanMedia, getMedia, deleteMedia, getImages,
+        scanMedia, getMedia, deleteMedia,
         modifyMedia, modifyEpisode, scanAllEpisodes,
         getMediaInfo, scanAllMedia, scanSubs, scanAllSubs,
     };

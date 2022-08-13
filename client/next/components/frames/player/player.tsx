@@ -43,7 +43,8 @@ export default function FramesPlayer() {
                 onError={handleError}
                 onPlay={handlePlayPause}
                 onPause={handlePlayPause}
-                ref={player} className={diff ? cd.count : cd.frames} preload="metadata"
+                ref={player} className={diff ? cd.count : cd.frames}
+                preload="metadata" playsInline autoPlay controls={false}
             >
                 <source src={response.cdn + response.location} type="video/mp4"/>
                 {response.subs.map((e, v) => <track key={v} kind="subtitles" label={e.label} srcLang={e.lang}

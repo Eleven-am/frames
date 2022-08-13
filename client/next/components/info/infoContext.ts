@@ -2,7 +2,7 @@ import {atom, selector, useRecoilState, useResetRecoilState} from 'recoil';
 import {SpringMedUserSpecifics} from "../../../../server/classes/user";
 import {SpringMedia} from "../../../../server/classes/media";
 import useNotifications from "../../../utils/notifications";
-import {useCallback} from "react";
+import React, {useCallback} from "react";
 import useBase from "../../../utils/provider";
 import {mutate} from "swr";
 import {MediaType} from "@prisma/client";
@@ -116,7 +116,7 @@ export const useInfoContext = () => {
         await mutate('/api/load/continue')
         if (info.type !== MediaType.MOVIE)
             await updateInfo();
-    }, [info, infoUser, setInfoUser, setInfo]);
+    }, [info, infoUser, updateInfo]);
 
     const toggleAddToList = useCallback(async () => {
         if (!info)
@@ -128,7 +128,18 @@ export const useInfoContext = () => {
         }
         await fetch(`/api/media/addToList?mediaId=${info.id}`);
         await mutate('/api/load/myList');
-    }, [info, infoUser, setInfoUser, setInfo]);
+    }, [info, infoUser, setInfoUser]);
 
-    return {getUserInfo, updateInfo, toggleSeen, toggleAddToList}
+    const rateMedia = useCallback(async (event: React.MouseEvent) => {
+        const box = event.currentTarget.getBoundingClientRect();
+        const rating = ((event.clientX - box.left) / (box.right - box.left)) * 100;
+        if (!info)
+            return;
+
+        if (infoUser)
+            setInfoUser({...infoUser, rating: `${rating}%`});
+        await fetch(`/api/media/rate?mediaId=${info.id}&rate=${Math.floor(rating / 10)}`);
+    }, [info, infoUser, setInfoUser]);
+
+    return {getUserInfo, updateInfo, toggleSeen, toggleAddToList, rateMedia}
 }
