@@ -34,13 +34,13 @@ const framesConfig = {
         password: '' // The password for the open subtitles api.
     },
     credentials: { // Your google api credentials.
-        "client_id": "148770012835-qhftfj9v65jsnrfvn4l80av2vvt4iphq.apps.googleusercontent.com",
-        "project_id": "freames",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret": "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",
-        "redirect_uris": ["http://localhost:5000"]
+        client_id: "", // Your client id.
+        project_id: "", // Your project id.
+        auth_uri: "", // Your auth uri.
+        token_uri: "", // Your token uri.
+        auth_provider_x509_cert_url: "", // Your auth provider x509 cert url.
+        client_secret: "", // Your client secret.
+        redirect_uris: [""] // Your redirect uris.
     },
     privateConfig: {
         cdn: '/api/streamVideo?auth=', // The url to stream a file from || could also be a link to a cloudflare worker.
