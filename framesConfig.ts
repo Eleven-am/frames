@@ -34,13 +34,13 @@ const framesConfig = {
         password: '' // The password for the open subtitles api.
     },
     credentials: { // Your google api credentials.
-        client_id: "", // Your client id.
-        project_id: "", // Your project id.
-        auth_uri: "", // Your auth uri.
-        token_uri: "", // Your token uri.
-        auth_provider_x509_cert_url: "", // Your auth provider x509 cert url.
-        client_secret: "", // Your client secret.
-        redirect_uris: [""] // Your redirect uris.
+        "client_id": "148770012835-qhftfj9v65jsnrfvn4l80av2vvt4iphq.apps.googleusercontent.com",
+        "project_id": "freames",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": "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",
+        "redirect_uris": ["http://localhost:5000"]
     },
     privateConfig: {
         cdn: '/api/streamVideo?auth=', // The url to stream a file from || could also be a link to a cloudflare worker.
@@ -88,9 +88,10 @@ const getCypherAndRefreshToken = async (secret: string): Promise<{cypher: string
 }
 
 const configFunction = async () => {
+    const realTimeApiKey =  '';
     const secret  = restAPI.createUUID(); // Create a secret for the rest api.
     const notificationId = restAPI.generateKey(32, 1); // Create a notification id for the rest api.
-    const {cypher, refreshToken: realTimeApiKey} = await getCypherAndRefreshToken(secret); // Get the cypher and refresh token from the rest api.
+    const {cypher} = await getCypherAndRefreshToken(secret); // Get the cypher and refresh token from the rest api.
     const googleToken = await getAccessToken(framesConfig.credentials.client_id, framesConfig.credentials.client_secret, framesConfig.credentials.redirect_uris[0]); // Get the google token.
     if (googleToken === null)
         throw new Error('Could not get google token.');

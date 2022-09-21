@@ -1,5 +1,6 @@
 import {MediaType} from "@prisma/client";
 import rename from "locutus/php/strings/strtr";
+import fetch from "cross-fetch";
 
 export const dicDo = {
     "mp4": "", "m4v": "", "264": "",

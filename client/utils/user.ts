@@ -54,7 +54,7 @@ const Loading = atom<boolean>({
     default: true
 })
 
-const ENDPOINT = 'https://frameshomebase.vercel.app/api/oauth?type=';
+const ENDPOINT = 'https://frameshomebase.maix.ovh/api/oauth?type=';
 export type Provider = 'google' | 'facebook' | 'spotify';
 
 export default function useUser() {
