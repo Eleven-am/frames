@@ -1,26 +1,10 @@
-import {
-    createContext,
-    Dispatch,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useReducer,
-    useRef,
-    useState
-} from "react";
-import {default_t, useEventEmitter} from "./customHooks";
-import {Channel, Presence, Socket} from 'phoenix';
+import {createContext, memo, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState} from "react";
+import {Channel, Presence, Socket} from "phoenix";
+import {default_t, useBasics} from "./customHooks";
 import useBase from "./provider";
+import {BehaviorSubject, Subject} from "rxjs";
 
-const RealtimeContext = createContext<{ state: UseChannelInterface[], dispatch: Dispatch<{ info: 'connect' | 'disconnect', topic: string, params: default_t, socket: Socket }>, socket: any }>({
-    state: [],
-    dispatch: () => {
-    },
-    socket: null
-});
-
-export interface PresenceInterface {
+export interface PresenceInterface<T = any> {
     username: string;
     online_at: string;
     reference: string;
@@ -28,45 +12,34 @@ export interface PresenceInterface {
     identifier: string;
     phx_ref: string;
     phx_ref_prev?: string;
-    metadata: default_t;
+    metadata: default_t<T>;
 }
 
 type RealtimeReference = { message: string, username: string, reference: string };
 
-interface UseChannelInterface {
-    topic: string;
-    channel: Channel;
-    connecting: boolean;
+type RealtimeChannel = {
+    channel: Channel,
+    presence: Presence,
+    users: BehaviorSubject<PresenceInterface[]>
+    reference: BehaviorSubject<RealtimeReference | undefined>
+    joined: Subject<PresenceInterface>
+    left: Subject<PresenceInterface>
+    message: Subject<{event: string, data: any}>
 }
 
-interface EventInterface {
-    event: 'whisper' | 'shout' | 'response';
-    message: any
+interface RealtimeContextProps {
+    channels: Map<string, RealtimeChannel>;
+    socket: Socket | null;
+    connect: (topic: string, params: default_t) => void;
+    disconnect: (topic: string) => void;
 }
 
-export interface PrevMessages<S> {
-    messages: { content: S, recipient: string, sender: string }[]
-}
-
-function reducer(state: UseChannelInterface[], action: { info: 'connect' | 'disconnect', topic: string, params: default_t, socket: Socket }): UseChannelInterface[] {
-    switch (action.info) {
-        case 'connect':
-            const sock = state.find(s => s.topic === action.topic);
-            if (sock || !action.socket)
-                return state;
-
-            const channel = action.socket.channel(action.topic, action.params);
-            return [...state, {topic: action.topic, channel, connecting: true}];
-
-        case 'disconnect':
-            const disconnect = state.find(s => s.topic === action.topic);
-            const newState = state.filter(s => s.topic !== action.topic);
-            if (disconnect)
-                disconnect.channel.leave();
-
-            return newState;
-    }
-}
+const RealTimeContext = createContext<RealtimeContextProps>({
+    channels: new Map(),
+    socket: null,
+    connect: () => {},
+    disconnect: () => {}
+});
 
 interface RealtimeProps {
     children: ReactNode;
@@ -74,12 +47,79 @@ interface RealtimeProps {
     endpoint: string;
     onConnect?: (socket: Socket) => void;
     onDisconnect?: (socket: Socket) => void;
-    onError?: (error: any) => void;
+    onError?: (error: Error) => void;
 }
 
-export const RealtimeConsumer = ({token, endpoint, children, onError, onConnect, onDisconnect}: RealtimeProps) => {
-    const [socket, setSocket] = useState<Socket>();
-    const [state, dispatch] = useReducer(reducer, []);
+export const RealtimeConsumer = memo(({children, token, endpoint, onError, onConnect, onDisconnect}: RealtimeProps) => {
+    const base = useBase();
+    const [socket, setSocket] = useState<Socket | null>(null);
+    const [channels, setChannels] = useState<Map<string, RealtimeChannel>>(new Map());
+
+    const handleSync = useCallback((presence: Presence) => {
+        const presences: { metas: PresenceInterface<any>[] }[] = presence.list() ?? [];
+        return presences.map(e => base.sortArray(e.metas, 'online_at', 'desc')[0]);
+    }, [base]);
+
+    const connect = useCallback((topic: string, params: default_t) => {
+        if (socket) {
+            const channel = socket.channel(topic, params);
+            const presence = new Presence(channel);
+            const joined = new Subject<PresenceInterface>();
+            const left = new Subject<PresenceInterface>();
+            const users = new BehaviorSubject<PresenceInterface[]>([]);
+            const message = new Subject<{event: string, data: any}>();
+            const reference = new BehaviorSubject<RealtimeReference | undefined>(undefined);
+
+            presence.onJoin((id, current, newPresence) => {
+                if (!current)
+                    joined.next(newPresence.metas[0]);
+            });
+
+            presence.onLeave((id, current, leftPress) => {
+                if (current.metas.length === 0)
+                    left.next(leftPress.metas[0]);
+            });
+
+            presence.onSync(() => {
+                const presences = handleSync(presence);
+                users.next(presences);
+            });
+
+            channel.onMessage = (event, data) => {
+                if (event === 'inform')
+                    reference.next(data);
+
+                else
+                    message.next({event, data});
+
+                return data;
+            };
+
+            setChannels(channels => new Map(channels.set(topic, {channel, presence, reference, joined, left, users, message})));
+            channel.join()
+                .receive("ok", () => {
+                    const presences = handleSync(presence);
+                    users.next(presences);
+                });
+
+            channel.onClose(() => {
+                users.next([]);
+                reference.next(undefined);
+            });
+        }
+    }, [socket]);
+
+    const disconnect = useCallback((topic: string) => {
+        if (socket) {
+            const channel = channels.get(topic)?.channel;
+            if (channel) {
+                channel.leave();
+                const tempChannels = new Map(channels);
+                tempChannels.delete(topic);
+                setChannels(tempChannels);
+            }
+        }
+    }, [socket, channels]);
 
     const generateSocket = useCallback(() => {
         if (token !== '' && endpoint !== '') {
@@ -118,174 +158,169 @@ export const RealtimeConsumer = ({token, endpoint, children, onError, onConnect,
     }, [endpoint, token]);
 
     return (
-        <RealtimeContext.Provider value={{socket, state, dispatch}}>
-            {state.map(e => <ChannelComponent {...e} key={e.topic}/>)}
+        <RealTimeContext.Provider value={{socket, channels, connect, disconnect}}>
             {children}
-        </RealtimeContext.Provider>
-    );
-}
+        </RealTimeContext.Provider>
+    )
+})
 
-const ChannelComponent = ({channel: chan, topic, connecting}: UseChannelInterface) => {
-    const base = useBase();
-    const {socket, dispatch} = useContext(RealtimeContext);
-    const presence = useRef<Presence>();
-    const {emit: setOnJoin} = useEventEmitter<PresenceInterface>(`${topic}:join`);
-    const {emit: setOnLeave} = useEventEmitter<PresenceInterface>(`${topic}:leave`);
-    const {emit: setOnUpdate} = useEventEmitter<PresenceInterface[]>(`${topic}:update`);
-    const {emit: setReference} = useEventEmitter<RealtimeReference | null>(`${topic}:reference`);
-    const {emit: setOnConnection} = useEventEmitter<boolean>(`${topic}:connect`);
-    const {emit: setOnMessage} = useEventEmitter<EventInterface>(`${topic}:newMessage`);
-    const {emit: setPreviousMessages} = useEventEmitter<any>(`${topic}:previousMessages`);
+export const useChannel = (channelName: string, options: { username: string, identifier: string }) => {
+    const {isMounted} = useBasics();
+    const {socket, connect: open, disconnect: close, channels} = useContext(RealTimeContext);
+    const messageHandlers = useRef<Map<string, ((data: any) => void)>>(new Map());
+    const [reference, setReference] = useState<RealtimeReference | undefined>(undefined);
+    const [online, setOnline] = useState<PresenceInterface[]>([]);
+    const [previousMessages, setPreviousMessages] = useState<any[]>([]);
 
-    const connectAndMaintainPresence = useCallback((chan: Channel) => {
-        presence.current = new Presence(chan);
+    const channel = useMemo(() => {
+        return channels.get(channelName) || null;
+    }, [channels, channelName]);
 
-        presence.current.onJoin((id, current, newPresence) => {
-            if (!current)
-                setOnJoin(newPresence.metas[0]);
-        });
+    const connected = useMemo(() => {
+        return channel?.channel.state === 'joined';
+    }, [channel?.channel?.state]);
 
-        presence.current.onLeave((id, current, leftPress) => {
-            if (current.metas.length === 0)
-                setOnLeave(leftPress.metas[0]);
-        });
+    const users = useMemo(() => {
+        return online.filter(e => e.identifier !== options.identifier);
+    }, [online, options.identifier]);
 
-        presence.current.onSync(() => {
-            const presences: { metas: PresenceInterface[] }[] = presence.current?.list() ?? [];
-            const users = presences.map(e => base.sortArray(e.metas, 'online_at', 'desc')[0]);
-            setOnUpdate(users);
-        });
-
-        chan.join().receive('ok', () => {
-            chan.onMessage = (event, message) => {
-                if (event === 'shout' || event === 'whisper' || event === 'response')
-                    setOnMessage({event, message});
-
-                else if (event === 'messages')
-                    setPreviousMessages(message);
-
-                else if (event === 'inform')
-                    setReference(message);
-
-                return message;
-            }
-
-            setOnConnection(true);
-        });
-    }, [topic, socket, dispatch, base, setOnJoin, setOnLeave, setOnUpdate, setReference, setOnConnection, setPreviousMessages]);
-
-    useEffect(() => {
-        if (chan && chan.state === 'closed' && connecting)
-            connectAndMaintainPresence(chan);
-    }, [chan]);
-
-    return null;
-}
-
-export function useChannel<T extends { username: string, identifier: string }>(topic: string, params: T) {
-    const channel = useRef<Channel>();
-    const toSend = useRef<Map<string, any>>(new Map());
-    const {socket, state, dispatch} = useContext(RealtimeContext);
-    const messageHandlers = useRef<Map<string, ((data: default_t) => void)>>(new Map());
-    const {state: reference} = useEventEmitter<RealtimeReference | null>(`${topic}:reference`);
-    const {subscribe: subscribeToOnJoin} = useEventEmitter<PresenceInterface>(`${topic}:join`);
-    const {subscribe: subscribeToOnLeave} = useEventEmitter<PresenceInterface>(`${topic}:leave`);
-    const {subscribe: subscribeToOnMessage} = useEventEmitter<EventInterface>(`${topic}:newMessage`);
-    const {
-        subscribe: subscribeToOnUpdate,
-        state: online,
-        emit: dispatchOnline
-    } = useEventEmitter<PresenceInterface[]>(`${topic}:update`);
-    const {
-        emit: setOnConnection,
-        subscribe: subscribeToOnConnection,
-        state: connected
-    } = useEventEmitter<boolean>(`${topic}:connect`);
-    const {
-        state: previousMessages,
-        subscribe: subscribeToPreviousMessages,
-        emit: setPreviousMessages
-    } = useEventEmitter<any>(`${topic}:previousMessages`);
+    const onConnectionChange = useCallback((handler: (connected: boolean) => void) => {
+        messageHandlers.current.set('connection', handler);
+    }, []);
 
     const connect = useCallback(() => {
-        if (!connected) {
-            dispatch({info: 'connect', topic, params, socket});
-        }
-    }, [connected, dispatch, params, socket, topic]);
+        open(channelName, options);
+    }, [channelName, options, open]);
 
     const disconnect = useCallback(() => {
-        dispatchOnline([]);
-        setOnConnection(false);
-        setPreviousMessages([]);
-        dispatch({info: 'disconnect', topic, params, socket});
-    }, [topic, params, socket, dispatchOnline, setOnConnection, setPreviousMessages]);
+        close(channelName);
+    }, [channelName, close]);
 
-    const subscribe = useCallback(<S extends unknown>(event: 'whisper' | 'shout' | 'response', callback: (data: S) => void) => {
-        messageHandlers.current.set(event, callback as any);
-    }, []);
+    const send = useCallback(<S extends object>(event: string, data: S) => {
+        if (channel && channel.channel.state === 'joined')
+            channel.channel.push(event, data);
+    }, [channel]);
 
-    const unsubscribe = useCallback((event: 'whisper' | 'shout' | 'response') => {
-        messageHandlers.current.delete(event);
-    }, []);
-
-    const send = useCallback(<S extends object>(event: 'whisper' | 'speak' | 'shout' | 'request' | 'modPresenceState', data: S) => {
-        if (channel.current)
-            channel.current.push(event, data);
-        else
-            toSend.current.set(event, data);
-    }, []);
-
-    const whisper = useCallback(<S extends object>(to: string, data: any) => {
-        send('whisper', {to, message: data});
+    const whisper = useCallback(<S extends object>(username: string, data: S) => {
+        send('whisper', {to: username, message: data});
     }, [send]);
 
-    const hopChannels = useCallback(<S extends object>(channel: string, message: S & { username: string }) => {
-        const chan = socket.channel(channel, {username: message.username})
-        chan.join().receive('ok', () => {
-            let nMsg: S & { username?: string } = {...message};
-            delete nMsg.username;
-            chan.push('shout', message);
-            chan.leave();
-        });
+    const hopChannels = useCallback((channelName: string, options: { username: string, identifier: string }, message: default_t) => {
+        const chan = socket?.channel(channelName, options)
+        if (chan) {
+            chan.join().receive('ok', () => {
+                let nMsg: default_t = {...message};
+                delete nMsg.username;
+                chan.push('shout', message);
+                chan.leave();
+            });
+        }
     }, [socket]);
 
-    const modifyPresenceState = useCallback((newState: string, metadata?: default_t) => {
+    const modifyPresenceState = useCallback(<S extends object>(newState: string, metadata?: S) => {
         if (metadata)
             send('modPresenceState', {presenceState: newState, metadata});
         else
             send('modPresenceState', {presenceState: newState});
     }, [send]);
 
-    const forceConnect = useCallback((topic: string, params: T) => {
-        dispatch({info: 'connect', topic, params, socket});
-    }, [socket, dispatch]);
+    const on = useCallback(<S extends any>(event: string, handler: (data: S) => void) => {
+        messageHandlers.current.set(event, handler);
+    }, []);
 
-    const onJoin = useCallback((callback: (presence: PresenceInterface) => void) => subscribeToOnJoin(callback), [subscribeToOnJoin]);
+    const off = useCallback((event: string) => {
+        messageHandlers.current.delete(event);
+    }, []);
 
-    const onLeave = useCallback((callback: (presence: PresenceInterface) => void) => subscribeToOnLeave(callback), [subscribeToOnLeave]);
+    const onJoin = useCallback(<S extends any>(handler: (data: PresenceInterface<S>) => void) => {
+        messageHandlers.current.set('onJoin', handler);
+    }, []);
 
-    const onUpdate = useCallback((callback: (presence: PresenceInterface[]) => void) => subscribeToOnUpdate(callback), [subscribeToOnUpdate]);
+    const onLeave = useCallback(<S extends any>(handler: (data: PresenceInterface<S>) => void) => {
+        messageHandlers.current.set('onLeave', handler);
+    }, []);
 
-    const onConnectionChange = useCallback((callback: (connected: boolean) => void) => subscribeToOnConnection(callback), [subscribeToOnConnection]);
+    const onRecap = useCallback(<S extends any>(handler: (data: PresenceInterface<S>[]) => void) => {
+        messageHandlers.current.set('onRecap', handler);
+    }, []);
 
-    const onRecap = useCallback(<S extends object>(callback: (event: PrevMessages<S>) => void) => subscribeToPreviousMessages(callback), [subscribeToOnMessage]);
+    const onUpdate = useCallback(<S extends any>(handler: (data: PresenceInterface<S>[]) => void) => {
+        messageHandlers.current.set('onSync', handler);
+    }, []);
+
+    const subscribe = useCallback(() => {
+        if (channel) {
+            const joined = channel.joined.subscribe(e => {
+                if (isMounted() && e.identifier !== options.identifier) {
+                    const handler = messageHandlers.current.get('onJoin');
+                    handler && handler(e);
+                }
+            });
+
+            const left = channel.left.subscribe(e => {
+                if (isMounted() && e.identifier !== options.identifier) {
+                    const handler = messageHandlers.current.get('onLeave');
+                    handler && handler(e);
+                }
+            });
+
+            const users = channel.users.subscribe(e => {
+                if (isMounted()) {
+                    const handler = messageHandlers.current.get('onSync');
+                    handler && handler(e.filter(e => e.identifier !== options.identifier));
+                    setOnline(e);
+                }
+            });
+
+            const reference = channel.reference.subscribe(e => {
+                if (isMounted()) {
+                    setReference(e);
+                }
+            });
+
+            const message = channel.message.subscribe(e => {
+                if (isMounted()) {
+                    if (e.event === 'messages') {
+                        setPreviousMessages(e.data);
+                        const handler = messageHandlers.current.get('onRecap');
+                        handler && handler(e.data);
+                    }
+
+                    const handler = messageHandlers.current.get(e.event);
+                    handler && handler(e.data);
+                }
+            });
+
+            return () => {
+                joined.unsubscribe();
+                left.unsubscribe();
+                users.unsubscribe();
+                reference.unsubscribe();
+                message.unsubscribe();
+            }
+        } return () => {};
+    } , [channel, isMounted, options.identifier]);
 
     useEffect(() => {
-        const initChan = state.find(s => s.topic === topic);
-        channel.current = initChan?.channel;
-    }, [state, topic]);
+        const subscription = subscribe();
+        return () => subscription();
+    }, [channel]);
 
-    subscribeToOnMessage((data) => {
-        const handler = messageHandlers.current.get(data.event);
-        if (handler)
-            handler(data.message);
-    });
+    useEffect(() => {
+        if (connected) {
+            const handler = messageHandlers.current.get('connection');
+            handler && handler(true);
+        } else {
+            const handler = messageHandlers.current.get('connection');
+            handler && handler(false);
+        }
+    }, [connected]);
 
     return {
+        connected, users, onConnectionChange,
         modifyPresenceState, previousMessages, onRecap,
         onJoin, onLeave, connect, reference, hopChannels,
-        disconnect, subscribe, unsubscribe, send, whisper,
-        onUpdate, transport: channel.current, forceConnect,
-        connected, onConnectionChange, online: online || []
-    };
+        onUpdate, transport: channel?.channel, forceConnect: open,
+        disconnect, subscribe: on, unsubscribe: off, send, whisper,
+    }
 }

@@ -763,11 +763,25 @@ export default class User extends Base {
         if (user && senderUser) {
             await this.prisma.notification.create({
                 data: {
-                    message, opened: false, image, url, senderId: senderUser.userId, title, receiverId: user.userId,
+                    message, opened: false,
+                    image, url, title,
+                    sender: {
+                        connect: {userId: senderUser.userId}
+                    },
+                    receiver: {
+                        connect: {userId: user.userId}
+                    }
                 },
             });
             const payload: NotificationInterface = {
-                type, sender: senderUser.email.split('@')[0], message, opened: false, title, data: url,
+                type: 'newNotification',
+                sender: senderUser.email.split('@')[0],
+                message: 'You have a new notification',
+                opened: false, title: 'New Notification',
+                data: {
+                    image, url, title,
+                    message, opened: false,
+                }
             }
 
             await this.broadCastToUser(user.userId, payload);

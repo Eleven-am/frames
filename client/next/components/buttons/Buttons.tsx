@@ -1,35 +1,37 @@
 import styles from './Button.module.css';
-import React, {useCallback, useMemo} from "react";
+import React, {memo, useCallback, useMemo} from "react";
 import {Link} from "../misc/Loader";
 import {mutate} from "swr";
 import {useGroupWatch} from "../../../utils/groupWatch";
 import {useRouter} from "next/router";
 
-export const BackButton = ({response}: { response: { mediaId: number, episodeName: string | null, logo: string | null, name: string } }) => {
-    const router = useRouter();
-    const {disconnect} = useGroupWatch();
+export const genericMemo: <T>(component: T) => T = memo;
 
-    const routeOut = useCallback(async (ev: any) => {
-        ev.stopPropagation();
-        const url = '/' + (response.episodeName ? 'show' : 'movie') + '=' + response.name.replace(/\s/g, '+');
-        await router.push('/info?mediaId=' + response.mediaId, url);
-        document.body.removeAttribute('style');
-        await mutate('/api/load/continue');
-        await disconnect();
-    }, [response, router, disconnect]);
+export const BackButton = memo(({response}: { response: { mediaId: number, episodeName: string | null, logo: string | null, name: string } }) => {
+        const router = useRouter();
+        const {disconnect} = useGroupWatch();
 
-    return (
-        <svg className={styles.bb} viewBox="0 0 512 512" onClick={routeOut}>
-            <path d="M256,0C114.844,0,0,114.844,0,256s114.844,256,256,256s256-114.844,256-256S397.156,0,256,0z M256,490.667
+        const routeOut = useCallback(async (ev: any) => {
+            ev.stopPropagation();
+            const url = '/' + (response.episodeName ? 'show' : 'movie') + '=' + response.name.replace(/\s/g, '+');
+            await router.push('/info?mediaId=' + response.mediaId, url);
+            document.body.removeAttribute('style');
+            await mutate('/api/load/continue');
+            await disconnect();
+        }, [response, router, disconnect]);
+
+        return (
+            <svg className={styles.bb} viewBox="0 0 512 512" onClick={routeOut}>
+                <path d="M256,0C114.844,0,0,114.844,0,256s114.844,256,256,256s256-114.844,256-256S397.156,0,256,0z M256,490.667
 				C126.604,490.667,21.333,385.396,21.333,256S126.604,21.333,256,21.333S490.667,126.604,490.667,256S385.396,490.667,256,490.667
 				z"/>
-            <path d="M394.667,245.333H143.083l77.792-77.792c4.167-4.167,4.167-10.917,0-15.083c-4.167-4.167-10.917-4.167-15.083,0l-96,96
+                <path d="M394.667,245.333H143.083l77.792-77.792c4.167-4.167,4.167-10.917,0-15.083c-4.167-4.167-10.917-4.167-15.083,0l-96,96
 				c-4.167,4.167-4.167,10.917,0,15.083l96,96c2.083,2.083,4.813,3.125,7.542,3.125c2.729,0,5.458-1.042,7.542-3.125
 				c4.167-4.167,4.167-10.917,0-15.083l-77.792-77.792h251.583c5.896,0,10.667-4.771,10.667-10.667S400.563,245.333,394.667,245.333
 				z"/>
-        </svg>
-    )
-}
+            </svg>
+        )
+    });
 
 interface HoverContainerProps<S = undefined> {
     children: React.ReactNode;
@@ -192,36 +194,8 @@ export function Icon<S>({
     )
 }
 
-export function FramesButton<S>(props: FramesButtonProps<S>) {
-    let {tooltip, label, icon, isFill, link, children, onClick, onClickEvent, ...rest} = props;
-    label = label || tooltip;
-    tooltip = tooltip || label;
-    isFill = isFill || (icon === 'play' || icon === 'add' || icon === 'roll' || icon === 'shuffle');
 
-    return (
-        <>
-            {
-                link ?
-                    <Link href={link.href} as={link.as}>
-                        <HoverContainer element={'button'} {...rest} tooltip={tooltip} style={props.contentStyle}
-                            className={`${(props.type === 'primary' ? styles.playButton : props.type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}>
-                            {icon && <Icon icon={icon} style={props.style} state={props.state}/>}
-                            {children && !icon && children}
-                            {props.type !== 'round' && label}
-                        </HoverContainer>
-                    </Link> :
-                    <HoverContainer element={'button'} {...rest} tooltip={tooltip} onClick={onClick} onClickEvent={onClickEvent}
-                        className={`${(props.type === 'primary' ? styles.playButton : props.type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}>
-                        {icon && <Icon icon={icon} style={props.style} state={props.state}/>}
-                        {children && !icon && children}
-                        {props.type !== 'round' && label}
-                    </HoverContainer>
-            }
-        </>
-    )
-}
-
-export function HoverContainer<S>({
+function Container<S>({
   children,
   className,
   state, element,
@@ -284,3 +258,36 @@ export function HoverContainer<S>({
         </Element>
     )
 }
+
+export const HoverContainer = genericMemo(Container);
+
+function Button<S>(props: FramesButtonProps<S>) {
+    let {tooltip, label, icon, isFill, link, children, onClick, onClickEvent, ...rest} = props;
+    label = label || tooltip;
+    tooltip = tooltip || label;
+    isFill = isFill || (icon === 'play' || icon === 'add' || icon === 'roll' || icon === 'shuffle');
+
+    return (
+        <>
+            {
+                link ?
+                    <Link href={link.href} as={link.as}>
+                        <HoverContainer element={'button'} {...rest} tooltip={tooltip} style={props.contentStyle}
+                            className={`${(props.type === 'primary' ? styles.playButton : props.type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}>
+                            {icon && <Icon icon={icon} style={props.style} state={props.state}/>}
+                            {children && !icon && children}
+                            {props.type !== 'round' && label}
+                        </HoverContainer>
+                    </Link> :
+                    <HoverContainer element={'button'} {...rest} tooltip={tooltip} onClick={onClick} onClickEvent={onClickEvent}
+                                    className={`${(props.type === 'primary' ? styles.playButton : props.type === 'secondary' ? styles.trailerButton : styles.roundGuys)} ${!isFill ? styles.noFill : ''}`}>
+                        {icon && <Icon icon={icon} style={props.style} state={props.state}/>}
+                        {children && !icon && children}
+                        {props.type !== 'round' && label}
+                    </HoverContainer>
+            }
+        </>
+    )
+}
+
+export const FramesButton = genericMemo(Button);

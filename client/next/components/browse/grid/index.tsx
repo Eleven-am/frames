@@ -3,8 +3,9 @@ import {MediaContextAtom} from "../browseContext";
 import style from "./Style.module.css";
 import useOnScroll from "../../../../utils/opacityScroll";
 import {useRecoilValue} from "recoil";
+import {memo} from "react";
 
-export default function Grid() {
+export const Grid = memo(() => {
     const data = useRecoilValue(MediaContextAtom);
     const {navDark} = useOnScroll();
 
@@ -18,4 +19,4 @@ export default function Grid() {
             </div>
         </>
     )
-}
+});

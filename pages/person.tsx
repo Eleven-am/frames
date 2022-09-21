@@ -3,15 +3,16 @@ import {PersonInterface} from "../server/classes/springboard";
 import {MetaTags, useNavBar} from "../client/next/components/navbar/navigation";
 import Background from "../client/next/components/misc/back";
 import Holder from "../client/next/components/production/person";
+import ErrorBoundary from "../client/next/components/misc/ErrorBoundary";
 
 export default function Person({person, metaTags}: { person: PersonInterface, metaTags: MetaTags }) {
     useNavBar('others', 1, metaTags);
 
     return (
-        <>
+        <ErrorBoundary>
             <Background response={person.images}/>
             <Holder person={person}/>
-        </>
+        </ErrorBoundary>
     )
 }
 

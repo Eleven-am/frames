@@ -3,15 +3,16 @@ import {GetServerSidePropsContext} from "next";
 import {ProductionCompanyInterface} from "../server/classes/springboard";
 import Background from "../client/next/components/misc/back";
 import Holder from "../client/next/components/production/holder";
+import ErrorBoundary from "../client/next/components/misc/ErrorBoundary";
 
 export default function Prod({prod, metaTags}: { prod: ProductionCompanyInterface, metaTags: MetaTags }) {
     useNavBar('others', 1, metaTags);
 
     return (
-        <>
+        <ErrorBoundary>
             <Background response={prod.images}/>
             <Holder response={prod}/>
-        </>
+        </ErrorBoundary>
     );
 }
 

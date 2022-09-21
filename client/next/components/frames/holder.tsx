@@ -1,21 +1,32 @@
 import {subscribe, useEventListener} from "../../../utils/customHooks";
-import {Buffer, CastHolder, DownloadHandler, Overview, ShareFrame, SubDisplay, UpNextHolder} from "./misc/misc";
+import {
+    Buffer,
+    CastHolder,
+    DownloadHandler,
+    Overview,
+    ShareFrame,
+    SubDisplay,
+    UpNextHolder
+} from "./misc/misc";
 import ss from './frames.module.css'
 import ControlsHolder from "./conrols/controlHolder";
-import GroupWatchHandler from "../lobby/groupWatchHandler";
+import GroupWatchHandler, {GroupWatchSlide} from "../lobby/groupWatchHandler";
 import FramesPlayer from "./player/player";
 import usePlaybackControls, {
     differance,
     displaySidesAtom,
     framesVideoStateAtom,
-    fullscreenAddressAtom
+    fullscreenAddressAtom,
+    PipAndFullscreenAtom
 } from "../../../utils/playback";
 import {useRecoilValue} from "recoil";
 import Settings from "./conrols/settings";
 import {Loading} from "../misc/Loader";
 import {HoverContainer} from "../buttons/Buttons";
+import {Conformation} from "../../../utils/notifications";
+import React, {memo} from "react";
 
-export default function FrameHolder({room}: { room: string | null }) {
+function FrameHolder({room}: { room: string | null }) {
     const diff = useRecoilValue(differance);
     const {
         showControls,
@@ -24,8 +35,9 @@ export default function FrameHolder({room}: { room: string | null }) {
         lobbyOpen,
         groupWatch: {updateRoom}
     } = usePlaybackControls(true);
+    const {fullscreen} = useRecoilValue(PipAndFullscreenAtom);
     const controls = useRecoilValue(displaySidesAtom).controls;
-    const fsADDR = useRecoilValue(fullscreenAddressAtom);
+    const fsADDR = useRecoilValue(fullscreenAddressAtom).fullscreen;
     const media = useRecoilValue(framesVideoStateAtom);
 
     subscribe(async ({media}) => {
@@ -43,7 +55,7 @@ export default function FrameHolder({room}: { room: string | null }) {
     if (!media) return <Loading/>;
 
     return (
-        <div id={fsADDR.fullscreen || ''}>
+        <div id={fsADDR || ''}>
             <div style={lobbyOpen ? {visibility: "hidden", opacity: 0} : controls || diff ? {} : {cursor: "none"}}>
                 <UpNextHolder/>
                 <FramesPlayer/>
@@ -54,9 +66,7 @@ export default function FrameHolder({room}: { room: string | null }) {
                         <SubDisplay/>
                         <HoverContainer className={ss.ch} onMove={showControls} onClick={playPause}>
                             <Overview/>
-                            <div className={controls ? ss.cc : `${ss.cc} ${ss.mvr}`}>
-                                <ControlsHolder/>
-                            </div>
+                            <ControlsHolder controls={controls}/>
                         </HoverContainer>
                     </>
                 }
@@ -65,6 +75,10 @@ export default function FrameHolder({room}: { room: string | null }) {
             <ShareFrame/>
             <DownloadHandler/>
             {lobbyOpen && <GroupWatchHandler/>}
+            {fullscreen && <Conformation/>}
+            <GroupWatchSlide/>
         </div>
     )
 }
+
+export default memo(FrameHolder);

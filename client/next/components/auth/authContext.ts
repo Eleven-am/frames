@@ -12,6 +12,7 @@ import {Role} from "@prisma/client";
 import {useCallback, useEffect, useState} from "react";
 import useUser from "../../../utils/user";
 import {subscribe} from "../../../utils/customHooks";
+import {AuthCP} from "../../../../server/classes/middleware";
 
 export const AuthContextErrorAtom = atom<string | null>({
     key: 'AuthContextErrorAtom',
@@ -45,7 +46,7 @@ export const AuthFade = atom<boolean>({
     default: false
 })
 
-export const Authenticated = atom<boolean | null>({
+export const Authenticated = atom<AuthCP | null>({
     key: 'AuthenticatedAtom',
     default: null
 })
@@ -61,7 +62,7 @@ export const AuthContextHandler = selector<{ fade?: boolean, process?: Process, 
             newError = 'enter a valid email address';
 
         else if (errors.passError)
-            newError = 'Password must contain a number, a capital and a small letter';
+            newError = 'Password must contain a number, a capital letter, a small letter and must be at least 8 characters long';
 
         else if (errors.authError)
             newError = 'invalid auth key';
@@ -72,7 +73,7 @@ export const AuthContextHandler = selector<{ fade?: boolean, process?: Process, 
             error: newError === '' ? error : newError
         }
     }, set: ({set, get}, newValue) => {
-        const auth = get(Authenticated);
+        const auth = get(Authenticated)?.authentication || false;
         if (!(newValue instanceof DefaultValue)) {
             if (newValue.process && auth) {
                 NProgress.start();
@@ -82,7 +83,7 @@ export const AuthContextHandler = selector<{ fade?: boolean, process?: Process, 
             if (newValue.error !== undefined)
                 set(AuthContextErrorAtom, newValue.error);
 
-            if (newValue.fade !== undefined && auth !== false) {
+            if (newValue.fade !== undefined && auth) {
                 set(AuthFade, newValue.fade);
                 NProgress.done();
             }
@@ -110,7 +111,7 @@ const validatePass = (pass: string) => {
     if (pass === '')
         return true;
 
-    else if (pass.length < 4)
+    else if (pass.length < 8)
         return false;
 
     else if (!/\d/.test(pass))
@@ -143,10 +144,8 @@ export const useReset = () => {
     const password = useResetRecoilState(AuthContextPasswordAtom);
     const fade = useResetRecoilState(AuthFade);
     const authKey = useResetRecoilState(AuthKeyAtom);
-    const auth = useResetRecoilState(Authenticated);
 
     return () => {
-        auth();
         error();
         process();
         email();

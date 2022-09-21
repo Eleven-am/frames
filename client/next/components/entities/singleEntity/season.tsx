@@ -1,11 +1,11 @@
 import {useRouter} from "next/router";
 import styles from '../multipleEntities/SectionDetails.module.css'
-import React from "react";
+import React, {memo} from "react";
 import {useSetRecoilState} from "recoil";
 import {InfoSectionContext} from "../../info/infoContext";
 import {SpringEpisode} from "../../../../../server/classes/media";
 
-export default function Element(item: SpringEpisode) {
+function Element(item: SpringEpisode) {
     const setSection = useSetRecoilState(InfoSectionContext);
     const {backdrop, id, name, overview, show, position, type} = item;
     const router = useRouter();
@@ -28,3 +28,5 @@ export default function Element(item: SpringEpisode) {
         </li>
     );
 }
+
+export default memo(Element);

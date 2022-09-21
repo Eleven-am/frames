@@ -1,8 +1,9 @@
 import styles from "../grid/List.module.css";
 import {Loading} from "../misc/Loader";
 import GridEntity from "../entities/singleEntity/gridEntity";
+import {memo} from "react";
 
-export default function SearchGrid({loading, grid}: { loading: boolean, grid: any[] }) {
+function SearchGrid({loading, grid}: { loading: boolean, grid: any[] }) {
     if (loading || grid.length < 1)
         return <Loading/>
 
@@ -15,3 +16,5 @@ export default function SearchGrid({loading, grid}: { loading: boolean, grid: an
 
     else return null;
 }
+
+export default memo(SearchGrid);

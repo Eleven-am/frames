@@ -1,8 +1,9 @@
 import {MediaType} from '@prisma/client';
 import {Link} from "../../misc/Loader";
 import {SpringMedia} from "../../../../../server/classes/media";
+import {memo} from "react";
 
-export default function Entity({poster, id, type, name, background}: SpringMedia) {
+function Entity({poster, id, type, name, background}: SpringMedia) {
     const url = "/" + (type === MediaType.MOVIE ? "movie" : "show") + "=" + name.replace(/\s/g, "+");
 
     return (
@@ -13,3 +14,5 @@ export default function Entity({poster, id, type, name, background}: SpringMedia
         </Link>
     );
 }
+
+export default memo(Entity);

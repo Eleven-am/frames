@@ -1,5 +1,5 @@
 import {BaseClass} from "../../server/classes/base";
-import {createContext, ReactNode, useCallback, useContext, useEffect, useState} from "react";
+import {createContext, memo, ReactNode, useCallback, useContext, useEffect, useState} from "react";
 import Cast from "chomecast-sender";
 import {ServerResponse, useUserContext} from "./user";
 import {subscribe, useDetectPageChange, useFetcher} from "./customHooks";
@@ -8,14 +8,14 @@ import {Role} from "@prisma/client";
 import {useSetRecoilState, useRecoilValue} from "recoil";
 import HomeLayout, {hideAtom} from "../next/components/navbar/navigation";
 import NProgress from "nprogress";
-import {Conformation, globalChannelKeyAtom, Listeners} from "./notifications";
+import {globalChannelKeyAtom, NotificationDialogProvider} from "./notifications";
 
 const BaseContext = createContext<{ base: BaseClass, cast: Cast | null}>({
     base: new BaseClass(),
     cast: null,
 });
 
-export function FramesConsumers({children}: { children: ReactNode }) {
+export const FramesConsumers = memo(({children}: { children: ReactNode })  => {
     const base = new BaseClass();
     const setUser = useUserContext();
     const [usr, setUsr] = useState<ServerResponse | null>(null);
@@ -75,15 +75,15 @@ export function FramesConsumers({children}: { children: ReactNode }) {
     return (
         <BaseContext.Provider value={{base, cast}}>
             <RealtimeConsumer token={(token || response?.token) || ''} endpoint={'wss://hopr.maix.ovh/socket'} onError={getKeys}>
-                <Listeners/>
-                <HomeLayout>
-                    {children}
-                </HomeLayout>
-                <Conformation/>
+                <NotificationDialogProvider>
+                    <HomeLayout>
+                        {children}
+                    </HomeLayout>
+                </NotificationDialogProvider>
             </RealtimeConsumer>
         </BaseContext.Provider>
     )
-}
+})
 
 export default function useBase() {
     return useContext(BaseContext).base;

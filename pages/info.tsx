@@ -13,6 +13,7 @@ import {SpringMedUserSpecifics} from "../server/classes/user";
 import GroupWatchHandler, {GroupWatchSlide} from "../client/next/components/lobby/groupWatchHandler";
 import useNotifications from "../client/utils/notifications";
 import {ManageMedia} from "../client/next/components/misc/editMedia";
+import ErrorBoundary from "../client/next/components/misc/ErrorBoundary";
 
 export default function InfoPage({info, metaTags}: { info: SpringMedia, metaTags: MetaTags }) {
     const reset = resetInfo();
@@ -29,19 +30,19 @@ export default function InfoPage({info, metaTags}: { info: SpringMedia, metaTags
     });
 
     useEffect(() => {
-        const {logo, name, overview, backdrop} = info;
-        sendMessage({action: 'displayInfo', logo, name, overview, backdrop});
-        modifyPresence('online', {logo, name, overview, backdrop});
+        const {logo, name, overview, backdrop, poster} = info;
+        sendMessage({action: 'displayInfo', logo, name, overview, backdrop, poster});
+        modifyPresence('online', {logo, name, overview, backdrop, poster});
         setMediaData(info);
         return () => reset();
     }, [info])
 
     return (
-        <>
+        <ErrorBoundary>
             {lobbyOpen ? <GroupWatchHandler/> : <Info/>}
             <ManageMedia/>
             <GroupWatchSlide/>
-        </>
+        </ErrorBoundary>
     );
 }
 

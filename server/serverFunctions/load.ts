@@ -3,13 +3,15 @@ import Media, {gridOpt} from "../classes/media";
 import User from "../classes/user";
 import PickAndFrame from "../classes/pickAndFrame";
 import Springboard from "../classes/springboard";
+import {CookiePayload} from "../classes/middleware";
+import {Role} from "@prisma/client";
 
 const media = new Media();
 const listEditors = new PickAndFrame();
 const springBoard = new Springboard();
 const user = new User();
 
-export default async (req: NextApiRequest, res: NextApiResponse, userId: string) => {
+export default async (req: NextApiRequest, res: NextApiResponse, {userId, context}: CookiePayload & { userId: string }) => {
     let response: any;
     const type = req.query.type[1];
     const body = {...req.body, ...req.query, type: req.query.type[2] || req.body.type};
@@ -47,7 +49,7 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'getRelevant':
-            response = await user.getRelevantMedia(userId);
+            response = context === Role.GUEST ? null: await user.getRelevantMedia(userId);
             break;
 
         case 'trending':
@@ -118,6 +120,10 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
                 }),
                 type: 'BASIC', display: 'recently added media'
             };
+            break;
+
+        case 'trendingCollection':
+            response = await springBoard.getTrendingCollection();
             break;
 
         case 'collection':

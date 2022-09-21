@@ -53,6 +53,18 @@
     animation: thirdMove 0.5s forwards;
 }
 
+.firstBack {
+    animation: firstMoveBack 0.5s forwards;
+}
+
+.secondBack {
+    animation: secondMoveBack 0.5s forwards;
+}
+
+.thirdBack {
+    animation: thirdMoveBack 0.5s forwards;
+}
+
 @keyframes displayLogo {
     0% {
         opacity: 0;
@@ -88,6 +100,39 @@
     0% {
         left: 189vw;
         height: 40vh;
+    }
+    100% {
+        left: 97vw;
+        height: 40vh;
+    }
+}
+
+@keyframes firstMoveBack {
+    0% {
+        left: -187vw;
+        height: 40vh;
+    }
+    100% {
+        left: -87vw;
+        height: 40vh;
+    }
+}
+
+@keyframes secondMoveBack {
+    0% {
+        left: -87vw;
+        height: 40vh;
+    }
+    100% {
+        left: 5vw;
+        height: 45vh;
+    }
+}
+
+@keyframes thirdMoveBack {
+    0% {
+        left: 5vw;
+        height: 45vh;
     }
     100% {
         left: 97vw;

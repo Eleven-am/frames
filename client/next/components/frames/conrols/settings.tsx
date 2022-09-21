@@ -1,6 +1,6 @@
 import {SideBar, SideBarAtomFamily} from "../../misc/sidebar";
-import React, {useCallback, useState} from "react";
-import {useRecoilValue, useSetRecoilState} from "recoil";
+import React, {memo, useCallback, useState} from "react";
+import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import ss from "./controls.module.css";
 import sss from "../../misc/MISC.module.css";
 import {
@@ -10,25 +10,25 @@ import {
     useRightControls
 } from "../../../../utils/playback";
 import {useManageUserInfo} from "../../../../utils/modify";
-import {subscribe} from "../../../../utils/customHooks";
+import {HoverContainer} from "../../buttons/Buttons";
 
-export default function Settings() {
+function Settings() {
     const player = useRightControls();
     const user = useManageUserInfo();
-    const setSubSync = useSetRecoilState(SubtitlesSyncAtom);
+    const [subSync, setSubSync] = useRecoilState(SubtitlesSyncAtom);
     const [subTime, setSubTime] = useState(0);
     const response = useRecoilValue(framesVideoStateAtom);
     const activeSub = useRecoilValue(framesSubtitlesAtom).activeSub;
     const setState = useSetRecoilState(SideBarAtomFamily('framesSettings'));
 
-    subscribe(({activeSub, subTime}) => {
-        setSubSync(prev => {
-            const sync = (subTime * 1000) - 50;
-            const temp = prev.filter(s => s.language !== activeSub);
-            temp.push({language: activeSub, sync});
-            return temp;
-        })
-    }, {activeSub, subTime});
+    const manageSubTime = useCallback((action: 'add' | 'subtract' | 'value', value?: number) => {
+        const time = value && action === 'value' ? value : subTime + (action === 'add' ? 1 : -1);
+        const newSub = {language: activeSub, sync: (time * 1000) - 50};
+        const newSync = subSync.filter(s => s.language !== activeSub);
+        newSync.push(newSub);
+        setSubSync(newSync);
+        setSubTime(time);
+    }, [activeSub, subTime, subSync]);
 
     const handleClose = useCallback(async () => {
         setState(false);
@@ -47,22 +47,22 @@ export default function Settings() {
                     </select>
                     <div className={ss.hdr}>Sync Subtitles</div>
                     <div style={{display: 'flex', justifyContent: 'space-around', alignItems: 'center', width: '100%'}}>
-                        <div style={{
+                        <HoverContainer style={{
                             color: 'rgba(255, 255, 255, .9)',
                             fontWeight: 'bold',
                             padding: '10px',
                             fontSize: '20px'
-                        }} onClick={() => setSubTime(e => e + 1)}>+
-                        </div>
+                        }} onClick={manageSubTime} state={'add'}>+
+                        </HoverContainer>
                         <input className={sss.select} value={subTime} type="number" style={{width: '90%'}}
-                               onChange={e => setSubTime(+e.currentTarget.value)}/>
-                        <div style={{
+                               onChange={e => manageSubTime('value', parseInt(e.currentTarget.value))}/>
+                        <HoverContainer style={{
                             color: 'rgba(255, 255, 255, .9)',
                             fontWeight: 'bold',
                             padding: '10px',
                             fontSize: '20px'
-                        }} onClick={() => setSubTime(e => e - 1)}>-
-                        </div>
+                        }} onClick={manageSubTime} state={'subtract'}>-
+                        </HoverContainer>
                     </div>
                 </div>
                 <div className={ss.sqr}>
@@ -108,3 +108,5 @@ export default function Settings() {
         </SideBar>
     )
 }
+
+export default memo(Settings);

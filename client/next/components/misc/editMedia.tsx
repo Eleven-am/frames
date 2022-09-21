@@ -2,7 +2,7 @@ import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import ss from './MISC.module.css';
 import sss from '../settings/ACCOUNT.module.css';
 import useModify, {DeleteAndLocationAtom, EditFrontMediaAtom, EditModalAtom} from "../../../utils/modify";
-import {useCallback, useEffect, useState} from "react";
+import {memo, useCallback, useEffect, useState} from "react";
 import {MediaType} from "@prisma/client";
 import {subscribe, useEventListener, useFetcher} from "../../../utils/customHooks";
 import {FrontImages} from "../../../../server/classes/tmdb";
@@ -10,7 +10,7 @@ import {FramesButton} from "../buttons/Buttons";
 import {EpisodeModSettings, FrontEpisode, FrontMediaSearch} from "../../../../server/classes/media";
 import {useConfirmDispatch} from "../../../utils/notifications";
 
-const General = () => {
+const General = memo(() => {
     const setDelete = useSetRecoilState(DeleteAndLocationAtom);
     const {getMediaInfo} = useModify();
     const [state, dispatch] = useRecoilState(EditFrontMediaAtom);
@@ -75,9 +75,9 @@ const General = () => {
             </ul>
         </div>
     )
-}
+})
 
-const Images = () => {
+const Images = memo(() => {
     const [state, dispatch] = useRecoilState(EditFrontMediaAtom);
     const {response} = useFetcher<FrontImages>(`/api/modify/getImages/${state.type}?tmdbId=${state.tmdbId}&name=${state.name}&year=${state.year}`);
 
@@ -119,9 +119,9 @@ const Images = () => {
         )
 
     else return null;
-}
+})
 
-const Tail = ({close}: { close: () => void }) => {
+const Tail = memo(({close}: { close: () => void }) => {
     const found = useRecoilValue(DeleteAndLocationAtom);
     const state = useRecoilValue(EditFrontMediaAtom).stateType;
     const {modifyMedia, deleteMedia, scanSubs} = useModify();
@@ -134,9 +134,9 @@ const Tail = ({close}: { close: () => void }) => {
             <FramesButton type='secondary' label={found.del ? 'replace' : 'submit'} state={close} onClick={modifyMedia}/>
         </div>
     )
-}
+})
 
-export const Episodes = () => {
+export const Episodes = memo(() => {
     const [thoroughHover, setThoroughHover] = useState(false);
     const [quickHover, setQuickHover] = useState(false);
     const state = useRecoilValue(EditFrontMediaAtom);
@@ -157,12 +157,12 @@ export const Episodes = () => {
             {(response?.seasons || []).map(e => <Season key={e.seasonId} {...e}/>)}
         </div>
     )
-}
+})
 
-function Season({
+const Season = memo(({
                     seasonId,
                     episodes
-                }: { seasonId: number; episodes: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean })[] }) {
+                }: { seasonId: number; episodes: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean })[] }) => {
 
     return (
         <div style={{marginTop: '10px'}}>
@@ -171,9 +171,9 @@ function Season({
             {episodes.map((episode, v) => <Episode episode={episode} key={v}/>)}
         </div>
     )
-}
+})
 
-function Episode({episode: obj}: { episode: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean }) }) {
+const Episode = memo(({episode: obj}: { episode: (EpisodeModSettings & { backdrop: string, name: string, overview: string, found: boolean }) }) => {
     const [episode, setEpisode] = useState<EpisodeModSettings>(obj);
     const [hover, setHover] = useState(false);
     const {modifyEpisode} = useModify();
@@ -219,8 +219,8 @@ function Episode({episode: obj}: { episode: (EpisodeModSettings & { backdrop: st
         </div>
     )
 }
-
-export const ManageMedia = () => {
+)
+export const ManageMedia = memo(() => {
     const setDelete = useSetRecoilState(DeleteAndLocationAtom);
     const [state, setState] = useRecoilState(EditFrontMediaAtom);
     const [modal, setModal] = useRecoilState(EditModalAtom);
@@ -277,4 +277,4 @@ export const ManageMedia = () => {
         )
 
     else return null;
-}
+})

@@ -4,11 +4,7 @@ import Lobby from "../client/next/components/lobby";
 export default function Index({images}: { images: string[] }) {
     useNavBar('groupWatch', 1);
 
-    return (
-        <>
-            <Lobby response={images}/>
-        </>
-    );
+    return <Lobby response={images}/>
 }
 
 

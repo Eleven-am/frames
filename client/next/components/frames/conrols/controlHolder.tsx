@@ -5,9 +5,10 @@ import RightControls from "./right";
 import Progress from "./progress";
 import {Subtitles, Toppers, UpNextMini} from "../misc/misc";
 import {useRecoilValue} from "recoil";
-import {useCallback} from "react";
+import {memo, useCallback} from "react";
+import ss from "../frames.module.css";
 
-export default function ControlsHolder() {
+function ControlsHolder({controls}: {controls: boolean}) {
     const state = useRecoilValue(framesPlayerStateSelector);
     const {playPause, seekVideo} = useCentreControls(true);
 
@@ -22,8 +23,11 @@ export default function ControlsHolder() {
         await playPause();
     }, [playPause]);
 
+    if (state === 'FAILED_TO_START')
+        return null;
+
     return (
-        <>
+        <div className={controls ? ss.cc : `${ss.cc} ${ss.mvr}`}>
             <Toppers/>
             <Progress/>
             <div className={styles.c}>
@@ -61,6 +65,8 @@ export default function ControlsHolder() {
             </div>
             <UpNextMini/>
             <Subtitles/>
-        </>
+        </div>
     )
 }
+
+export default memo(ControlsHolder);

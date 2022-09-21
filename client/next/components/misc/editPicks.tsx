@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from "react";
+import {memo, useCallback, useEffect, useState} from "react";
 import {EditPickContext, PickSearchContext, PickSelectorContext, useEditorPicks} from "../../../utils/modify";
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import ss from "./MISC.module.css";
@@ -8,17 +8,18 @@ import style from '../settings/ACCOUNT.module.css';
 import {PickType} from "@prisma/client";
 import {UpdateSearch} from "../../../../server/classes/pickAndFrame";
 
-function Tail({close}: { close: () => void }) {
-    const {addPick} = useEditorPicks();
+const Tail = memo(({close}: { close: () => void }) => {
+    const {addPick, deletePick} = useEditorPicks();
 
     return (
         <div className={ss.tail}>
+            <FramesButton type='secondary' state={close} label='Delete Pick' onClick={deletePick}/>
             <FramesButton type='primary' state={close} label='Submit' onClick={addPick}/>
         </div>
     )
-}
+})
 
-function PickBody() {
+const PickBody = memo(() => {
     const type = useRecoilValue(EditPickContext).type;
     const data = useRecoilValue(PickSelectorContext);
 
@@ -31,9 +32,9 @@ function PickBody() {
             </div>
         </div>
     )
-}
+})
 
-function Image({obj}: { obj: UpdateSearch }) {
+const Image = memo(({obj}: { obj: UpdateSearch }) => {
     const {modifyPick} = useEditorPicks();
     const {type} = useRecoilValue(EditPickContext);
 
@@ -52,9 +53,9 @@ function Image({obj}: { obj: UpdateSearch }) {
             <img className={ss.img2} src={obj.logo || ''} alt={obj.name}/>
         </div>
     )
-}
+})
 
-const PickBodyHead = () => {
+const PickBodyHead = memo(() => {
     const [obj, setObj] = useRecoilState(EditPickContext);
     const setSearch = useSetRecoilState(PickSearchContext);
     const [text, setText] = useState('');
@@ -112,9 +113,9 @@ const PickBodyHead = () => {
             </div>
         </>
     )
-}
+})
 
-export default function ManagePick() {
+function ManagePick() {
     const [state, dispatch] = useRecoilState(EditPickContext);
     const [open, setOpen] = useState(true);
 
@@ -144,3 +145,5 @@ export default function ManagePick() {
 
     else return null;
 }
+
+export default memo(ManagePick);

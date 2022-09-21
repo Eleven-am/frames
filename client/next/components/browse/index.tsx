@@ -1,13 +1,14 @@
 import style from './Style.module.css'
-import BannerHolder from "./banner";
-import Selectors from "./selectors";
-import Grid from "./grid";
+import {BannerHolder} from "./banner";
+import {Selectors} from "./selectors";
+import {Grid} from "./grid";
 import useOnScroll from "../../../utils/opacityScroll";
-import {useCallback, useEffect} from 'react';
+import {memo, useCallback, useEffect} from 'react';
 import {useBrowseContext} from "./browseContext";
 import {BrowseData} from "../../../../server/classes/media";
+import ErrorBoundary from "../misc/ErrorBoundary";
 
-export default function Browse({data}: { data: BrowseData }) {
+export const Browse = memo(({data}: { data: BrowseData }) => {
     const {onScroll} = useOnScroll();
     const {handleScroll, reset} = useBrowseContext(true);
 
@@ -21,10 +22,12 @@ export default function Browse({data}: { data: BrowseData }) {
     }, []);
 
     return (
-        <div className={style.cntr} onScroll={scroll}>
-            <BannerHolder banners={data.trending}/>
-            <Selectors data={data}/>
-            <Grid/>
-        </div>
+        <ErrorBoundary>
+            <div className={style.cntr} onScroll={scroll}>
+                <BannerHolder banners={data.trending}/>
+                <Selectors data={data}/>
+                <Grid/>
+            </div>
+        </ErrorBoundary>
     )
-}
+});

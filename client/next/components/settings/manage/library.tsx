@@ -1,9 +1,9 @@
-import {useCallback, useEffect, useState} from "react";
+import {memo, useCallback, useEffect, useState} from "react";
 import ss from "../ACCOUNT.module.css";
 import {useFetcher} from "../../../../utils/customHooks";
 import useModify, {EditFrontMediaAtom, UnsavedFrontMediaAtom} from "../../../../utils/modify";
 import {Image, Loading} from "../../misc/Loader";
-import {FramesButton} from "../../buttons/Buttons";
+import {FramesButton, genericMemo} from "../../buttons/Buttons";
 import {useRecoilState, useSetRecoilState} from "recoil";
 import frames from '../../../assets/frames.png';
 import {UpdateSearch} from "../../../../../server/classes/pickAndFrame";
@@ -20,7 +20,7 @@ export interface Settings<S> {
     onClick: (id: S) => void;
 }
 
-export function SearchRes<S>(obj: Settings<S>) {
+function UnMemoSearchRes<S>(obj: Settings<S>) {
     return (
         <div className={obj.className ? `${ss.res} ${ss.had}` : ss.res} onClick={() => obj.onClick(obj.id)}>
             {obj.backdrop !== '' ?
@@ -36,7 +36,9 @@ export function SearchRes<S>(obj: Settings<S>) {
     )
 }
 
-export default function Library() {
+export const SearchRes = genericMemo(UnMemoSearchRes);
+
+function Library() {
     const base = useBase();
     const setMedia = useSetRecoilState(EditFrontMediaAtom);
     const {scanAllMedia, scanAllEpisodes, scanAllSubs, getMedia} = useModify();
@@ -118,3 +120,5 @@ export default function Library() {
         </div>
     )
 }
+
+export default memo(Library);

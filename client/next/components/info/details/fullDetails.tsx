@@ -1,33 +1,16 @@
-import React, {useCallback} from "react";
+import {memo} from "react";
 import styles from './FullDetails.module.css';
 import info from '../Info.module.css';
 import {Link} from "../../misc/Loader";
 import {SpringMedia} from "../../../../../server/classes/media";
-import {useDecadeContext, useGenreContext} from "../../browse/browseContext";
-import {useRouter} from "next/router";
-import {MediaType} from "@prisma/client";
 
-export default function Details({response}: { response: SpringMedia }) {
-    const router = useRouter();
-    const {splitGenres} = useGenreContext();
-    const {manageDecade} = useDecadeContext();
+interface DetailsInterface {
+    splitGenres: () => void;
+    manageDecade: () => void
+    response: SpringMedia;
+}
 
-    const handleClick = useCallback(async () => {
-        splitGenres(response.genre);
-        const url = response.type === MediaType.MOVIE ? '/movies' : '/shows';
-        await router.push(url);
-    }, [response, router, splitGenres]);
-
-    const handleDecade = useCallback(async () => {
-        const year = response.release.match(/\d{4}$/);
-        if (year) {
-            const decade = year[0].replace(/\d$/, '0s');
-            const url = response.type === MediaType.MOVIE ? '/movies' : '/shows';
-            manageDecade(decade);
-            await router.push(url);
-        }
-    }, [response, router, manageDecade]);
-
+function Details({response, splitGenres, manageDecade}: DetailsInterface) {
     return (
         <div id={styles["info-extra"]}>
             <div id={styles["info-full-overview"]}>
@@ -37,8 +20,8 @@ export default function Details({response}: { response: SpringMedia }) {
             </div>
             <div id={styles["info-extras"]}>
                 <div id={styles["info-item-release"]}>
-                    <div>Genre: <span className={styles.click} onClick={handleClick}>{response.genre}</span></div>
-                    <div>Release: <span className={styles.click} onClick={handleDecade}>{response.release}</span></div>
+                    <div>Genre: <span className={styles.click} onClick={splitGenres}>{response.genre}</span></div>
+                    <div>Release: <span className={styles.click} onClick={manageDecade}>{response.release}</span></div>
                     <div>Runtime: <span className={styles["info-basic"]}>{response.runtime}</span></div>
                     {response.collection ?
                         <div>
@@ -131,3 +114,5 @@ export default function Details({response}: { response: SpringMedia }) {
         </div>
     )
 }
+
+export default memo(Details);

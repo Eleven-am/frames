@@ -3,11 +3,11 @@ import SearchGrid from "./grid";
 import {useDetectPageChange} from "../../../utils/customHooks";
 import {useRecoilState} from "recoil";
 import {NavOpacityAtom} from "../navbar/navigation";
-import {useEffect, useRef} from "react";
+import {memo, useEffect, useRef} from "react";
 import {Loading} from "../misc/Loader";
 import {useSearch} from "../navbar/navbar";
 
-export default function SearchLayout() {
+function SearchLayout() {
     const {loading: pageChange} = useDetectPageChange();
     const opacityBackup = useRef(0);
     const [opacity, setOpacity] = useRecoilState(NavOpacityAtom)
@@ -35,3 +35,6 @@ export default function SearchLayout() {
 
     else return null
 }
+
+export default memo(SearchLayout)
+

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {memo, useCallback, useEffect, useState} from "react";
 import ss from "../ACCOUNT.module.css";
 import {FramesButton} from "../../buttons/Buttons";
 import {useFetcher} from "../../../../utils/customHooks";
@@ -9,7 +9,7 @@ import {MediaType} from "@prisma/client";
 import {SearchRes} from "./library";
 import {GetContentSearch} from "../../../../../server/classes/springboard";
 
-export default function GetContents() {
+function GetContents() {
     const [text, setText] = useState('');
     const [search, setSearch] = useRecoilState(GetSearchContext);
     const {libraryScan, searchRecommendations, downloadMedia} = useGetContext();
@@ -80,3 +80,5 @@ export default function GetContents() {
         </div>
     )
 }
+
+export default memo(GetContents);

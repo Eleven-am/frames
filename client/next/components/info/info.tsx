@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {memo, useCallback, useEffect, useRef, useState} from "react";
 import info from "./Info.module.css";
 import styles from '../trending/backdrop/BACKDROP.module.css'
 import InfoSections from "./sections/sections";
@@ -8,14 +8,40 @@ import {useYoutubePLayer} from "../../../utils/customHooks";
 import useOnScroll from "../../../utils/opacityScroll";
 import {useRecoilValue} from "recoil";
 import {InfoContext} from "./infoContext";
+import {useRouter} from "next/router";
+import {MediaType} from "@prisma/client";
+import {useDecadeContext, useGenreContext} from "../browse/browseContext";
 
-export default function Info() {
+function Info() {
     const response = useRecoilValue(InfoContext);
     const backdropRef = useRef<HTMLDivElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
     const {start, loadTrailer, done} = useYoutubePLayer();
     const {onScroll, values, setReference, reset} = useOnScroll();
     const [move, setMove] = useState(false);
+    const {splitGenres} = useGenreContext();
+    const {manageDecade} = useDecadeContext();
+    const router = useRouter();
+
+    const handleGenreClick = useCallback(async () => {
+        if (response) {
+            splitGenres(response.genre);
+            const url = response.type === MediaType.MOVIE ? '/movies' : '/shows';
+            await router.push(url);
+        }
+    }, [response, router, splitGenres]);
+
+    const handleDecade = useCallback(async () => {
+        if (response) {
+            const year = response.release.match(/\d{4}$/);
+            if (year) {
+                const decade = year[0].replace(/\d$/, '0s');
+                const url = response.type === MediaType.MOVIE ? '/movies' : '/shows';
+                manageDecade(decade);
+                await router.push(url);
+            }
+        }
+    }, [response, router, manageDecade]);
 
     useEffect(() => {
         let timer1 = setTimeout(() => setMove(start), start ? 10 : 410);
@@ -62,11 +88,22 @@ export default function Info() {
                         </div>
                     </div>
                     : <>
-                        <InfoDetails loadTrailer={handleClick} trailer={start}/>
-                        <InfoSections setReference={setReference}/>
+                        <InfoDetails
+                            loadTrailer={handleClick}
+                            trailer={start}
+                            splitGenres={handleGenreClick}
+                            manageDecade={handleDecade}
+                        />
+                        <InfoSections
+                            setReference={setReference}
+                            manageDecade={handleDecade}
+                            splitGenres={handleGenreClick}
+                        />
                     </>
                 }
             </div>
         </div>
     );
 }
+
+export default memo(Info);

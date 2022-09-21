@@ -2,8 +2,9 @@ import ss from "../ACCOUNT.module.css";
 import {useManageSections} from "../../../../utils/modify";
 import WatchHistory from "./watchHistory";
 import YourList from "./myList";
+import {memo} from "react";
 
-export default function Account() {
+function Account() {
     const response = ['watch history', 'notifications', 'playlists', 'your list', 'playback settings', 'security settings'];
     const [side, setSide] = useManageSections(response);
 
@@ -23,3 +24,5 @@ export default function Account() {
         </div>
     )
 }
+
+export default memo(Account);

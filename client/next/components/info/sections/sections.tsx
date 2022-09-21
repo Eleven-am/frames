@@ -1,6 +1,6 @@
 import Entities from "../../entities/multipleEntities/multipleEntity";
 import Details from "../details/fullDetails";
-import React, {Suspense, useEffect, useRef} from "react";
+import React, {memo, Suspense, useEffect, useRef} from "react";
 import styles from '../Info.module.css';
 import ss from '../../entities/Sections.module.css';
 import {useRecoilState, useRecoilValue} from "recoil";
@@ -12,7 +12,7 @@ import {
     InfoSectionContext
 } from "../infoContext";
 
-const SectionLoading = () => {
+const SectionLoading = memo(() => {
     return (
         <div className={ss.sectionContainer}>
             <div style={{height: '300px'}} className={ss.sectionList}>
@@ -20,9 +20,14 @@ const SectionLoading = () => {
             </div>
         </div>
     )
+})
+
+interface SectionsInterface {
+    splitGenres: () => void;
+    manageDecade: () => void
 }
 
-function Sections() {
+const Sections = memo((props: SectionsInterface) => {
     const response = useRecoilValue(InfoContext);
     const {seasons, section} = useRecoilValue(InfoEpisodesContext);
 
@@ -36,14 +41,18 @@ function Sections() {
                         <Entities section={true} response={response.recommendations} type={'BASIC'}/>
                     </div> :
                     section === 'Details' ?
-                        <Details response={response}/> :
+                        <Details response={response} {...props}/> :
                         <Entities section={true} response={seasons} type={'SECTION'}/>
             }
         </>
     )
+})
+
+interface InfoSectionInterface extends SectionsInterface {
+    setReference: ((arg: Element | null) => void)
 }
 
-export default function InfoSections({setReference}: { setReference: ((arg: Element | null) => void) }) {
+function InfoSections({setReference, splitGenres, manageDecade}: InfoSectionInterface) {
     const response = useRecoilValue(InfoContext);
     const [sections, setSections] = useRecoilState(InformSeasonContext);
     const reference = useRef<HTMLDivElement>(null);
@@ -79,9 +88,11 @@ export default function InfoSections({setReference}: { setReference: ((arg: Elem
             <div className={styles.spacer} ref={reference}/>
             {isServer ? <SectionLoading/> :
                 <Suspense fallback={<SectionLoading/>}>
-                    <Sections/>
+                    <Sections splitGenres={splitGenres} manageDecade={manageDecade}/>
                 </Suspense>
             }
         </>
     )
 }
+
+export default memo(InfoSections);

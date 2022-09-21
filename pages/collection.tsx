@@ -3,15 +3,16 @@ import {MetaTags, useNavBar} from "../client/next/components/navbar/navigation";
 import {FramesCollections} from "../server/classes/springboard";
 import Background from "../client/next/components/misc/back";
 import {CollectionHolder} from "../client/next/components/production/holder";
+import ErrorBoundary from "../client/next/components/misc/ErrorBoundary";
 
 export default function Collection({collection, metaTags}: { collection: FramesCollections, metaTags: MetaTags }) {
     useNavBar('collections', 1, metaTags);
 
     return (
-        <>
+        <ErrorBoundary>
             <Background response={collection.images}/>
             <CollectionHolder response={collection}/>
-        </>
+        </ErrorBoundary>
     );
 }
 

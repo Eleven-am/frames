@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {memo, useCallback, useEffect, useState} from "react";
 import {Loading} from "../../misc/Loader";
 import ss from "../ACCOUNT.module.css";
 import {FramesButton} from "../../buttons/Buttons";
@@ -8,7 +8,7 @@ import useNotifications, {useConfirmDispatch} from "../../../../utils/notificati
 import useUser from "../../../../utils/user";
 import {ManageAuthKey} from "../../../../../server/classes/auth";
 
-export default function ManageKeys() {
+function ManageKeys() {
     const {manageKeys, generateAuthKey} = useUser();
     const {globalNotification: channel} = useNotifications();
     const [state, setState] = useState<ManageAuthKey[]>([]);
@@ -96,3 +96,5 @@ export default function ManageKeys() {
             </div>
         )
 }
+
+export default memo(ManageKeys);

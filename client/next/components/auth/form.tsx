@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {memo, useCallback, useEffect, useRef, useState} from "react";
 import styles from './Auth.module.css';
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import googleLogo from '../../assets/ggl.png';
@@ -18,13 +18,12 @@ import {
 import {subscribe, useEventListener} from "../../../utils/customHooks";
 import useUser, {Provider} from "../../../utils/user";
 
-function Login() {
-    const [state, dispatch] = useRecoilState(AuthContextHandler);
+const Login = memo(() => {
+    const [{error, process}, dispatch] = useRecoilState(AuthContextHandler);
     const [email, setEmail] = useRecoilState(AuthContextEmailAtom);
     const [pass, setPass] = useState('');
     const {confirmMail, signIn, forgotPassword} = useUser();
     const {emailError} = useRecoilValue(AuthErrors);
-    const {error, process} = state;
 
     const submit = useCallback(() => {
         dispatch({fade: true, error: null});
@@ -68,25 +67,33 @@ function Login() {
         fade();
     }, [])
 
+    const handleOnChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.currentTarget.name === 'email')
+            setEmail(e.currentTarget.value);
+        else
+            setPass(e.currentTarget.value);
+        dispatch({error: null});
+    }, [setEmail, setPass, dispatch]);
+
     return (
         <>
             <div className={styles["log-input-holder"]}>
-                <input readOnly={process !== "email"}
-                       autoComplete={'on'}
-                       className={process === "email" ? styles["log-input"] : styles["log-pass"]}
-                       style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="email"
-                       placeholder="enter your email address" onChange={(e) => {
-                    dispatch({error: null})
-                    setEmail(e.currentTarget.value)
-                }}/>
-                <input className={process === "password" ? styles["log-input"] : styles["log-pass"]}
-                       autoComplete={'current-password'}
-                       readOnly={process !== "password"}
-                       style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="password"
-                       placeholder="enter your password" onChange={(e) => {
-                    dispatch({error: null})
-                    setPass(e.currentTarget.value)
-                }}/>
+                {process === 'email' && <input
+                    autoComplete='email'
+                    className={styles["log-input"]}
+                    style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}}
+                    type="email" name="email"
+                    placeholder="enter your email address" onChange={handleOnChange}
+                />
+                }
+                {process === 'password' && <input
+                    autoComplete='current-password'
+                    className={styles["log-input"]}
+                    style={error ? {borderColor: "rgba(245, 78, 78, .9)"} : {}}
+                    type="password" name="password"
+                    placeholder="enter your password" onChange={handleOnChange}
+                />
+                }
             </div>
             <div className={styles["submit-width"]}>
                 <button
@@ -99,24 +106,24 @@ function Login() {
                 </button>
             </div>
 
-            {error === 'Incorrect password' ? <div className={styles["submit-width"]}>
+            {error === 'Incorrect password' && <div className={styles["submit-width"]}>
                 <div className={styles.fp} onClick={handleForgotPassword}>forgot password?</div>
-            </div> : null}
+            </div>}
         </>
     )
-}
+});
 
-function CreateAccount() {
+const CreateAccount = memo(() => {
     const submitWidth = useRef<HTMLButtonElement>(null);
     const {signUp} = useUser();
     const dispatch = useSetRecoilState(AuthContextHandler);
     const fade = useRecoilValue(AuthFade);
     const {auth, setAuth, authError, valid} = useAuth();
     const {email, setEmail, isValid, validating} = useEmail(true);
-    const {passError, valid: cPass, pass, setPass, setConfirmPass} = usePassword();
+    const {passError, valid: cPass, pass, setPass, setConfirmPass, passValid} = usePassword();
 
     const submit = useCallback(async () => {
-        if (email !== '' && pass !== '' && auth !== '' && (!isValid && validating) && !passError && !authError)
+        if (email !== '' && pass !== '' && auth !== '' && (!isValid && validating) && !passError && !authError && passValid)
             dispatch({
                 error: await signUp(email, pass, auth)
             });
@@ -156,7 +163,7 @@ function CreateAccount() {
                 <div className={styles["create-holders"]}>
                     <label htmlFor="create-email">email address</label>
                     <br/>
-                    <input style={!validating || isValid ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="text"
+                    <input style={!validating || isValid ? {borderColor: "rgba(245, 78, 78, .9)"} : {}} type="email"
                            placeholder="enter your email address" value={email}
                            onChange={(e) => setEmail(e.currentTarget.value)}/>
                     <div className={styles.authSpacers}/>
@@ -181,9 +188,9 @@ function CreateAccount() {
             </div>
         </>
     )
-}
+});
 
-function AuthKey() {
+const AuthKey = memo(() => {
     const {updateUser} = useUser();
     const dispatch = useSetRecoilState(AuthContextHandler);
     const {auth, setAuth, authError, valid} = useAuth();
@@ -230,9 +237,9 @@ function AuthKey() {
             </div>
         </>
     )
-}
+});
 
-function Pick() {
+const Pick = memo(() => {
     const {signOauth, windowOpen} = useUser()
     const dispatch = useSetRecoilState(AuthContextHandler);
 
@@ -258,33 +265,31 @@ function Pick() {
     }, windowOpen);
 
     return (
-        <>
-            <div style={{marginTop: '50px'}}>
-                <div className={styles.pick} onClick={() => handleClickOauth('facebook')}
-                     style={{background: 'rgba(66, 103, 178, 0.5)', color: 'rgba(255, 255, 255, 0.9)'}}>
-                    <div className={styles.pickImg}><Image src={facebook} alt="facebook"/></div>
-                    sign in with facebook
-                </div>
-
-                <div className={styles.pick} onClick={() => handleClickOauth('google')}
-                     style={{background: 'rgba(255, 255, 255, 0.7)', color: 'rgba(1, 16, 28, 0.8)'}}>
-                    <div className={styles.pickImg}><Image src={googleLogo} alt="google"/></div>
-                    sign in with google
-                </div>
-
-                <div className={styles.pick} style={{marginBottom: '0'}} onClick={handleClick}>
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="4"/>
-                        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
-                    </svg>
-                    sign in with email
-                </div>
+        <div style={{marginTop: '50px'}}>
+            <div className={styles.pick} onClick={() => handleClickOauth('facebook')}
+                 style={{background: 'rgba(66, 103, 178, 0.5)', color: 'rgba(255, 255, 255, 0.9)'}}>
+                <div className={styles.pickImg}><Image src={facebook} alt="facebook"/></div>
+                sign in with facebook
             </div>
-        </>
-    )
-}
 
-function ResetPassword() {
+            <div className={styles.pick} onClick={() => handleClickOauth('google')}
+                 style={{background: 'rgba(255, 255, 255, 0.7)', color: 'rgba(1, 16, 28, 0.8)'}}>
+                <div className={styles.pickImg}><Image src={googleLogo} alt="google"/></div>
+                sign in with google
+            </div>
+
+            <div className={styles.pick} style={{marginBottom: '0'}} onClick={handleClick}>
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+                </svg>
+                sign in with email
+            </div>
+        </div>
+    )
+});
+
+const ResetPassword = memo(() => {
     const {modifyPassword} = useUser();
     const dispatch = useSetRecoilState(AuthContextHandler);
     const {passError, valid: cPass, passValid, pass, setPass, setConfirmPass} = usePassword();
@@ -329,9 +334,9 @@ function ResetPassword() {
             </div>
         </>
     )
-}
+});
 
-export default function LoginForm() {
+export const LoginForm = memo(() => {
     const reset = useReset();
     const {error, process, fade} = useRecoilValue(AuthContextHandler);
 
@@ -375,4 +380,4 @@ export default function LoginForm() {
             </div>
         </div>
     )
-}
+});

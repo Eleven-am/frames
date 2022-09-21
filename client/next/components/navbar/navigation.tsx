@@ -1,6 +1,6 @@
 import Head from "next/head";
 import {atom, DefaultValue, selector, useRecoilValue, useSetRecoilState} from 'recoil';
-import {ReactNode, useCallback, useEffect} from "react";
+import {memo, ReactNode, useCallback, useEffect} from "react";
 import {useRouter} from "next/router";
 import Navbar, {useSearch} from "./navbar";
 import {Image, Loading} from "../misc/Loader";
@@ -108,7 +108,7 @@ export const hideAtom = atom({
     default: false
 })
 
-export function Header() {
+const Header = memo(() => {
     const meta = useRecoilValue(MetaTagAtom);
 
     return (
@@ -137,9 +137,9 @@ export function Header() {
             </div>
         </>
     )
-}
+})
 
-export default function HomeLayout({children}: { children: ReactNode }) {
+function HomeLayout({children}: { children: ReactNode }) {
     const {user, loading, signOut} = useUser();
     const {active} = useSearch();
     const router = useRouter();
@@ -176,6 +176,8 @@ export default function HomeLayout({children}: { children: ReactNode }) {
         </>
     )
 }
+
+export default memo(HomeLayout);
 
 export function useNavBar(section?: navSection, opacity?: number, metaTag?: MetaTags) {
     const prevState = useRecoilValue(PreviousNavStateAtom);

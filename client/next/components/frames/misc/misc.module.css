@@ -133,3 +133,44 @@
 .gwm:hover, .gwm:focus {
     border: 2px solid #fff;
 }
+
+.flashSVG {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    fill:  rgba(144, 197, 240, .9);
+    width: 7vw;
+    opacity: 0;
+}
+
+.flash {
+    animation: flash .2s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes flash {
+    0% {
+        opacity: 0;
+        visibility: hidden;
+    }
+    25% {
+        opacity: .3;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        opacity: .5;
+        visibility: hidden;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    75% {
+        opacity: .3;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
+}

@@ -5,7 +5,8 @@ import {Settings} from "../manage/library";
 import {useManageUserInfo} from "../../../../utils/modify";
 import {WatchHistory} from "../../../../../server/classes/playback";
 import {useConfirmDispatch} from "../../../../utils/notifications";
-import {useCallback} from "react";
+import {memo, useCallback} from "react";
+import {genericMemo} from "../../buttons/Buttons";
 
 export interface UserSettings<S> extends Settings<S> {
     timestamp: string;
@@ -14,7 +15,7 @@ export interface UserSettings<S> extends Settings<S> {
     logo?: string | null;
 }
 
-export function UserResponse<S>(obj: UserSettings<S>) {
+function UnMemoUerResponse<S>(obj: UserSettings<S>) {
 
     return (
         <div className={ss.d}>
@@ -49,7 +50,9 @@ export function UserResponse<S>(obj: UserSettings<S>) {
     )
 }
 
-export default function WatchedList() {
+export const UserResponse = genericMemo(UnMemoUerResponse);
+
+function WatchedList() {
     const confirmAction = useConfirmDispatch();
     const {deleteWatchEntry} = useManageUserInfo();
     const {
@@ -94,3 +97,5 @@ export default function WatchedList() {
         </div>
     )
 }
+
+export default memo(WatchedList);

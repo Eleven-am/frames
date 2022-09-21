@@ -197,10 +197,6 @@
     transition: all 0.2s ease-in-out;
 }
 
-.log-pass {
-    display: none;
-}
-
 .log-input {
     margin: 18vh 0 7px 0;
 }

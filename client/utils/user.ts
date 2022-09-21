@@ -1,14 +1,13 @@
 import {Role} from "@prisma/client";
-import {atom, selector, useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
+import {atom, useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {useCallback, useState} from "react";
 import useBase from "./provider";
 import NProgress from "nprogress";
-import {hookChangeAtomFamily, useBasics, useWindowListener} from "./customHooks";
+import {useBasics, useWindowListener} from "./customHooks";
 import {AuthContextProcessAtom} from "../next/components/auth/authContext";
 import {ManageAuthKey} from "../../server/classes/auth";
-import {useManageUserInfo, UserPlaybackSettingsContext} from "./modify";
-import {PresenceInterface} from "./realtime";
-import {globalChannelKeyAtom} from "./notifications";
+import {useManageUserInfo} from "./modify";
+import {NotificationInterface} from "../../server/classes/user";
 
 const SocketUserAtom = atom<SocketUser | null>({
     key: 'socketUser',
@@ -39,26 +38,6 @@ interface SocketUser {
     email: string;
     state: string;
 }
-
-export const globalChannelSelector = selector({
-    key: 'globalChannelSelector',
-    get: ({get}) => {
-        const user = get(UserContext);
-        const key = get(globalChannelKeyAtom);
-        const topic = `globalNotification:${key}:update`;
-        const userState = get(UserPlaybackSettingsContext);
-        const online: PresenceInterface[] | undefined = get(hookChangeAtomFamily(topic));
-        const users = online && user ? online.filter(usr => usr.identifier !== user.identifier) : [];
-
-        if (user?.role === Role.ADMIN)
-            return users;
-
-        else if (userState?.incognito === true)
-            return [];
-
-        return users.filter(user => !user.identifier.startsWith('incognito:'));
-    }
-})
 
 const UserContext = atom<(ContextType & { username: string }) | null>({
     key: 'userContext',
@@ -151,15 +130,15 @@ export default function useUser() {
     }, [base, getBaseUrl]);
 
     const getResetPassword = useCallback(async (token: string): Promise<{ process: 'resetPassword' } | { error: string }> => {
-            let data = {token, process: 'getResetPassword'};
-            const user = await base.makeRequest<ServerResponse>('/api/auth', data, 'POST');
-            if (user?.context) {
-                setResetUser(user.context);
-                return {process: 'resetPassword'};
-            }
+        let data = {token, process: 'getResetPassword'};
+        const user = await base.makeRequest<ServerResponse>('/api/auth', data, 'POST');
+        if (user?.context) {
+            setResetUser(user.context);
+            return {process: 'resetPassword'};
+        }
 
-            return {error: user?.error || 'something went wrong'};
-        }, [base]);
+        return {error: user?.error || 'something went wrong'};
+    }, [base]);
 
     const modifyPassword = useCallback(async (password: string) => {
         if ((resetUser && resetUser.email) || (user && user.email)) {
@@ -244,6 +223,21 @@ export default function useUser() {
         return {error: 'You do not have permission to perform this action'};
     }, [base, user]);
 
+    const getNotifications = useCallback(async () => {
+        if (user) {
+            const response = await base.makeRequest<Omit<NotificationInterface, 'message' | 'data' | 'type'>[]>(
+                '/api/auth',
+                {process: 'getNotifications', ...user},
+                'POST'
+            );
+
+            if (response)
+                return response;
+        }
+
+        return [];
+    }, [base, user]);
+
     const checkOauth = useCallback(async (user: SocketUser) => {
         if (window) {
             NProgress.start();
@@ -270,7 +264,7 @@ export default function useUser() {
         getResetPassword, modifyPassword, forgotPassword,
         signAsGuest, signOut, loading, signOauth, confirmEmail, signIn,
         signUp, confirmAuthKey, updateUser, confirmMail, generateAuthKey,
-        manageKeys, user, windowOpen: windowOpen || processing
+        manageKeys, user, windowOpen: windowOpen || processing, getNotifications
     }
 }
 

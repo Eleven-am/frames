@@ -2,13 +2,13 @@ import styles from './Navbar.module.css';
 import {atom, useRecoilState, useRecoilValue, useResetRecoilState, useSetRecoilState} from "recoil";
 import {navSection, NavSectionAndOpacity, SearchContextAtom} from "./navigation";
 import {Role} from "@prisma/client";
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import React, {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Image, Link} from "../misc/Loader";
 import frames from "../../assets/frames.png";
 import {SettingsSegmentContext} from "../../../utils/modify";
 import {useRouter} from "next/router";
-import {notificationCount} from "../../../utils/notifications";
-import {ContextType, globalChannelSelector} from "../../../utils/user";
+import {notificationCount, useUsers} from "../../../utils/notifications";
+import {ContextType} from "../../../utils/user";
 import {SearchPicker} from "../../../../server/classes/media";
 import {useBasics, useFetcher, useTimer} from "../../../utils/customHooks";
 import {HoverContainer} from "../buttons/Buttons";
@@ -62,7 +62,7 @@ export const useSearch = () => {
     };
 }
 
-function Account({user}: {user: ContextType & {username: string} | null}) {
+const Account = memo(({user}: {user: ContextType & {username: string} | null}) => {
     const setAccountContext = useSetRecoilState(SideMenu);
     const {start, stop} = useTimer();
     const count = useRecoilValue(notificationCount);
@@ -104,15 +104,15 @@ function Account({user}: {user: ContextType & {username: string} | null}) {
             {count && <div className={styles.notification}>{count}</div>}
         </HoverContainer>
     )
-}
+})
 
-function OnlineUsersComponent() {
-    const users = useRecoilValue(globalChannelSelector);
+const OnlineUsersComponent = memo(() => {
+    const users = useUsers();
 
     return (
         <Link href={'/lobby'}>
             <div className={styles.online}
-                 title={`${users.length > 0 ? users.length - 1 : 'No'} user${users.length > 1 ? 's' : ''} online`}>
+                 title={`${users.length > 0 ? users.length : 'No'} user${users.length > 1 ? 's' : ''} online`}>
                 <svg viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
@@ -123,9 +123,9 @@ function OnlineUsersComponent() {
             </div>
         </Link>
     )
-}
+})
 
-function AccountInfo({user, signOut}: {user: ContextType & {username: string} | null, signOut: () => void}) {
+const AccountInfo = memo(({user, signOut}: {user: ContextType & {username: string} | null, signOut: () => void}) => {
     const {openPopup} = useBasics();
     const {start, stop} = useTimer();
     const count = useRecoilValue(notificationCount);
@@ -188,18 +188,18 @@ function AccountInfo({user, signOut}: {user: ContextType & {username: string} | 
         )
 
     else return null;
-}
+})
 
-function Logo() {
+const Logo = memo(() => {
     return (
         <div className={styles.b}>
             <Image src={frames} alt='frames' className={styles.bImg}/>
             <span className={styles.bt}>frames</span>
         </div>
     )
-}
+})
 
-function Search({user, section}: {user: ContextType & {username: string} | null, section: navSection | null}) {
+const Search = memo(({user, section}: {user: ContextType & {username: string} | null, section: navSection | null}) => {
     const myRef = useRef<HTMLInputElement>(null);
     const {setSearch} = useSearch();
 
@@ -225,9 +225,9 @@ function Search({user, section}: {user: ContextType & {username: string} | null,
             <Account user={user}/>
         </div>
     );
-}
+})
 
-function Sections({navContext}: {navContext: navSection}) {
+const Sections = memo(({navContext}: {navContext: navSection}) => {
     const sections = useMemo(() => ["home", "movies", "tv shows", "playlists", "collections"], []);
     const paths = useMemo(() => ["/", "/movies", "/shows", "/playlist", "/collections"], []);
     const resetSearch = useResetRecoilState(SearchContextAtom);
@@ -243,9 +243,9 @@ function Sections({navContext}: {navContext: navSection}) {
             })}
         </div>
     );
-}
+})
 
-export default function Navbar({user, signOut}: {user: ContextType & {username: string} | null, signOut: () => void}) {
+function Navbar({user, signOut}: {user: ContextType & {username: string} | null, signOut: () => void}) {
     const {opacity, section} = useRecoilValue(NavSectionAndOpacity);
     if (section === 'watch')
         return null;
@@ -271,3 +271,5 @@ export default function Navbar({user, signOut}: {user: ContextType & {username: 
             </>
         )
 }
+
+export default memo(Navbar);

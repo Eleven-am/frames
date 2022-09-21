@@ -10,9 +10,9 @@ import {PlayBackKeys} from "../server/classes/springboard";
 import {GetServerSidePropsContext} from "next";
 import {cleanUp, framesVideoStateAtom} from "../client/utils/playback";
 import {Role} from "@prisma/client";
-import {GroupWatchSlide} from "../client/next/components/lobby/groupWatchHandler";
 import {Loading} from "../client/next/components/misc/Loader";
 import {useGroupWatch} from "../client/utils/groupWatch";
+import ErrorBoundary from "../client/next/components/misc/ErrorBoundary";
 
 export default function Watch({media, metaTags, room}: { media: SpringPlay, metaTags: MetaTags, room: string | null }) {
     const reset = cleanUp();
@@ -53,10 +53,10 @@ export default function Watch({media, metaTags, room}: { media: SpringPlay, meta
 
     useEffect(() => {
         setResponse(media);
-        const {logo, name, overview, backdrop} = media;
+        const {logo, name, overview, backdrop, poster} = media;
         room && !connected && openSession({id: media.mediaId, auth: room});
         !media.frame && room === null && router.replace('/watch=' + media.location, undefined, {shallow: true});
-        modifyPresence(`watching ${name}`, {logo, name, overview, backdrop});
+        modifyPresence(`watching ${name}`, {logo, name, overview, backdrop, poster});
         return () => reset(async (response) => {
             await modifyPresence('online');
             broadcastToSelf({
@@ -66,7 +66,7 @@ export default function Watch({media, metaTags, room}: { media: SpringPlay, meta
                 data: null
             })
 
-            if (user?.role === Role.GUEST && response?.frame)
+            if (user?.role === Role.GUEST && response?.frame === true)
                 await signOut();
         });
     }, [media, room]);
@@ -75,11 +75,10 @@ export default function Watch({media, metaTags, room}: { media: SpringPlay, meta
         return <Loading/>
 
     return (
-        <>
+        <ErrorBoundary>
             {alreadyStreaming ? <AlreadyStreaming/> : <FrameHolder room={room}/>}
             <WatchListener/>
-            <GroupWatchSlide/>
-        </>
+        </ErrorBoundary>
     )
 }
 

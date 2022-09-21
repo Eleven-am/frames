@@ -1,6 +1,6 @@
 import ss from './Styles.module.css';
 import styles from '../../grid/List.module.css';
-import {useCallback, useEffect, useRef, useState} from "react";
+import {memo, useCallback, useEffect, useRef, useState} from "react";
 import {GenreHolderContextAtom, useDecadeContext, useGenreContext} from "../browseContext";
 import useOnScroll from "../../../../utils/opacityScroll";
 import {useRecoilValue} from "recoil";
@@ -52,7 +52,7 @@ const useScroll = () => {
     return {scrollLeft, scrollRight, setList, atLeft, atRight};
 }
 
-export default function Selectors({data}: { data: BrowseData }) {
+export const Selectors = memo(({data}: { data: BrowseData }) => {
     const divRef = useRef<HTMLDivElement>(null);
     const genres = useRecoilValue(GenreHolderContextAtom);
     const {setReference} = useOnScroll();
@@ -67,9 +67,9 @@ export default function Selectors({data}: { data: BrowseData }) {
             <DecadeHolder decades={data.decades}/>
         </div>
     );
-}
+});
 
-const GenreHolder = ({genres}: { genres: string[] }) => {
+const GenreHolder = memo(({genres}: { genres: string[] }) => {
     const list = useRef<HTMLUListElement>(null);
     const {scrollLeft, scrollRight, setList, atLeft, atRight} = useScroll();
     const {manageGenre, isGenreSelected} = useGenreContext();
@@ -96,9 +96,9 @@ const GenreHolder = ({genres}: { genres: string[] }) => {
             </svg>
         </div>
     )
-}
+});
 
-const DecadeHolder = ({decades}: { decades: string[] }) => {
+const DecadeHolder = memo(({decades}: { decades: string[] }) => {
     const {manageDecade, decade} = useDecadeContext();
 
     return (
@@ -109,4 +109,4 @@ const DecadeHolder = ({decades}: { decades: string[] }) => {
             {decades.map(value => <option key={value} value={value}>{value}</option>)}
         </select>
     )
-}
+});

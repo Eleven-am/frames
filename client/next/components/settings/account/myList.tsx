@@ -5,9 +5,9 @@ import ss from "../ACCOUNT.module.css";
 import {UserResponse, UserSettings} from "./watchHistory";
 import {MyList} from "../../../../../server/classes/user";
 import {useConfirmDispatch} from "../../../../utils/notifications";
-import {useCallback} from "react";
+import {memo, useCallback} from "react";
 
-export default function YourList() {
+function YourList() {
     const confirmAction = useConfirmDispatch();
     const {deleteFromMyList} = useManageUserInfo();
     const {
@@ -53,3 +53,5 @@ export default function YourList() {
         </div>
     )
 }
+
+export default memo(YourList);

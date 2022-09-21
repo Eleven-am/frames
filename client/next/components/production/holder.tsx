@@ -4,8 +4,9 @@ import {Link, Loading} from "../misc/Loader";
 import {useFetcher} from "../../../utils/customHooks";
 import {PlayListResponse} from "../../../../server/classes/playlist";
 import {FramesCollections, ProductionCompanyInterface} from "../../../../server/classes/springboard";
+import {memo} from "react";
 
-export default function Holder({response}: { response: ProductionCompanyInterface }) {
+function Holder({response}: { response: ProductionCompanyInterface }) {
     const {response: data} = useFetcher<PlayListResponse | null>('/api/media/prodPlaylist?mediaId=' + response.id);
 
     if (data)
@@ -26,7 +27,9 @@ export default function Holder({response}: { response: ProductionCompanyInterfac
     else return <Loading/>
 }
 
-export function CollectionHolder({response}: { response: FramesCollections }) {
+export default memo(Holder)
+
+export const CollectionHolder = memo(({response}: { response: FramesCollections }) => {
     const {response: mediaId} = useFetcher<number | null>('/api/media/firstVideoInCollection?mediaId=' + response.id, {
         revalidateOnFocus: false,
     });
@@ -45,4 +48,4 @@ export function CollectionHolder({response}: { response: FramesCollections }) {
         )
 
     else return <Loading/>
-}
+})

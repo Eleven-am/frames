@@ -5,16 +5,19 @@ import {InfoContext, infoUserContext, useInfoContext} from "../infoContext";
 import {MediaType, Role} from "@prisma/client";
 import useModify, {useGetContext} from "../../../../utils/modify";
 import useUser from "../../../../utils/user";
-import React, {useState} from "react";
+import React, {memo, useState} from "react";
 import {useGroupWatch} from "../../../../utils/groupWatch";
 import styles from "../../buttons/Button.module.css";
+import ss from './FullDetails.module.css';
 
 interface InfoType {
     trailer: boolean;
-    loadTrailer: () => void
+    loadTrailer: () => void;
+    splitGenres: () => void;
+    manageDecade: () => void
 }
 
-export default function InfoDetails({loadTrailer, trailer}: InfoType) {
+function InfoDetails({loadTrailer, trailer, splitGenres, manageDecade}: InfoType) {
     const response = useRecoilValue(InfoContext);
     const infoUser = useRecoilValue(infoUserContext);
     const {toggleSeen, toggleAddToList, rateMedia} = useInfoContext();
@@ -63,9 +66,9 @@ export default function InfoDetails({loadTrailer, trailer}: InfoType) {
                 <div className={info.infoDetails}>
                     <div className={info.rating}>{response.rating}</div>
                     <span>-</span>
-                    <div>{response.release}</div>
+                    <div className={ss.click} onClick={manageDecade}>{response.release}</div>
                     <span>-</span>
-                    <div>{response.genre}</div>
+                    <div className={ss.click} onClick={splitGenres}>{response.genre}</div>
                     <span>-</span>
                     <div>{response.runtime}</div>
                     <HoverContainer className={styles.rc} onHover={setRating}>
@@ -82,3 +85,5 @@ export default function InfoDetails({loadTrailer, trailer}: InfoType) {
         </>
     )
 }
+
+export default memo(InfoDetails);

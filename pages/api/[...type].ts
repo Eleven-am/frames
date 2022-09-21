@@ -32,7 +32,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             return;
 
         case 'load':
-            await load(req, res, userId);
+            await load(req, res, newData);
             return;
 
         case 'media':

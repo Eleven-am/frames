@@ -7,10 +7,11 @@ import {
 } from "../../../../utils/playback";
 import {useBasics} from "../../../../utils/customHooks";
 import ss from '../../navbar/Navbar.module.css';
-import React from "react";
+import React, {memo} from "react";
 import styles from './controls.module.css';
+import {HoverContainer} from "../../buttons/Buttons";
 
-export default function RightControls() {
+function RightControls() {
     const {isMobile} = useBasics();
     const {right} = useRecoilValue(displaySidesAtom);
     const {pip, fullscreen} = useRecoilValue(PipAndFullscreenAtom);
@@ -57,7 +58,7 @@ export default function RightControls() {
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
-                    {users.length - 1 > 0 ? <div className={ss.watchOnline}>{users.length - 1}</div> : null}
+                    {users.length ? <div className={ss.watchOnline}>{users.length}</div> : null}
                 </button>
             }
 
@@ -74,8 +75,7 @@ export default function RightControls() {
                 </svg>
             </button>
 
-            <button className={styles.f} onMouseLeave={() => hoverSubtitle(false)}
-                    onMouseEnter={() => hoverSubtitle(true)}>
+            <HoverContainer className={styles.f} onHover={hoverSubtitle}>
                 <svg viewBox="0 -71 512 512">
                     <path
                         d="m407 0h-302c-57.898438 0-105 47.101562-105 105v160.679688c0 57.894531 47.101562 105 105 105h302c57.898438 0 105-47.105469 105-105v-160.679688c0-57.898438-47.101562-105-105-105zm75 265.679688c0 41.351562-33.644531 75-75 75h-302c-41.355469 0-75-33.648438-75-75v-160.679688c0-41.355469 33.644531-75 75-75h302c41.355469 0 75 33.644531 75 75zm0 0"/>
@@ -92,16 +92,15 @@ export default function RightControls() {
                     <path
                         d="m157.917969 223.359375h-45.722657c-8.285156 0-15 6.71875-15 15 0 8.285156 6.714844 15 15 15h45.722657c8.285156 0 15-6.714844 15-15 0-8.28125-6.714844-15-15-15zm0 0"/>
                 </svg>
-            </button>
+            </HoverContainer>
 
             {response?.frame && isGuest ? null :
-                <button className={styles.f} onClick={playNext} onMouseEnter={() => hoverUpNext(true)}
-                        onMouseLeave={() => hoverUpNext(false)}>
+                <HoverContainer className={styles.f} onClick={playNext} onHover={hoverUpNext}>
                     <svg viewBox="0 0 24 24">
                         <polyline points="13 17 18 12 13 7"/>
                         <polyline points="6 17 11 12 6 7"/>
                     </svg>
-                </button>}
+                </HoverContainer>}
 
             <button className={styles.nf} onClick={toggleFS}>
                 <svg style={!fullscreen ? {display: "block"} : {display: "none"}}
@@ -120,3 +119,5 @@ export default function RightControls() {
         </div>
     )
 }
+
+export default memo(RightControls)

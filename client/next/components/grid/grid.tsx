@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import GridEntity from "../entities/singleEntity/gridEntity";
 import styles from './List.module.css';
 import {useRecoilValue} from "recoil";
@@ -8,7 +8,7 @@ import {SpringMedia} from "../../../../server/classes/media";
 import {useInfiniteScroll} from "../../../utils/customHooks";
 import {Collection} from "./collectionList";
 
-export default function Grid() {
+function Grid() {
     const gridSelector = useRecoilValue(GridSelector);
     const {
         loading,
@@ -31,7 +31,9 @@ export default function Grid() {
     return null;
 }
 
-export const CollectionGrid = () => {
+export default memo(Grid);
+
+export const CollectionGrid = memo(() => {
     const gridSelector = useRecoilValue(GridSelector);
     const {
         loading,
@@ -52,4 +54,4 @@ export const CollectionGrid = () => {
         )
 
     return null;
-}
+})

@@ -376,14 +376,8 @@ export class BaseClass {
         const keys = Array.isArray(needle) ? needle : [needle];
         for (let i = 0; i < a.length; ++i)
             for (let j = i + 1; j < a.length; ++j) {
-                let val = true;
-                for (let k = 0; k < keys.length; ++k)
-                    if (a[i][keys[k]] !== a[j][keys[k]]) {
-                        val = false;
-                        break;
-                    }
-
-                if (val)
+                const same = keys.every(key => a[i][key] === a[j][key]);
+                if (same)
                     a.splice(j--, 1);
             }
 
@@ -449,29 +443,18 @@ export class BaseClass {
     public exclude<A, B, C extends keyof A, D extends keyof B>(arr: A[], arr2: B[], keyA: C | C[], keyB: D | D[]): Array<A> {
         let a: any = arr.concat();
         let b = arr2.concat();
-        let result: Array<A> = [];
+        const results: A[] = [];
         let keysA = Array.isArray(keyA) ? keyA : [keyA];
         let keysB = Array.isArray(keyB) ? keyB : [keyB];
 
         for (let i = 0; i < a.length; ++i) {
-            let val = true;
-            for (let j = 0; j < b.length; ++j) {
-                let index = 0;
-                for (let k = 0; k < keysA.length; ++k)
-                    if (a[i][keysA[k]] === b[j][keysB[k]])
-                        index++;
+            const notFound = b.every(item => !keysA.every((key, index) => a[i][key] === item[keysB[index]]));
 
-                if (index === keysA.length) {
-                    val = false;
-                    break;
-                }
-            }
-
-            if (val)
-                result.push(a[i]);
+            if (notFound)
+                results.push(a[i]);
         }
 
-        return result;
+        return results;
     }
 
     /**
@@ -480,31 +463,27 @@ export class BaseClass {
      * @param arr2 - array to check against
      * @param keyA - the key to compare
      * @param keyB - the key to compare
-     * @param keepKey - the key to save
+     * @param keepKeys - the key to save
      */
-    public intersect<A, B, C extends keyof A, D extends ExtractSameValueType<A, B, C>, E extends keyof B>(arr: A[], arr2: B[], keyA: C | C[], keyB: D | D[], keepKey?: E): Array<A & Pick<B, E>> {
+    public intersect<A, B, C extends keyof A, D extends ExtractSameValueType<A, B, C>, E extends keyof B>(arr: A[], arr2: B[], keyA: C | C[], keyB: D | D[], keepKeys?: E | E[]): Array<A & Pick<B, E>> {
         let a: any[] = arr.concat();
         let b: any[] = arr2.concat();
         let c: (A & Pick<B, E>)[] = [];
         let keysA = Array.isArray(keyA) ? keyA : [keyA];
         let keysB = Array.isArray(keyB) ? keyB : [keyB];
+        let keptKeys = Array.isArray(keepKeys) ? keepKeys : [keepKeys];
 
         for (let i = 0; i < a.length; ++i) {
-            let val = false;
-            for (let j = 0; j < b.length; ++j) {
-                let index = 0;
-                for (let k = 0; k < keysA.length; ++k)
-                    if (a[i][keysA[k]] === b[j][keysB[k]])
-                        index++;
+            const item = b.find(item => keysA.every((key, index) => a[i][key] === item[keysB[index]]));
+            if (item) {
+                if (keptKeys.length > 0) {
+                    let obj = {...a[i]};
+                    keptKeys.forEach(key => obj[key] = item[key]);
+                    c.push(obj);
 
-                if (index === keysA.length) {
-                    val = true;
-                    break;
-                }
+                } else
+                    c.push(a[i]);
             }
-
-            if (val)
-                c.push(a[i]);
         }
 
         return c;
@@ -554,7 +533,6 @@ export class BaseClass {
                         const res = await response.json();
                         resolve(res);
                     } catch (e) {
-
                         const res = await response.text() as any as S
                         resolve(res);
                     }

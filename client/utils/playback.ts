@@ -17,7 +17,7 @@ export interface FramesSubs {
     data: Sub[];
 }
 
-type PLAYER_TYPE = 'PLAYING' | 'PAUSED' | 'BUFFERING' | 'ENDED' | 'FAILED_TO_START';
+type PLAYER_TYPE = 'PLAYING' | 'PAUSED' | 'BUFFERING' | 'ENDED' | 'FAILED_TO_START' | 'NOT_STARTED';
 
 export const displaySidesAtom = atom<{ left: boolean, right: boolean, info: boolean, controls: boolean }>({
     key: 'displaySides', default: {
@@ -56,7 +56,7 @@ export const framesPlayer = atom<HTMLVideoElement | null>({
 });
 
 export const framesPlayerStateAtom = atom<PLAYER_TYPE>({
-    key: 'framesPlayerState', default: 'BUFFERING'
+    key: 'framesPlayerState', default: 'NOT_STARTED'
 });
 
 export const volumeFrameAtom = atom<{ volume: number, mute: boolean }>({
@@ -184,7 +184,7 @@ export const VolumeSelector = selector({
     }
 });
 
-export const framesPlayerStateSelector = selector({
+export const framesPlayerStateSelector = selector<PLAYER_TYPE>({
     key: 'framesPlayerStateSelector', get: ({get}) => {
         const state = get(CastEventAtom);
         if (state?.connected) return state.buffering ? 'BUFFERING' : state.paused ? 'PAUSED' : 'PLAYING';
@@ -289,10 +289,10 @@ export const useDefaultControls = () => {
     const {start: startFiveSecs, stop: stopFiveSecs} = useTimer();
     const {start: startTenSecs, stop: stopTenSecs} = useTimer();
     const setSides = useSetRecoilState(displaySidesAtom);
+    const setPState = useSetRecoilState(framesPlayerStateAtom);
     const shareAndDownload = useSetRecoilState(shareAndDownloadAtom);
     const setSubtitlesAndUpNext = useSetRecoilState(SubtitlesAndUpNextAtom);
-    const playerState = useRef<PLAYER_TYPE>('BUFFERING');
-    const setPState = useSetRecoilState(framesPlayerStateAtom);
+    const playerState = useRef<PLAYER_TYPE>('NOT_STARTED');
 
     const showControls = useCallback(() => {
         stopFiveSecs();
@@ -305,15 +305,15 @@ export const useDefaultControls = () => {
         }, 5000);
 
         startTenSecs(() => {
-            if (playerState.current === 'PAUSED') setSides(prev => ({...prev, info: true}));
+            if (playerState.current === 'PAUSED') setSides(prev => ({...prev, controls: false, info: true}));
         }, 10000);
-    }, [setSides, setSubtitlesAndUpNext, playerState]);
+    }, [setSides, setSubtitlesAndUpNext, playerState, startFiveSecs, startTenSecs, stopFiveSecs, stopTenSecs]);
 
     const setPlayerState = useCallback((state: PLAYER_TYPE | ((p: PLAYER_TYPE) => PLAYER_TYPE)) => {
         const val = typeof state === 'function' ? state(playerState.current) : state;
         setPState(val);
         playerState.current = val;
-    }, [setPState]);
+    }, [setPState, playerState]);
 
     return {showControls, groupWatch, setPlayerState, response, player, setSides, shareAndDownload};
 }
@@ -392,7 +392,7 @@ export const useRightControls = () => {
         response,
         showControls,
         player,
-        groupWatch: {pushNext, disconnect, connected, openSession: open, openCHat, channel: {online}}
+        groupWatch: {pushNext, disconnect, connected, openSession: open, openCHat, users}
     } = useDefaultControls();
     const {getUserDetails} = useManageUserInfo()
     const setState = useSetRecoilState(SideBarAtomFamily('framesSettings'));
@@ -517,8 +517,7 @@ export const useRightControls = () => {
         toggleSession,
         hoverSubtitle, modifyPresence,
         hoverUpNext, getUserDetails,
-        connected, users: online,
-        toggleChat: openCHat,
+        connected, users, toggleChat: openCHat,
         isGuest: user?.role === Role.GUEST
     };
 }
@@ -533,7 +532,7 @@ export const useCentreControls = (inform: boolean) => {
 
     const sendMessage = useCallback((message: Message) => {
         if (inform) send(message);
-    }, [send]);
+    }, [send, inform]);
 
     const seekVideo = useCallback((current: number, val: 'current' | 'add' | 'multiply') => {
         const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
@@ -551,11 +550,11 @@ export const useCentreControls = (inform: boolean) => {
                     break;
             }
 
+            sendMessage({action: "skipped", data: newVal});
             cast.connected ? cast.seek(newVal) : player.currentTime = newVal;
-            sendMessage({action: "skipped", data: newVal + 1});
         }
         showControls();
-    }, [response, cast.connected, sendMessage, cast.seek, chromecastState, showControls]);
+    }, [response, sendMessage, cast, chromecastState, showControls]);
 
     const playPause = useCallback(async (action?: boolean) => {
         const video = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
@@ -570,6 +569,8 @@ export const useCentreControls = (inform: boolean) => {
                     else
                         video.pause();
                 }
+
+                sendMessage({action: "playing", data: action, playData: video?.currentTime});
             } else if (video && !cast.connected) {
                 if (video.paused) {
                     await video.play();
@@ -591,7 +592,7 @@ export const useCentreControls = (inform: boolean) => {
             })
         }
 
-    }, [response, cast.connected, cast.playPause, sendMessage]);
+    }, [cast, response, sendMessage, dispatch, chromecastEvent, chromecastState]);
 
     return {playPause, seekVideo, display, sendMessage, lobbyOpen};
 }
@@ -631,18 +632,17 @@ export const usePlaybackControlsListener = (inform: boolean) => {
         } else if (informServer) {
             setPos(current);
             const position = Math.floor((current / duration) * 1000);
-            sendMessage({action: 'inform', data: current});
-            await base?.makeRequest('/api/stream/inform', {auth: media?.location, position}, 'POST');
+            await base.makeRequest('/api/stream/inform', {auth: media?.location, position}, 'POST');
         }
 
         if (media) {
             if (presenceState?.metadata?.backdrop === media.backdrop)
                 return;
 
-            const {logo, name, overview, backdrop} = media;
-            modifyPresence(`watching ${name}`, {logo, name, overview, backdrop});
+            const {logo, name, overview, backdrop, poster} = media;
+            modifyPresence(`watching ${name}`, {logo, name, overview, backdrop, poster});
         }
-    }, [presenceState, sendMessage, base, signOut, cast.disconnect, informServer, setPos]);
+    }, [presenceState, base, signOut, cast.disconnect, informServer, setPos, modifyPresence]);
 
     const handleVolumeChange = useCallback(() => {
         if (player) setVolumeState({
@@ -665,13 +665,7 @@ export const usePlaybackControlsListener = (inform: boolean) => {
                     setHideImage(true);
 
                 } catch (e: any) {
-                    const error = e as DOMException;
                     setPlayerState('FAILED_TO_START');
-                    dispatch({
-                        type: "error",
-                        heading: "Playback Error",
-                        message: error.message
-                    });
                 }
             }
 
@@ -679,7 +673,7 @@ export const usePlaybackControlsListener = (inform: boolean) => {
                 setSides(prev => ({...prev, left: false, right: false}));
             }, 1000);
         }
-    }, [response, informDB, dispatch, setPlayerState, setHideImage, setSides, setSubtitles, clear, lobbyOpen]);
+    }, [response, setCurrent, setSubtitles, lobbyOpen, informDB, clear, setPlayerState, setHideImage, setSides]);
 
     const handleTimeUpdate = useCallback(async (event: SyntheticEvent) => {
         const player = event.target as HTMLVideoElement;
@@ -702,9 +696,13 @@ export const usePlaybackControlsListener = (inform: boolean) => {
     const handlePlayPause = useCallback(async () => {
         const player = (document.getElementById(response?.playerId || '') as HTMLVideoElement | null);
         showControls();
-        if (player && !player.paused) {
-            setPlayerState("PLAYING");
-        } else if (player) setPlayerState("PAUSED");
+        if (player) {
+            setPlayerState(prev => {
+                if (prev === 'NOT_STARTED' || prev === 'FAILED_TO_START')
+                    return player.paused ? 'FAILED_TO_START' : 'PLAYING';
+                return player.paused ? 'PAUSED' : 'PLAYING';
+            });
+        }
     }, [sendMessage, response, setPlayerState, showControls]);
 
     const handleWaiting = useCallback(() => {
@@ -724,20 +722,8 @@ export const usePlaybackControlsListener = (inform: boolean) => {
         if (player && response) {
             const current = player.currentTime = (response.position / 1000) * player.duration;
             setCurrent({current, duration: player.duration, buffered: player.buffered});
-            if (lobbyOpen)
-                try {
-                    await player.play();
-                } catch (e: any) {
-                    const error = e as DOMException;
-                    setPlayerState('FAILED_TO_START');
-                    dispatch({
-                        type: "error",
-                        heading: "Playback Error",
-                        message: error.message
-                    });
-                }
         }
-    }, [setPlayerState, response, setCurrent, lobbyOpen]);
+    }, [response, setCurrent]);
 
     const handleError = useCallback((event: SyntheticEvent) => {
         const player = event.target as HTMLVideoElement;

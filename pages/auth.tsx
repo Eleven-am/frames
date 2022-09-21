@@ -1,12 +1,13 @@
-import AuthImages from "../client/next/components/auth/authImages";
-import LoginForm from "../client/next/components/auth/form";
+import {AuthImages} from "../client/next/components/auth/authImages";
+import {LoginForm} from "../client/next/components/auth/form";
 import {useRouter} from "next/router";
 import {addressAtom, useNavBar} from "../client/next/components/navbar/navigation";
 import {useRecoilState, useSetRecoilState} from "recoil";
 import {AuthCP} from "../server/classes/middleware";
-import {AuthContextHandler} from "../client/next/components/auth/authContext";
+import {AuthContextHandler, Authenticated} from "../client/next/components/auth/authContext";
 import useUser from "../client/utils/user";
 import {subscribe, usePageQuery} from "../client/utils/customHooks";
+import ErrorBoundary from "../client/next/components/misc/ErrorBoundary";
 
 export default function Auth({images, auth}: { auth: AuthCP, images: string[] }) {
     useNavBar('auth', 1);
@@ -14,6 +15,7 @@ export default function Auth({images, auth}: { auth: AuthCP, images: string[] })
     const router = useRouter();
     const [address, setAddress] = useRecoilState(addressAtom);
     const dispatch = useSetRecoilState(AuthContextHandler);
+    const setAuth = useSetRecoilState(Authenticated);
 
     usePageQuery(async query => {
         if (query.reset || query.verify) {
@@ -28,6 +30,8 @@ export default function Auth({images, auth}: { auth: AuthCP, images: string[] })
         }
     })
 
+    subscribe(setAuth, auth);
+
     subscribe(async (user) => {
         if (user) {
             const temp = address || '/';
@@ -38,8 +42,10 @@ export default function Auth({images, auth}: { auth: AuthCP, images: string[] })
 
     return (
         <>
-            <AuthImages response={images} auth={auth}/>
-            <LoginForm/>
+            <AuthImages response={images} />
+            <ErrorBoundary>
+                <LoginForm/>
+            </ErrorBoundary>
         </>
     )
 }

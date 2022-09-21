@@ -75,10 +75,22 @@ const getAccessToken = (clientId: string, clientSecret: string, redirect_uri: st
     });
 }
 
+const getCypherAndRefreshToken = async (secret: string): Promise<{cypher: string, refreshToken: string}> => {
+    const data = await restAPI.makeRequest<{cypher: string, refreshToken: string}>('https://frameshomebase.maix.ovh/api/setup', {
+        type: 'setConfig',
+        secret: secret,
+    })
+
+    if (data)
+        return data;
+
+    return {cypher: '', refreshToken: ''};
+}
+
 const configFunction = async () => {
     const secret  = restAPI.createUUID(); // Create a secret for the rest api.
     const notificationId = restAPI.generateKey(32, 1); // Create a notification id for the rest api.
-    const cypher = restAPI.createUUID(); // Create a cypher for the rest api.
+    const {cypher, refreshToken: realTimeApiKey} = await getCypherAndRefreshToken(secret); // Get the cypher and refresh token from the rest api.
     const googleToken = await getAccessToken(framesConfig.credentials.client_id, framesConfig.credentials.client_secret, framesConfig.credentials.redirect_uris[0]); // Get the google token.
     if (googleToken === null)
         throw new Error('Could not get google token.');
@@ -91,7 +103,7 @@ const configFunction = async () => {
         expiry_date: googleToken.expiry_date,
         cypher: cypher,
         secret: secret,
-        externalApis: {...framesConfig.externalApis},
+        externalApis: {...framesConfig.externalApis, realTimeApiKey},
         globalNotification: notificationId
     };
 
@@ -99,7 +111,7 @@ const configFunction = async () => {
 
     const otherData: FRAMES_INTERFACE = {
         privateConfig: {...framesConfig.privateConfig, notificationId, cypher, library: framesConfig.library, secret},
-        externalApis: {...framesConfig.externalApis},
+        externalApis: {...framesConfig.externalApis, realTimeApiKey},
         token: googleToken,
         credentials: framesConfig.credentials,
         others: {deluge: framesConfig.deluge, openSubtitles: framesConfig.openSubtitles}
@@ -109,7 +121,7 @@ const configFunction = async () => {
 
     const stringifiedData = `DATABASE_URL=${framesConfig.databaseURL}\nMIDDLEWARE=${encryptedMiddleWareData}\nFRAMES_CONFIG=${encryptedOtherData}\nSECRET=${secret}`;
     fs.writeFileSync('.env', stringifiedData);
-    console.log('env_bak file created');
+    console.log('env file created');
     console.log('Please make sure you have the following in your .gitignore file: .env');
     console.log('\n');
     console.log('If you intend to run this on vercel, set this value to the MIDDLEWARE environment variable:');

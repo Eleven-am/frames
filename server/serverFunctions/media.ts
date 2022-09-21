@@ -53,7 +53,7 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             break;
 
         case 'browse':
-            response = await user.getBrowse(req.body, +body.page, userId);
+            response = await user.getBrowse(body, +body.page, userId);
             break;
     }
 

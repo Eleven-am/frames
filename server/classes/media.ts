@@ -7,6 +7,7 @@ import Drive from "./drive";
 import path from "path";
 import rename from "locutus/php/strings/strtr";
 import {dicDo} from "./base";
+import UserClass, {NotificationInterface} from "./user";
 
 const OS = require('opensubtitles-api');
 
@@ -954,10 +955,10 @@ export default class MediaClass extends Base {
             }
 
             let episodeResults = [] as FrameEpisodeScan[];
-            let videoLocations = [] as string[];
 
             const Promises: any[] = [];
             toDelete.forEach(file => Promises.push(this.drive.deleteFileOrFolder(file.location)));
+            const existingEpisodes = media.episodes.map(e => ({...e, location: e.video.location}));
 
             let tmdbSeasons = await this.tmdb?.getAllEpisodes(tmdbMedia.id) || {episodes: [], tmdbId: media.tmdbId};
             const seasons = (await this.drive?.readFolder(media.folder.location)) || [];
@@ -966,54 +967,37 @@ export default class MediaClass extends Base {
             episodesToScan.forEach(episode => Promises.push(this.scanEpisode(episode, seasons, tmdbEpisodes, episodeResults, ignoreScan)));
             await Promise.all(Promises);
 
-            if (!thoroughScan) {
-                const alreadyPresentEpisodes = this.intersect(episodeResults, episodes, ['seasonId', 'episode'], ['seasonId', 'episode']);
-                const oldEpisodes = this.intersect(episodes, alreadyPresentEpisodes, ['seasonId', 'episode'], ['seasonId', 'episode']);
-                const newEpisodes = this.exclude(episodeResults, alreadyPresentEpisodes, ['seasonId', 'episode'], ['seasonId', 'episode']);
-                videoLocations = oldEpisodes.map(e => e.video.location);
-
-                const promises = oldEpisodes.map(async e => {
-                    const newEpisode = alreadyPresentEpisodes.find(n => n.seasonId === e.seasonId && n.episode === e.episode);
-                    if (newEpisode) {
-                        await this.prisma.video.update({
-                            where: {id: e.video.id},
-                            data: {location: newEpisode.location}
-                        })
-                        return this.drive.deleteFileOrFolder(e.video.location);
-                    }
-                    return false;
-                })
-
-                await Promise.all(promises);
-                episodeResults = newEpisodes;
-
-                if (newEpisodes.length === 0) {
-                    console.log(`There are no new episodes for ${media.name}`);
-                    return;
-                }
-            }
-
-            videoLocations = videoLocations.concat(episodeResults.map(e => e.location));
+            const imperfectEpisodes = this.exclude(episodeResults, existingEpisodes, ['seasonId', 'episode', 'location'], ['seasonId', 'episode', 'location']);
+            const presentEpisodes = this.intersect(imperfectEpisodes, existingEpisodes, ['seasonId', 'episode'], ['seasonId', 'episode'], ['videoId', 'id']);
+            const newEpisodes = this.exclude(imperfectEpisodes, presentEpisodes, ['seasonId', 'episode'], ['seasonId', 'episode']);
 
             try {
-                await this.prisma.video.deleteMany({
-                    where: {
-                        location: {in: videoLocations},
-                    }
+                const imperfectLocations = imperfectEpisodes.map(e => e.location);
+                await this.prisma.video.deleteMany({where: {location: {in: imperfectLocations}}});
+
+                let presentPromises: any[] = presentEpisodes.map(e => {
+                    return this.prisma.video.update({
+                        where: {id: e.videoId},
+                        data: {
+                            location: e.location,
+                        }
+                    });
                 });
-                const data: Omit<Video, 'id'>[] = episodeResults.map(e => {
+
+                const data: Omit<Video, 'id'>[] = newEpisodes.map(e => {
                     return {
                         english: null, french: null, german: null, mediaId: media.id, location: e.location,
                     }
-                })
-                await this.prisma.video.createMany({data});
+                });
 
+                await this.prisma.video.createMany({data});
                 const videos = await this.prisma.video.findMany({
                     where: {
-                        location: {in: episodeResults.map(e => e.location)},
-                    }, include: {media: true, episode: true}, orderBy: {id: 'desc'}
+                        location: {in: newEpisodes.map(e => e.location)},
+                    }
                 });
-                const episodes: Omit<Episode, 'id'>[] = episodeResults.map(e => {
+
+                const episodesToSave: Omit<Episode, 'id'>[] = newEpisodes.map(e => {
                     const video = videos.find(v => v.location === e.location);
                     return {
                         backdrop: e.backdrop,
@@ -1027,24 +1011,18 @@ export default class MediaClass extends Base {
                         updated: new Date(),
                     }
                 });
-                const dbEpisodes = await this.prisma.episode.createMany({data: episodes});
 
-                if (dbEpisodes.count > 0) {
-                    if (videoLocations.length > 0) {
-                        await this.prisma.media.update({
-                            where: {id: media.id}, data: {
-                                updated: new Date(),
-                            }
-                        });
-                        const show = await this.prisma.media.findUnique({
-                            where: {id: media.id}, include: {episodes: true}
-                        });
-                        if (show) {
-                            const promises = (users || []).map(e => this.updateUserSeen(show, e));
-                            await Promise.all(promises);
+                const dbEpisodes = await this.prisma.episode.createMany({data: episodesToSave});
+
+                if (dbEpisodes.count > 0 && users) {
+                    await this.prisma.media.update({
+                        where: {id: media.id}, data: {
+                            updated: new Date(),
                         }
-                    }
+                    });
+                    presentPromises = presentPromises.concat((users || []).map(e => this.updateUserSeen(media, e)));
                 }
+                await Promise.all(presentPromises);
             } catch (e) {
                 console.log(e);
             }
@@ -1062,11 +1040,18 @@ export default class MediaClass extends Base {
 
         if (data) {
             const {mediaData, castCrew} = data;
-            const media = modMedia.stateType === 'MODIFY' ? await this.prisma.media.update({
-                where: {id: mediaId}, data: {...mediaData}
-            }) : await this.prisma.media.create({
-                data: {...mediaData, created: new Date(), updated: new Date()}
-            });
+            let media: Media;
+            const findMedia = await this.prisma.media.findFirst({where: {type, tmdbId}});
+            if (findMedia)
+                media = await this.prisma.media.update({
+                    where: {id: findMedia.id},
+                    data: {...mediaData}
+                });
+
+            else
+                media = await this.prisma.media.create({
+                    data: {...mediaData, created: new Date(), updated: new Date()}
+                });
 
             if (media) {
                 const med = await this.prisma.media.findUnique({
@@ -1571,6 +1556,28 @@ export default class MediaClass extends Base {
     }
 
     /**
+     * @desc Sends a message to a specific user
+     * @param email - the email of the user sending the message
+     * @param message - the message to send
+     */
+    public async sendMessage(email: string, message: Required<NotificationInterface>) {
+        const users = await this.prisma.user.findMany();
+        const user = users.find(e => e.email.toLowerCase().includes(message.recipient.toLowerCase()));
+        if (user) {
+            const userClass = new UserClass();
+            await userClass.sendMessage(
+                user.userId,
+                message.message,
+                message.title,
+                message.data.image,
+                message.data.url,
+                message.type,
+                email
+            )
+        }
+    }
+
+    /**
      * @desc this is a recursive function that handles the subtitles logic
      * @param subs - the videos array to be scanned
      */
@@ -1805,10 +1812,21 @@ export default class MediaClass extends Base {
             }
         });
 
-        if (seenMedia)
+        if (seenMedia) {
             await this.prisma.seenMedia.delete({
                 where: {seenByUser: {userId: user.userId, mediaId: show.id}}
             });
+
+            const userClass = new UserClass();
+            await userClass.sendMessage(
+                user.userId,
+                `New episode of ${show.name} is available.`,
+                'New episode available',
+                show.poster,
+                `/info?infoId=${show.id}`,
+                'New episode available',
+            );
+        }
 
         return true;
     }

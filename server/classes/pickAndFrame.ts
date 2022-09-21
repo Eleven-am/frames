@@ -126,8 +126,8 @@ export default class PickAndFrame extends Playback {
             let temps = picks.filter(e => e.category === item.category);
             const last = temps.pop();
             let overview = temps.map(e => e.media.name).join(', ') + (last ? ' and ' + last.media.name : '');
-            overview = temps[0].display + ' includes ' + overview;
-            const poster = temps[0].media.poster;
+            overview = (temps[0] || last).display + ' includes ' + overview;
+            const poster = (temps[0] || last).media.poster;
             const media = mediaPick.map(e => {
                 return {
                     type: e.media.type,
@@ -145,10 +145,10 @@ export default class PickAndFrame extends Playback {
                 ...item,
                 poster,
                 overview,
-                display: temps[0].display,
+                display: (temps[0] || last).display,
                 picks: media,
-                type: temps[0].type,
-                active: temps[0].active
+                type: (temps[0] || last).type,
+                active: (temps[0] || last).active
             });
         }
 
@@ -165,12 +165,22 @@ export default class PickAndFrame extends Playback {
         const number = parseInt(match?.groups?.number ?? '1');
 
         let picks = await this.prisma.pick.findMany({
-            distinct: ['category'], where: {type},
+            distinct: ['category'], where: {
+                AND: [{type}, {NOT: {category: 'selected_trending'}}]
+            },
         });
 
         if (number <= picks.length) return await this.getCategory(picks[number - 1].category);
 
         else return {data: [], type: PickType.BASIC, display: ''};
+    }
+
+    /**
+     * @desc Deletes a pick from the database by category
+     * @param category - category to be deleted
+     */
+    public async deletePick(category: string) {
+        await this.prisma.pick.deleteMany({where: {category}});
     }
 
     /**

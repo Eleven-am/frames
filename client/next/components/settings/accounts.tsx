@@ -6,8 +6,9 @@ import About from "./about";
 import Account from "./account";
 import {useManageSections} from "../../../utils/modify";
 import useUser from "../../../utils/user";
+import {memo} from "react";
 
-export default function Index() {
+function Index() {
     const {response, loading: loading2} = useFetcher<string[]>('/api/settings/getSections');
     const {user, loading} = useUser();
     const [select, setSelect] = useManageSections(response, false);
@@ -34,3 +35,5 @@ export default function Index() {
 
     else return null
 }
+
+export default memo(Index);

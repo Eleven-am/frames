@@ -1,10 +1,11 @@
 import ss from './GroupWatch.module.css';
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {memo, useCallback, useEffect, useRef, useState} from "react";
 import {Loading} from "../misc/Loader";
 import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import {
     GroupWatchMediaIdAtom,
     GroupWatchMessages,
+    GroupWatchMessagesInterface,
     GroupWatchSection,
     Message,
     useGroupWatch
@@ -20,15 +21,14 @@ import {
 import {FramesButton} from "../buttons/Buttons";
 import {FrameMediaLite} from "../../../../server/classes/playback";
 import {SideBar, SideBarAtomFamily} from "../misc/sidebar";
-import useUser, {FramesContext} from "../../../utils/user";
 import useBase from "../../../utils/provider";
 import {useNavBar} from "../navbar/navigation";
 import {useCentreControls} from "../../../utils/playback";
 import {PresenceInterface} from "../../../utils/realtime";
-import useNotifications from "../../../utils/notifications";
+import useNotifications, {useUsers} from "../../../utils/notifications";
 import {BaseClass} from "../../../../server/classes/base";
 
-export default function GroupWatchHandler() {
+function GroupWatchHandler() {
     useNavBar('groupWatch', 1);
     const [med, setId] = useRecoilState(GroupWatchMediaIdAtom);
     const setSide = useSetRecoilState(SideBarAtomFamily('GroupWatchSlider'));
@@ -73,10 +73,11 @@ export default function GroupWatchHandler() {
                 <img className={ss.pstr} src={response.poster} alt={response.name}
                      style={{background: response.background}}/>
                 <div className={ss.but}>
-                    <FramesButton type='primary' onClick={() => startSession(playPause)} icon={connected ? 'play' : undefined}
-                              label={connected ? 'start session' : 'connecting...'}/>
+                    <FramesButton type='primary' onClick={() => startSession(playPause)}
+                                  icon={connected ? 'play' : undefined}
+                                  label={connected ? 'start session' : 'connecting...'}/>
                     <FramesButton type='secondary' label={'leave session'}
-                              onClick={() => endSession(playPause, response)}/>
+                                  onClick={() => endSession(playPause, response)}/>
                 </div>
             </div>
         )
@@ -84,12 +85,14 @@ export default function GroupWatchHandler() {
     else return null;
 }
 
-export const GroupWatchSlide = () => {
+export default memo(GroupWatchHandler)
+
+export const GroupWatchSlide = memo(() => {
     const base = useBase();
-    const {user} = useUser();
+    const globalUsers = useUsers();
     const [section, setSection] = useRecoilState(GroupWatchSection)
-    const {groupWatch: {online: users}, inviteUser, users: globalUsers} = useNotifications();
-    const {closeGroupWatch, sendMessage, connected, room} = useGroupWatch();
+    const {inviteUser} = useNotifications();
+    const {closeGroupWatch, sendMessage, connected, room, users} = useGroupWatch();
 
     return (
         <SideBar atomName={'GroupWatchSlider'} topic={'GroupWatch'} close={closeGroupWatch}>
@@ -100,14 +103,14 @@ export const GroupWatchSlide = () => {
             </ul>
             <div className={ss.cnt}>
                 {section === 0 && <GlobalOnline {...{base, room, inviteUser, users: globalUsers}}/>}
-                {section === 1 && <GroupWatchOnline {...{base, user, users, room}}/>}
-                {section === 2 && <GroupWatchActivity {...{base, connected, user, send: sendMessage}}/>}
+                {section === 1 && <GroupWatchOnline {...{base, users, room}}/>}
+                {section === 2 && <GroupWatchActivity {...{base, connected, send: sendMessage}}/>}
             </div>
         </SideBar>
     )
-}
+})
 
-const GlobalOnline = ({
+const GlobalOnline = memo(({
                           base,
                           inviteUser,
                           room,
@@ -146,15 +149,14 @@ const GlobalOnline = ({
             {users.map(user => (
                 <div className={`${ss.chtMsgItm} ${ss.hvr}`} key={user.phx_ref}
                      onClick={() => inviteUser(user.reference, user.username)}>
-                    <div
-                        className={`${ss.atr} ${user.presenceState === 'away' ? ss.away : user.presenceState === 'streaming' ? ss.streaming : ss.online}`}>
+                    <div className={`${ss.atr} ${user.presenceState === 'away' ? ss.away : user.presenceState.includes('watching') ? ss.streaming : ss.online}`}>
                         <svg viewBox="0 0 24 24">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                             <circle cx="12" cy="7" r="4"/>
                         </svg>
                     </div>
                     <div className={ss.onrHdr}>
-                        <div className={ss.onrHdrUsr}>{user.identifier.startsWith('incognito:') ? '# ' : ''}{user.username}</div>
+                        <div className={ss.onrHdrUsr}>{user.username}</div>
                         <div className={ss.onrHdrStm}>
                             <div>{user.presenceState}</div>
                             <div>{base.compareDates(new Date(+user.online_at * 1000))}</div>
@@ -164,14 +166,13 @@ const GlobalOnline = ({
             ))}
         </div>
     )
-}
+})
 
-const GroupWatchOnline = ({
+const GroupWatchOnline = memo(({
                               base,
                               room,
                               users,
-                              user
-                          }: { user: FramesContext, users: PresenceInterface[], room: string, base: BaseClass }) => {
+                          }: {users: PresenceInterface[], room: string, base: BaseClass }) => {
     const {copy} = useClipboard();
     const {getBaseUrl} = useBasics();
 
@@ -180,7 +181,7 @@ const GroupWatchOnline = ({
         await copy(url, 'Video Session url copied to clipboard');
     }, [copy, getBaseUrl, room]);
 
-    if (users.filter(e => e.identifier !== user?.identifier).length < 1)
+    if (users.length < 1)
         return (
             <div className={ss.chtMsg}>
                 <div className={`${ss.chtMsgItm} ${ss.hvr}`} onClick={saveToClipboard}>
@@ -203,10 +204,10 @@ const GroupWatchOnline = ({
 
     return (
         <div className={ss.chtMsg}>
-            {users.filter(e => e.identifier !== user?.identifier).map(user => (
+            {users.map(user => (
                 <div className={ss.chtMsgItm} key={user.phx_ref}>
                     <div
-                        className={`${ss.atr} ${user.presenceState === 'away' ? ss.away : user.presenceState === 'streaming' ? ss.streaming : ss.online}`}>
+                        className={`${ss.atr} ${user.presenceState === 'away' ? ss.away : user.presenceState.includes('watching') ? ss.streaming : ss.online}`}>
                         <svg viewBox="0 0 24 24">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                             <circle cx="12" cy="7" r="4"/>
@@ -223,14 +224,13 @@ const GroupWatchOnline = ({
             ))}
         </div>
     )
-}
+})
 
-const GroupWatchActivity = ({
+const GroupWatchActivity = memo(({
                                 send,
                                 connected,
                                 base,
-                                user
-                            }: { user: FramesContext, connected: boolean, send: (message: Message) => void, base: BaseClass }) => {
+                            }: {connected: boolean, send: (message: Message) => void, base: BaseClass }) => {
     const messages = useRecoilValue(GroupWatchMessages);
     const [message, setMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -246,22 +246,29 @@ const GroupWatchActivity = ({
             setMessage('');
             inputRef.current?.blur();
         }
-    }, [message, connected, send])
+    }, [message, connected, send, scrollToBottom]);
+
+    const generateStyles = useCallback((message: GroupWatchMessagesInterface) => {
+        let styles = ss.msg;
+        styles = `${styles} ${message.isUser ? ss.isUser : ''}`;
+        styles = `${styles} ${message.isNotification ? ss.notification : ''}`;
+        return styles;
+    }, []);
 
     useEventListener('keyup', event => {
         if (event.code === 'Enter')
             sendMessage();
     })
 
-    subscribe(scrollToBottom, message);
+    subscribe(scrollToBottom, messages);
 
     return (
         <>
             <div className={ss.chtMsg}>
                 {messages.map((msg, i) => (
-                    <div key={i} className={ss.msg} style={msg.username === user?.username ? {textAlign: 'right'} : {}}>
+                    <div key={i} className={generateStyles(msg)}>
                         <div className={ss.msgUsr}>{msg.username}</div>
-                        <div className={ss.msgTxt}>{msg.message}</div>
+                        <div>{msg.message}</div>
                         <div className={ss.msgTime}>{base.compareDates(msg.received)}</div>
                     </div>
                 ))}
@@ -278,4 +285,4 @@ const GroupWatchActivity = ({
             </div>
         </>
     )
-}
+})

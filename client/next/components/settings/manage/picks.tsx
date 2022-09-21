@@ -5,8 +5,9 @@ import {useEditorPicks} from "../../../../utils/modify";
 import {SearchRes, Settings} from "./library";
 import {PickSummary} from "../../../../../server/classes/pickAndFrame";
 import {useFetcher} from "../../../../utils/customHooks";
+import {memo} from "react";
 
-export default function Picks() {
+function Picks() {
     const {pushPickLib} = useEditorPicks();
     const {loading, response} = useFetcher<PickSummary[]>('/api/settings/getPicks');
 
@@ -35,3 +36,5 @@ export default function Picks() {
 
     else return null;
 }
+
+export default memo(Picks);

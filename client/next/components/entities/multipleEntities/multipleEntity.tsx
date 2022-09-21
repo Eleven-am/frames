@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {memo, useEffect, useRef, useState} from "react";
 import Entity from "../singleEntity/entity";
 import Editor from "../singleEntity/editor";
 import styles from '../Sections.module.css';
@@ -6,7 +6,7 @@ import $ from "jquery";
 import SectionDetails from "./sectiondetails";
 import {SectionType} from "../../../../../server/classes/pickAndFrame";
 
-export default function Entities({response, type, section}: { response: any[], type: SectionType, section?: boolean }) {
+function UnMemoEntities({response, type, section}: { response: any[], type: SectionType, section?: boolean }) {
     const [left, setLeft] = useState(false);
     const [right, setRight] = useState(true);
     const [position, setPosition] = useState(0);
@@ -103,3 +103,5 @@ export default function Entities({response, type, section}: { response: any[], t
         </div>
     )
 }
+
+export default memo(UnMemoEntities);

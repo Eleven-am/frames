@@ -1,4 +1,4 @@
-import React, {useCallback} from "react";
+import React, {memo, useCallback} from "react";
 import {
     AirplaySelector,
     displaySidesAtom,
@@ -13,7 +13,7 @@ import {Role} from "@prisma/client";
 import useUser from "../../../../utils/user";
 import {useConfirmDispatch} from "../../../../utils/notifications";
 
-export default function LeftControls() {
+function LeftControls() {
     const {isMobile} = useBasics();
     const dispatch = useConfirmDispatch();
     const response = useRecoilValue(framesVideoStateAtom);
@@ -115,3 +115,5 @@ export default function LeftControls() {
         </div>
     )
 }
+
+export default memo(LeftControls)

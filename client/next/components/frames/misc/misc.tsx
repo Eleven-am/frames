@@ -2,7 +2,7 @@ import ss from '../misc.module.css';
 import style from './misc.module.css';
 import {BackButton, FramesButton} from "../../buttons/Buttons";
 import {useRecoilState, useRecoilValue} from "recoil";
-import React, {useEffect, useMemo, useState} from "react";
+import React, {memo, useEffect, useMemo, useState} from "react";
 import cd from "../frames.module.css";
 import {
     differance,
@@ -25,10 +25,9 @@ import styles from "../../buttons/Button.module.css";
 import {Link} from "../../misc/Loader";
 import useNotifications, {AlreadyStreamingAtom} from "../../../../utils/notifications";
 import {useAuth} from "../../auth/authContext";
-import {GroupWatchSlide} from "../../lobby/groupWatchHandler";
 import useBase from "../../../../utils/provider";
 
-export const Toppers = () => {
+export const Toppers = memo(() => {
     const response = useRecoilValue(framesVideoStateAtom);
     if (!response) return null;
 
@@ -44,20 +43,44 @@ export const Toppers = () => {
             </div>
         </>
     )
-}
+})
 
-export const Buffer = () => {
+export const Buffer = memo(() => {
+    const response = useRecoilValue(framesVideoStateAtom);
     const state = useRecoilValue(framesPlayerStateSelector);
 
     return (
-        <div className={ss.vd}
-             style={state === 'BUFFERING' ? {visibility: "visible"} : {visibility: "hidden"}}>
-            <div className={ss.buffer}>Loading...</div>
-        </div>
+        <>
+            <div className={ss.vd}
+                 style={state === 'BUFFERING' || state === 'NOT_STARTED' || state === 'FAILED_TO_START' ?
+                     {visibility: "visible"} : {visibility: "hidden"}}>
+                {state === 'FAILED_TO_START' ? <div className={ss.ci}>
+                    {
+                        response?.logo ? <img src={response?.logo || ''} alt={response?.name}/> :
+                            <span>{response?.name}</span>
+                    }
+                    {response?.episodeName ? <div className={ss.ep}>{response?.episodeName}</div> : null}
+                </div> : <div className={ss.buffer}>Loading...</div>}
+            </div>
+            {state === 'PAUSED' && <svg className={`${style.flashSVG} ${style.flash}`} viewBox="0 0 24 24">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>}
+            {state !== 'PAUSED' && <svg className={`${style.flashSVG} ${state === 'FAILED_TO_START' ? '' : style.flash}`}
+                                                                        style={state === 'FAILED_TO_START' ? {visibility: "visible", opacity: .8} : {}}
+                                                                        viewBox="0 0 494.148 494.148">
+                <g>
+                    <path d="M405.284,201.188L130.804,13.28C118.128,4.596,105.356,0,94.74,0C74.216,0,61.52,16.472,61.52,44.044v406.124
+            c0,27.54,12.68,43.98,33.156,43.98c10.632,0,23.2-4.6,35.904-13.308l274.608-187.904c17.66-12.104,27.44-28.392,27.44-45.884
+            C432.632,229.572,422.964,213.288,405.284,201.188z" data-original="#000000" className="active-path"
+                          data-old_color="#000000"/>
+                </g>
+            </svg>}
+        </>
     )
-}
+})
 
-export const Overview = () => {
+export const Overview = memo(() => {
     const response = useRecoilValue(framesVideoStateAtom);
     const display = useRecoilValue(displaySidesAtom).info;
     const paused = useRecoilValue(framesPlayerStateSelector) === 'PAUSED';
@@ -73,9 +96,9 @@ export const Overview = () => {
             </div>
         </div>
     )
-}
+})
 
-export const ShareFrame = () => {
+export const ShareFrame = memo(() => {
     const {copy} = useClipboard();
     const base = useBase();
     const {getBaseUrl} = useBasics();
@@ -126,9 +149,9 @@ export const ShareFrame = () => {
             </ul>
         </div>
     )
-}
+})
 
-export const DownloadHandler = () => {
+export const DownloadHandler = memo(() => {
     const base = useBase();
     const data = useRecoilValue(framesVideoStateAtom);
     const [value, setValue] = useRecoilState(shareAndDownloadAtom);
@@ -172,13 +195,14 @@ export const DownloadHandler = () => {
             </ul>
         </div>
     )
-}
+})
 
-export const CastHolder = () => {
+export const CastHolder = memo(() => {
     const response = useRecoilValue(framesVideoStateAtom);
     const move = useRecoilValue(displaySidesAtom).controls;
     const diff = useRecoilValue(differance);
     const player = useRecoilValue(framesPlayer);
+    const playerState = useRecoilValue(framesPlayerStateSelector);
     const [state, setState] = useRecoilState(VideoStateAtom);
     const {connected, device, castMedia} = useCast();
 
@@ -195,7 +219,7 @@ export const CastHolder = () => {
             });
             player.muted = true;
             player.pause();
-        } else if (!connected && player) {
+        } else if (!connected && player && playerState !== 'NOT_STARTED') {
             player.muted = false;
             player.currentTime = state?.time || player.currentTime;
             player.play();
@@ -241,9 +265,9 @@ export const CastHolder = () => {
         )
 
     else return null;
-}
+})
 
-export const UpNextHolder = () => {
+export const UpNextHolder = memo(() => {
     const response = useRecoilValue(framesVideoStateAtom);
     const diff = useRecoilValue(differance);
     const data = useRecoilValue(UpNextAtom);
@@ -278,9 +302,9 @@ export const UpNextHolder = () => {
         )
 
     else return null;
-}
+})
 
-export const AlreadyStreaming = () => {
+export const AlreadyStreaming = memo(() => {
     const {signOutEveryWhere} = useNotifications();
     const data = useRecoilValue(AlreadyStreamingAtom);
 
@@ -318,9 +342,9 @@ export const AlreadyStreaming = () => {
         )
 
     else return null;
-}
+})
 
-export const Subtitles = () => {
+export const Subtitles = memo(() => {
     const [within, setWithin] = useState(false);
     const response = useRecoilValue(framesVideoStateAtom);
     const activeSub = useRecoilValue(framesSubtitlesAtom).activeSub;
@@ -339,9 +363,9 @@ export const Subtitles = () => {
             ) : null}
         </div>
     )
-}
+})
 
-const Sub = ({sub}: { sub: { language: string, url: string } }) => {
+const Sub = memo(({sub}: { sub: { language: string, url: string } }) => {
     const activeSub = useRecoilValue(framesSubtitlesAtom).activeSub;
     const {switchLanguage} = useRightControls();
 
@@ -355,9 +379,9 @@ const Sub = ({sub}: { sub: { language: string, url: string } }) => {
         )
 
     else return null;
-}
+})
 
-export const UpNextMini = () => {
+export const UpNextMini = memo(() => {
     const upNext = useRecoilValue(UpNextAtom);
     const next = useRecoilValue(SubtitlesAndUpNextAtom).upNext;
     const {playNext} = useRightControls();
@@ -371,17 +395,9 @@ export const UpNextMini = () => {
         )
 
     else return null;
-}
+})
 
-export const Modals = () => {
-    return (
-        <>
-            <GroupWatchSlide/>
-        </>
-    )
-}
-
-export const SubDisplay = () => {
+export const SubDisplay = memo(() => {
     const sub = useRecoilValue(SubtitlesAtom);
 
     if (sub)
@@ -393,4 +409,4 @@ export const SubDisplay = () => {
         )
 
     else return null;
-}
+})

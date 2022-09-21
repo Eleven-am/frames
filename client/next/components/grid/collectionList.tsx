@@ -1,5 +1,5 @@
 import {useSetRecoilState} from "recoil";
-import React, {useEffect} from "react";
+import React, {memo, useEffect} from "react";
 import styles from "./List.module.css";
 import ss from "../entities/singleEntity/Grid.module.css";
 import {Link} from "../misc/Loader";
@@ -10,7 +10,7 @@ import Image from "next/image";
 import {FramesCollections} from "../../../../server/classes/springboard";
 import {useNavBar} from "../navbar/navigation";
 
-export function Collection(item: Pick<FramesCollections, "id" | "name" | "poster">) {
+function UnMemoCollection(item: Pick<FramesCollections, "id" | "name" | "poster">) {
     return (
         <Link href={'collection?collectionId=' + item.id} as={'collection=' + item.name.replace(/\s/g, '+')}>
             <div className={ss.collectionHolder}>
@@ -30,7 +30,9 @@ export function Collection(item: Pick<FramesCollections, "id" | "name" | "poster
     )
 }
 
-export default function CollectionList() {
+export const Collection = memo(UnMemoCollection);
+
+function CollectionList() {
     const setGridInfo = useSetRecoilState(GridSelector);
     const reset = useGridReset();
 
@@ -62,3 +64,5 @@ export default function CollectionList() {
 
     return null;
 }
+
+export default memo(CollectionList);

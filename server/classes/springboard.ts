@@ -52,6 +52,16 @@ export interface ProductionCompanyInterface {
     shows: Pick<SpringMedia, 'id' | 'type' | 'name' | 'background' | 'poster'>[]
 }
 
+export interface TrendingCollectionProps {
+    id: number;
+    name: string;
+    poster: string;
+    logo: string;
+    backdrop: string;
+    link: string;
+    as: string;
+}
+
 export default class Springboard extends MediaClass {
     private readonly playback: Playback;
     private readonly playlist: Playlist;
@@ -371,6 +381,87 @@ export default class Springboard extends MediaClass {
     }
 
     /**
+     * @desc gets a rondom trending collection for display on the home page
+     */
+    public async getTrendingCollection(): Promise<TrendingCollectionProps | null> {
+        const trending = await this.getSelectedTrending();
+
+        if (trending)
+            return trending;
+
+        const collections = (await this.getCollections()).slice(0, 3);
+
+        const collection = collections[Math.floor(Math.random() * collections.length)];
+        const collectionImages = await this.tmdb?.getCollectionImages(collection.id);
+
+        const media = await this.prisma.media.findMany({
+            where: {
+                collection: {
+                    path: ['id'], equals: collection.id
+                }
+            }, select: {
+                id: true, type: true, name: true, background: true, poster: true, logo: true, backdrop: true,
+            }, orderBy: {release: 'desc'}
+        });
+
+        const findMediaLogo = media.find(e => e.logo !== null);
+
+        if (findMediaLogo)
+            if (collectionImages && collectionImages.backdrop && collectionImages.poster)
+                return {
+                    ...collection, logo: findMediaLogo.logo || '',
+                    backdrop: collectionImages.backdrop,
+                    poster: collectionImages.poster,
+                    link: `/collection?collectionId=${collection.id}`,
+                    as: `/collection=${collection.name.replace(/\s/g, '+')}`,
+                }
+
+            else if (collectionImages && collectionImages.poster)
+                return {
+                    ...collection, logo: findMediaLogo.logo || '',
+                    backdrop: media[0].backdrop,
+                    poster: collectionImages.poster,
+                    link: `/collection?collectionId=${collection.id}`,
+                    as: `/collection=${collection.name.replace(/\s/g, '+')}`,
+                }
+
+        return null;
+    }
+
+    /**
+     * @desc Gets a specific media selected by the admin for display on the home page
+     */
+    private async getSelectedTrending(): Promise<TrendingCollectionProps | null> {
+        const picks = await this.prisma.pick.findMany({
+            where: {
+                category: 'selected_trending'
+            }, include: {
+                media: true
+            }
+        });
+
+        if (picks.length > 0) {
+            const media = picks[0].media;
+            const tmdbMedia = await this.tmdb?.getMedia(media.tmdbId, media.type);
+            if (tmdbMedia) {
+                const poster = "https://image.tmdb.org/t/p/original" + tmdbMedia.poster_path;
+                const {backdrop, logo, name} = media;
+                return {
+                    id: media.id,
+                    name: name,
+                    poster: poster,
+                    backdrop: backdrop,
+                    logo: logo || '',
+                    link: `/info?mediaId=${media.id}`,
+                    as: `/${media.type.toLowerCase()}=${media.name.replace(/\s/g, "+")}`
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @desc finds a media item by their name and for multiple copies it returns the most recent version
      * @param request - the request string sent from the client
      * @param type - the type of media to search for
@@ -655,8 +746,8 @@ export default class Springboard extends MediaClass {
     public async generateGlobalSuggestions(): Promise<void> {
         const users = await this.prisma.user.findMany();
 
-        const promises = users.map(e => this.user.generateSuggestions(e.userId));
-        await Promise.all(promises);
+        for await (const user of users)
+            await this.user.generateSuggestions(user.userId);
     }
 
     /**

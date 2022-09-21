@@ -1,4 +1,4 @@
-import React, {ReactNode} from "react";
+import React, {memo, ReactNode} from "react";
 import {atomFamily, useRecoilValue} from "recoil";
 import sss from "../lobby/GroupWatch.module.css";
 
@@ -7,7 +7,7 @@ export const SideBarAtomFamily = atomFamily<boolean, string>({
     default: false
 })
 
-export const SideBar = ({
+export const SideBar = memo(({
                             children,
                             topic,
                             atomName,
@@ -28,4 +28,4 @@ export const SideBar = ({
             {children}
         </div>
     )
-}
+})

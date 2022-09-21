@@ -1,7 +1,7 @@
 import {Link, Loading} from "../misc/Loader";
 import styles from "./back.module.css";
 import {SectionBone} from "../entities/section";
-import {useCallback, useEffect, useRef, useState} from "react";
+import {memo, useCallback, useEffect, useRef, useState} from "react";
 import useOnScroll from "../../../utils/opacityScroll";
 import {useFetcher} from "../../../utils/customHooks";
 import {HoverContainer} from "../buttons/Buttons";
@@ -13,7 +13,7 @@ interface ErrorProps {
     message: string;
 }
 
-function MinHolder({data, person}: { data: number, person: PersonInterface }) {
+const MinHolder = memo(({data, person}: { data: number, person: PersonInterface }) => {
     const {reset, setReference, onScroll, values} = useOnScroll();
     const reference = useRef<HTMLDivElement>(null);
 
@@ -46,9 +46,9 @@ function MinHolder({data, person}: { data: number, person: PersonInterface }) {
             <img className={styles.person} src={person.photo} alt={person.name}/>
         </div>
     )
-}
+})
 
-export const ErrorPage = ({error, offline}: { error: ErrorProps, offline?: boolean }) => {
+export const ErrorPage = memo(({error, offline}: { error: ErrorProps, offline?: boolean }) => {
     const [name, setName] = useState(error.name);
 
     const hovering = useCallback((b: boolean) => {
@@ -72,9 +72,9 @@ export const ErrorPage = ({error, offline}: { error: ErrorProps, offline?: boole
             <span>{error.message}</span>
         </div>
     )
-}
+})
 
-export default function Holder({person}: { person: PersonInterface }) {
+function Holder({person}: { person: PersonInterface }) {
     const {
         response: data,
         loading,
@@ -89,3 +89,5 @@ export default function Holder({person}: { person: PersonInterface }) {
 
     else return null;
 }
+
+export default memo(Holder);

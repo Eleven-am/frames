@@ -1,5 +1,5 @@
 import useSWR, {SWRConfiguration} from "swr";
-import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {MouseEvent, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {atomFamily, useRecoilState} from "recoil";
 import {useConfirmDispatch} from "./notifications";
 import {useRouter} from "next/router";
@@ -136,7 +136,12 @@ export const fetcher = <S>(url: string, cancel?: AbortSignal, method: 'GET' | 'P
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-        }).then(res => res.json()).then(resolve)
+        }).then(res => {
+            if (res.ok)
+                return res.json();
+
+            throw new Error(res.statusText);
+        }).then(resolve)
             .catch(error => {
                 if (error.name === "AbortError") {
                     return;
@@ -236,6 +241,44 @@ export const useLoop = (initialState: { start: number, end: number }) => {
     }, [clear, restart])
 
     return {current: state.start, prev: state.start === 0 ? state.end : state.start - 1, clear, restart, switchTo};
+}
+
+export const useDraggable = (callback: (pos: number) => void) => {
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragWidth, setDragWidth] = useState<string>();
+    const savedCallback = useRef(callback);
+
+    useEffect(() => {
+        savedCallback.current = callback;
+    }, [callback]);
+
+    const handleMouseDown = useCallback((event: MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
+        setIsDragging(true);
+    }, [])
+
+    const handleMouseMove = useCallback((event: MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
+        if (isDragging) {
+            const rect = event.currentTarget!.getBoundingClientRect();
+            const pos = ((event.clientX - rect.left) / (rect.right - rect.left));
+            console.log(pos);
+            setDragWidth(`${pos * 100}%`)
+        }
+    }, [isDragging])
+
+    const handleMouseUp = useCallback((event: MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
+        if (isDragging) {
+            const rect = event.currentTarget!.getBoundingClientRect();
+            const pos = ((event.clientX - rect.left) / (rect.right - rect.left));
+            savedCallback.current(pos);
+            setDragWidth(undefined);
+            setIsDragging(false);
+        }
+    }, [isDragging])
+
+    return {isDragging, dragWidth, handleMouseDown, handleMouseMove, handleMouseUp};
 }
 
 export const hookChangeAtomFamily = atomFamily<any, string>({
@@ -616,7 +659,7 @@ export const useHomeSegments = () => {
     const [basePick, setBasePick] = useState(1);
     const [editorPick, setEditorPick] = useState(2);
     const [recommendPick, setRecommendPick] = useState(2);
-    const [segment, setSegment] = useState<string[]>(['myList', 'continue', 'recommend1', 'rated', 'trending', 'suggestion', 'popular', 'editor1', 'basic1', 'seen', 'editor2', 'recommend2', 'added']);
+    const [segment, setSegment] = useState<string[]>(['myList', 'continue', 'rated', 'trending', 'popular', 'trendingCollection', 'suggestion', 'recommend1', 'editor1', 'basic1', 'seen', 'editor2', 'recommend2', 'added']);
     const [loading, setLoading] = useState(false);
     const callbackRef = useRef<() => void>(() => {});
 

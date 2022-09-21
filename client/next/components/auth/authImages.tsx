@@ -1,17 +1,12 @@
 import styles from "./Auth.module.css";
 import {useRecoilValue, useSetRecoilState} from "recoil";
 import {AuthContextHandler, AuthContextProcessAtom, Authenticated, useReset} from "./authContext";
-import {useCallback, useEffect} from "react";
-import {AuthCP} from "../../../../server/classes/middleware";
+import {useCallback, memo} from "react";
 import Background from "../misc/back";
 import useUser from "../../../utils/user";
 
-function Information({response}: { response: AuthCP }) {
-    const setAuth = useSetRecoilState(Authenticated);
-
-    useEffect(() => {
-        setAuth(response.authentication);
-    }, [response])
+const Information = memo(() => {
+    const response = useRecoilValue(Authenticated);
 
     return (
         <div style={{
@@ -22,9 +17,9 @@ function Information({response}: { response: AuthCP }) {
             textAlign: "center",
             fontFamily: "'Roboto', sans-serif",
         }}>
-            <span>{response.cpRight}</span>
+            <span>{response?.cpRight}</span>
             <div style={{lineHeight: "10px"}}>
-                <span style={{fontSize: "x-small"}}>{response.aReserved}</span>
+                <span style={{fontSize: "x-small"}}>{response?.aReserved}</span>
                 <br/>
                 <span style={{fontSize: "x-small"}}>
                     Videos only stream till the 5 minute mark for guest
@@ -32,10 +27,9 @@ function Information({response}: { response: AuthCP }) {
             </div>
         </div>
     )
-}
+});
 
-export default function AuthImages({response, auth}: { response: string[], auth: AuthCP }) {
-    const setAuth = useSetRecoilState(Authenticated);
+export const AuthImages = memo(({response}: { response: string[] }) => {
     const process = useRecoilValue(AuthContextProcessAtom);
     const dispatch = useSetRecoilState(AuthContextHandler);
 
@@ -44,8 +38,7 @@ export default function AuthImages({response, auth}: { response: string[], auth:
 
     const handleClick = useCallback(() => {
         reset();
-        setAuth(auth.authentication);
-    }, [auth, reset, setAuth]);
+    }, [reset]);
 
     const handleGuest = useCallback(async () => {
         dispatch({fade: true});
@@ -60,8 +53,8 @@ export default function AuthImages({response, auth}: { response: string[], auth:
                     select a provider
                 </div> : null}
 
-            <Information response={auth}/>
+            <Information/>
             <div id={styles.guest} className={styles['signIn-button']} onClick={handleGuest}>continue as guest</div>
         </>
     );
-}
+});

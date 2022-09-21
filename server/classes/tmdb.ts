@@ -145,6 +145,28 @@ export interface AppleIMages {
     }
 }
 
+export interface TmdbCollectionImages {
+    id: number;
+    backdrops: Array<{
+        aspect_ratio: number;
+        height: number;
+        iso_639_1: string | null;
+        file_path: string;
+        vote_average: number;
+        vote_count: number;
+        width: number;
+    }>;
+    posters: Array<{
+        aspect_ratio: number;
+        height: number;
+        iso_639_1: string | null;
+        file_path: string;
+        vote_average: number;
+        vote_count: number;
+        width: number;
+    }>;
+}
+
 export interface Person {
     adult: boolean;
     gender: number;
@@ -545,6 +567,18 @@ export class TmdbApi extends BaseClass {
         return apple;
     }
 
+    /**
+     * @desc gets the images of a TMDB collection from TMDB using the collection ID
+     * @param id - id of the collection
+     */
+    public async getCollectionImagesRaw(id: number): Promise<TmdbCollectionImages | null> {
+        const url = this.baseUrl + '/collection/' + id + '/images';
+        const params = {
+            api_key: this.apiKey
+        }
+
+        return await this.makeRequest<TmdbCollectionImages>(url, params);
+    }
 }
 
 export class Aggregate extends TmdbApi {
@@ -1123,6 +1157,48 @@ export class Aggregate extends TmdbApi {
 
         if (response.length > 0)
             return await this.getPerson(response[0].id);
+
+        return null;
+    }
+
+    /**
+     * @desc gets and converts the collection images into a usable array
+     * @param id - id of the collection to get images for
+     */
+    public async getCollectionImages(id: number) {
+        const images = await this.getCollectionImagesRaw(id);
+        if (images) {
+            const backdrops = this.sortArray(images.backdrops.map(e => {
+                return {
+                    url: 'https://image.tmdb.org/t/p/original' + e.file_path,
+                    drift: e.vote_average,
+                    language: e.iso_639_1
+                }
+            }), 'drift', 'desc');
+
+            const posters = this.sortArray(images.posters.map(e => {
+                return {
+                    url: 'https://image.tmdb.org/t/p/original' + e.file_path,
+                    drift: e.vote_average,
+                    language: e.iso_639_1
+                }
+            }), 'drift', 'desc');
+
+            const englishBackdrops = backdrops.filter(e => e.language?.includes('en'));
+            const englishPosters = posters.filter(e => e.language?.includes('en'));
+
+            if (englishBackdrops.length)
+                return {
+                    backdrop: englishBackdrops[0].url,
+                    poster: englishPosters[0].url || null
+                }
+
+            const nullBackdrop = backdrops.find(e => e.language === null);
+            return {
+                backdrop: nullBackdrop?.url || null,
+                poster: englishPosters[0].url || null
+            }
+        }
 
         return null;
     }

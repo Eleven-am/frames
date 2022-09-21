@@ -3,16 +3,17 @@ import {useNavBar} from "../client/next/components/navbar/navigation";
 import Trending from "../client/next/components/trending/trending";
 import HomeSections from "../client/next/components/homeSection/homeSections";
 import {Banner} from "../server/classes/media";
+import ErrorBoundary from "../client/next/components/misc/ErrorBoundary";
 
 export default function Home({banner}: { banner: Banner[] }) {
     const [stop, setStop] = useState(false);
     useNavBar('home', 1);
 
     return (
-        <>
+        <ErrorBoundary>
             <Trending stop={stop} response={banner}/>
             <HomeSections stop={setStop}/>
-        </>
+        </ErrorBoundary>
     )
 }
 

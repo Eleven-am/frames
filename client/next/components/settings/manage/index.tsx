@@ -5,8 +5,9 @@ import ManageKeys from "./manageKeys";
 import Picks from "./picks";
 import GetContents from "./getContents";
 import {useManageSections} from "../../../../utils/modify";
+import {memo} from "react";
 
-export default function Manage() {
+function Manage() {
     const {response} = useFetcher<string[]>('/api/settings/getManage');
     const [side, setSide] = useManageSections(response);
 
@@ -23,3 +24,5 @@ export default function Manage() {
         </div>
     </div>)
 }
+
+export default memo(Manage);

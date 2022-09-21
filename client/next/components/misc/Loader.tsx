@@ -1,9 +1,9 @@
 import ss from './Loading.module.css';
 import FLink from "next/link";
-import react, {ComponentType, ForwardedRef, ReactNode} from "react";
+import react, {ComponentType, ForwardedRef, memo, ReactNode} from "react";
 import FImage from "next/image";
 
-export function Loading() {
+export const Loading = memo(() => {
     return (
         <div className={ss.bb1}>
             <div className={ss.bb2}>
@@ -12,13 +12,13 @@ export function Loading() {
             </div>
         </div>
     )
-}
+})
 
 
 export const WithForwardingRef = <Props extends { [_: string]: any }, T extends Element>(BaseComponent: ComponentType<Props>) =>
     react.forwardRef((props: Props, ref: ForwardedRef<T>) => <BaseComponent {...props} forwardRef={ref}/>);
 
-export function Link({children, href, as}: { href: string, as?: string, children: ReactNode }) {
+export const Link = memo(({children, href, as}: { href: string, as?: string, children: ReactNode }) => {
     return (
         <FLink href={href} as={as}>
             <a className={ss.anchor}>
@@ -26,9 +26,9 @@ export function Link({children, href, as}: { href: string, as?: string, children
             </a>
         </FLink>
     )
-}
+})
 
-export const Image = ({
+export const Image = memo(({
                           src,
                           className,
                           loading,
@@ -40,4 +40,4 @@ export const Image = ({
             <FImage src={src} loading={loading} alt={alt}/>
         </div>
     )
-}
+})

@@ -1,30 +1,24 @@
 import {SideBar, SideBarAtomFamily} from "../misc/sidebar";
-import {atom, useRecoilValue, useSetRecoilState} from "recoil";
+import {useRecoilValue, useSetRecoilState} from "recoil";
 import ss from "./GroupWatch.module.css";
-import React, {useCallback, useEffect} from "react";
+import React, {memo, useCallback, useEffect, useMemo, useState} from "react";
 import {HoverContainer} from "../buttons/Buttons";
 import {PresenceInterface} from "../../../utils/realtime";
 import info from "../info/Info.module.css";
 import {useRouter} from "next/router";
-import useUser from "../../../utils/user";
 import useBase from "../../../utils/provider";
-import useNotifications from "../../../utils/notifications";
+import useNotifications, {MetaData, useUsers} from "../../../utils/notifications";
 import Background from "../misc/back";
 import {UserPlaybackSettingsContext} from "../../../utils/modify";
 import {ErrorPage} from "../production/person";
 
-const metadataAtom = atom<{ logo: string | null, backdrop: string, name: string, poster: string, overview: string } | null>({
-    key: 'metadataAtom',
-    default: null,
-})
-
-export default function IncognitoPage ({response}: { response: string[] }) {
+function IncognitoPage({response}: {response: string[]}) {
     const userState = useRecoilValue(UserPlaybackSettingsContext);
 
     if (userState?.incognito) {
         return (
             <>
-                <Background response={response}/>
+                <Background response={response} />
                 <ErrorPage error={{
                     name: 'GroupWatch Incognito',
                     message: "You are in incognito mode, you can't see other active users."
@@ -33,25 +27,48 @@ export default function IncognitoPage ({response}: { response: string[] }) {
         )
     }
 
-    return <Lobby response={response}/>
+    return <Lobby response={response} />
 }
 
-function Lobby({response}: { response: string[] }) {
+const Lobby = memo(({response}: {response: string[]}) => {
+    const router = useRouter();
+    const users = useUsers();
+    const [hovered, setHovered] = useState('');
+    const {requestToJoinSession} = useNotifications();
     const changeState = useSetRecoilState(SideBarAtomFamily('groupWatchLobby'));
+
+    const onHovering = useCallback((b: boolean, user?: PresenceInterface) => {
+        if (b && user)
+            setHovered(user.identifier);
+        else
+            setHovered('');
+    }, [])
+
+    const metadata = useMemo(() => {
+        if (hovered !== '') {
+            const user = users.find(u => u.identifier === hovered);
+            if (user && user.metadata.payload)
+                return user.metadata.payload as MetaData;
+        }
+        return null;
+    }, [hovered, users]);
+
+    const close = useCallback(async () => {
+        await router.back();
+        changeState(false);
+    }, [router, changeState])
 
     useEffect(() => changeState(true), [])
 
     return (
         <div className={ss.hldr}>
-            <DisplayMetadata response={response}/>
-            <LobbySideBar/>
+            <DisplayMetadata metadata={metadata} images={response} />
+            <LobbySideBar close={close} users={users} onHover={onHovering} requestToJoinSession={requestToJoinSession}/>
         </div>
     )
-}
+})
 
-const DisplayMetadata = ({response: images}: { response: string[] }) => {
-    const response = useRecoilValue(metadataAtom);
-
+const DisplayMetadata = memo(({images, metadata: response}: { metadata: MetaData | null, images: string[]}) => {
     if (!response) return <Background response={images} auth={true}/>
 
     return (
@@ -68,64 +85,31 @@ const DisplayMetadata = ({response: images}: { response: string[] }) => {
             </div>
         </>
     )
+})
+
+interface LobbySideBarProps {
+    users: PresenceInterface[];
+    close: () => Promise<void>;
+    onHover: (b: boolean, user?: (PresenceInterface | undefined)) => void;
+    requestToJoinSession: (otherUser?: (PresenceInterface | undefined)) => Promise<void>
 }
 
-const LobbySideBar = () => {
+const LobbySideBar = memo(({close, onHover, requestToJoinSession, users}: LobbySideBarProps) => {
     const base = useBase();
-    const {user} = useUser();
-    const setMetadata = useSetRecoilState(metadataAtom);
-    const {users, requestToJoinSession} = useNotifications();
-    const [hovered, setHovered] = React.useState('');
-    const [hovering, setHovering] = React.useState(false);
-    const setState = useSetRecoilState(SideBarAtomFamily('groupWatchLobby'));
-    const router = useRouter();
-
-    const close = useCallback(async () => {
-        await router.push('/');
-        setState(false);
-    }, [router, setState])
-
-    useEffect(() => {
-        return () => {
-            setState(false);
-        }
-    }, [])
-
-    const onHovering = useCallback((b: boolean, user?: PresenceInterface) => {
-        if (b && user)
-            setHovered(user.identifier);
-
-        setHovering(b);
-    }, [])
-
-    const onMouseMove = useCallback(() => {
-        if (!hovering)
-            setHovered('');
-    }, [hovering])
-
-    useEffect(() => {
-        if (hovered !== '') {
-            const user = users.find(u => u.identifier === hovered);
-            if (user && user.metadata.payload)
-                setMetadata(user.metadata.payload);
-            else
-                setMetadata(null);
-        } else
-            setMetadata(null);
-    }, [hovered, users]);
 
     return (
         <SideBar atomName={'groupWatchLobby'} topic={"frames' lobby"} close={close}>
             <ul className={ss.pckr}>
                 <li>online users</li>
             </ul>
-            <div className={ss.cnt} onMouseMove={onMouseMove}>
+            <div className={ss.cnt}>
                 <div className={ss.chtMsg}>
-                    {users.filter(e => e.identifier !== user?.identifier).map(user => (
-                        <HoverContainer state={user} onClick={requestToJoinSession}
-                                        className={`${ss.chtMsgItm} ${ss.hvr}`} key={user.phx_ref} onHover={onHovering}>
+                    {users.map(user => (
+                        <HoverContainer
+                            state={user} onClick={requestToJoinSession}
+                            className={`${ss.chtMsgItm} ${ss.hvr}`} key={user.phx_ref} onHover={onHover}>
                             <div
-                                className={`${ss.atr} ${user.presenceState === 'away' ? ss.away : user.presenceState === 'streaming' ? ss.streaming : ss.online}`}>
+                                className={`${ss.atr} ${user.presenceState === 'away' ? ss.away : user.presenceState.includes('watching') ? ss.streaming : ss.online}`}>
                                 <svg viewBox="0 0 24 24">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                     <circle cx="12" cy="7" r="4"/>
@@ -144,4 +128,6 @@ const LobbySideBar = () => {
             </div>
         </SideBar>
     )
-}
+})
+
+export default memo(IncognitoPage);

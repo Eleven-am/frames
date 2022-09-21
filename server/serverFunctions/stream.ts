@@ -69,6 +69,11 @@ export default async (req: NextApiRequest, res: NextApiResponse, data: CookiePay
         case 'loadVideo':
             response = await springboard.startPlayback(body.media, session, true, body.playbackKey);
             break;
+
+        case 'getTrendingImages':
+            const trending = await springboard.getTrending();
+            response = trending.map(item => item.poster);
+            break;
     }
 
     res.status(200).json(response);

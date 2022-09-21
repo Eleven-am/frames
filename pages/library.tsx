@@ -1,6 +1,6 @@
 import {useNavBar} from "../client/next/components/navbar/navigation";
 import {useDetectPageChange} from "../client/utils/customHooks";
-import Browse from "../client/next/components/browse";
+import {Browse} from "../client/next/components/browse";
 import {useEffect} from "react";
 import useOnScroll from "../client/utils/opacityScroll";
 import {BrowseData} from "../server/classes/media";
@@ -18,11 +18,7 @@ export default function Library({data}: { data: BrowseData }) {
         return () => reset();
     }, [loading]);
 
-    return (
-        <>
-            <Browse data={data}/>
-        </>
-    )
+    return <Browse data={data}/>;
 }
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {

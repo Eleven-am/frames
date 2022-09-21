@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef} from "react";
+import React, {memo, useCallback, useEffect, useMemo, useRef} from "react";
 import {FramesButton} from "../../buttons/Buttons";
 import styles from "./BACKDROP.module.css";
 import style from "./../Trending.module.css";
@@ -16,7 +16,7 @@ interface TrendingBlock {
     loadTrailer: (a: string, b: HTMLImageElement) => void
 }
 
-export default function Backdrop({data, index, start, done, loadTrailer}: TrendingBlock) {
+function Backdrop({data, index, start, done, loadTrailer}: TrendingBlock) {
     const {id, name, backdrop, logo, overview, trailer: link, type} = data
     const overviewRef = useRef<HTMLParagraphElement>(null);
     const holder = useRef<HTMLDivElement>(null);
@@ -75,3 +75,5 @@ export default function Backdrop({data, index, start, done, loadTrailer}: Trendi
         </div>
     </div>)
 }
+
+export default memo(Backdrop);

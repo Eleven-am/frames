@@ -1,9 +1,9 @@
 import {useRecoilValue, useSetRecoilState} from "recoil";
 import {differance, framesPlayer, HideImageAtom, usePlaybackControlsListener} from "../../../../utils/playback";
-import {useEffect, useRef} from "react";
+import {memo, useEffect, useRef} from "react";
 import cd from './frames.module.css';
 
-export default function FramesPlayer() {
+function FramesPlayer() {
     const setFrames = useSetRecoilState(framesPlayer);
     const hideImage = useRecoilValue(HideImageAtom);
     const player = useRef<HTMLVideoElement | null>(null);
@@ -44,7 +44,7 @@ export default function FramesPlayer() {
                 onPlay={handlePlayPause}
                 onPause={handlePlayPause}
                 ref={player} className={diff ? cd.count : cd.frames}
-                preload="metadata" playsInline autoPlay controls={false}
+                preload="metadata" autoPlay
             >
                 <source src={response.cdn + response.location} type="video/mp4"/>
                 {response.subs.map((e, v) => <track key={v} kind="subtitles" label={e.label} srcLang={e.lang}
@@ -55,3 +55,5 @@ export default function FramesPlayer() {
         </>
     )
 }
+
+export default memo(FramesPlayer);

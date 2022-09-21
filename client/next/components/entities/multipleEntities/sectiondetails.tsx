@@ -1,9 +1,9 @@
 import styles from "./SectionDetails.module.css";
-import React from "react";
+import React, {memo} from "react";
 import Element from "../singleEntity/season";
 import {SpringEpisode} from "../../../../../server/classes/media";
 
-export default function SectionDetails({
+function UnMemoSectionDetails({
                                            response,
                                            entities
                                        }: { entities: React.RefObject<HTMLUListElement>, response: SpringEpisode[] }) {
@@ -16,3 +16,5 @@ export default function SectionDetails({
         </div>
     )
 }
+
+export default memo(UnMemoSectionDetails);

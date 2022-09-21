@@ -227,8 +227,8 @@
 }
 
 .notification, .onlineCounter, .watchOnline {
+    top: -1px;
     display: flex;
-    top: 5px;
     text-align: center;
     justify-content: center;
     align-items: center;
@@ -246,9 +246,8 @@
 }
 
 .onlineCounter, .watchOnline {
-    top: -1px;
-    left: -1px;
     color: white;
+    left: -1px;
     background-color: #3cab66d0;
 }
 

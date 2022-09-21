@@ -1,11 +1,12 @@
-import React, {useEffect, useRef} from 'react';
-import Section from "../entities/section";
+import React, {memo, useEffect, useRef} from 'react';
+import Section, {TrendingCollection} from "../entities/section";
 import styles from './homeSections.module.css';
 import {useSetRecoilState} from "recoil";
 import {sectionAtom, startHeight} from "./homeContext";
 import {useHomeSegments} from "../../../utils/customHooks";
+import ErrorBoundary from "../misc/ErrorBoundary";
 
-export default function HomeSections({stop}: { stop: (s: boolean) => void }) {
+function HomeSections({stop}: { stop: (s: boolean) => void }) {
     const {segment: response, handleScroll, setCallback} = useHomeSegments();
     const setHeight = useSetRecoilState(startHeight);
     const setSection = useSetRecoilState(sectionAtom);
@@ -27,12 +28,19 @@ export default function HomeSections({stop}: { stop: (s: boolean) => void }) {
     }, [])
 
     return (
-        <div className={styles.sectionScroll} onScroll={handleScroll}>
-            <div className={styles.sectionsHolder} ref={divRef}>
-                {response.map(item => {
-                    return <Section key={item} location={item}/>
-                })}
+        <ErrorBoundary>
+            <div className={styles.sectionScroll} onScroll={handleScroll}>
+                <div className={styles.sectionsHolder} ref={divRef}>
+                    {response.map(item => {
+                        if (item === 'trendingCollection')
+                            return <TrendingCollection key={item}/>
+
+                        return <Section key={item} location={item}/>
+                    })}
+                </div>
             </div>
-        </div>
+        </ErrorBoundary>
     )
 }
+
+export default memo(HomeSections);

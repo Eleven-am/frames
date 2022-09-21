@@ -201,6 +201,14 @@
     margin: 10px;
 }
 
+.notification {
+    color: rgba(255, 255, 255, .5);
+}
+
+.isUser {
+    text-align: right;
+}
+
 .msgUsr, .msgTime {
     font-size: 12px;
     font-family: var(--text);

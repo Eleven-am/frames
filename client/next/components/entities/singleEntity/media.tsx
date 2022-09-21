@@ -1,4 +1,4 @@
-import React from "react";
+import React, {memo} from "react";
 import {MediaType} from '@prisma/client';
 import styles from './Grid.module.css';
 import secondStyles from '../Sections.module.css'
@@ -6,7 +6,7 @@ import Image from "next/image";
 import {Link} from "../../misc/Loader";
 import {SpringMedia} from "../../../../../server/classes/media";
 
-export default function Media({
+function Media({
                                   data,
                                   media
                               }: { data: Pick<SpringMedia, 'id' | 'type' | 'name' | 'backdrop' | 'logo'> & { position?: number, location?: string }, media: boolean }) {
@@ -31,3 +31,5 @@ export default function Media({
         </Link>
     )
 }
+
+export default memo(Media);

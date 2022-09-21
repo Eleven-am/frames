@@ -8,7 +8,7 @@ import {UpNext} from "../../server/classes/media";
 import {useChannel} from "./realtime";
 import NProgress from "nprogress";
 import {FrameMediaLite} from "../../server/classes/playback";
-import {useConfirmDispatch} from "./notifications";
+import {useConfirmDispatch, useGroupWatchUsers} from "./notifications";
 import useBase from "./provider";
 import {SideBarAtomFamily} from "../next/components/misc/sidebar";
 import {UserPlaybackSettingsContext} from "./modify";
@@ -34,14 +34,16 @@ export const GroupRoom = atom({
     key: 'GroupRoom', default: ''
 })
 
-interface GroupWatchMessages {
-    id: number,
-    message: string,
-    username: string,
-    received: Date,
+export interface GroupWatchMessagesInterface {
+    id: number;
+    message: string;
+    username: string;
+    received: Date;
+    isNotification: boolean;
+    isUser: boolean;
 }
 
-export const GroupWatchMessages = atom<GroupWatchMessages[]>({
+export const GroupWatchMessages = atom<GroupWatchMessagesInterface[]>({
     key: 'GroupWatchMessages', default: []
 })
 
@@ -61,6 +63,7 @@ export interface GroupWatchMessage extends Message {
 export function useGroupWatch() {
     const {user} = useUser();
     const {goBack} = useNavBar();
+    const users = useGroupWatchUsers();
     const [side, setSide] = useRecoilState(SideBarAtomFamily('GroupWatchSlider'));
     const setSection = useSetRecoilState(GroupWatchSection);
     const [med, setId] = useRecoilState(GroupWatchMediaIdAtom);
@@ -80,13 +83,15 @@ export function useGroupWatch() {
         identifier: `${userState?.incognito ? 'incognito:' : ''}${user?.identifier}`
     });
 
-    const addNewMessage = useCallback((message: string) => {
+    const addNewMessage = useCallback((message: string, isNotification: boolean) => {
         if (user) {
             const nMsg = {
                 id: Date.now(),
+                isUser: true,
                 username: user.username,
                 message: message,
-                received: new Date()
+                received: new Date(),
+                isNotification: isNotification
             }
 
             addMessage((prev) => [...prev, nMsg])
@@ -116,9 +121,11 @@ export function useGroupWatch() {
         socket.send<GroupWatchMessage>('speak', {...message, username: user?.username || ''});
 
         let messageString = '';
+        let isNotification = true;
         switch (message.action) {
             case 'says':
                 messageString = message.data as string;
+                isNotification = false;
                 break;
 
             case 'playing':
@@ -137,8 +144,8 @@ export function useGroupWatch() {
         }
 
         if (messageString !== '')
-            addNewMessage(messageString);
-    }, [socket.send, leader, user, room, addNewMessage]);
+            addNewMessage(messageString, isNotification);
+    }, [leader, addNewMessage, user, socket])
 
     const joinRoom = useCallback(async (room: string) => {
         if (user?.role === Role.GUEST) dispatch({
@@ -290,6 +297,6 @@ export function useGroupWatch() {
         leader, startSession, endSession,
         joinRoom, openSession,
         connected: socket.connected || false,
-        lobbyOpen: !!med, side
+        lobbyOpen: !!med, side, users
     };
 }

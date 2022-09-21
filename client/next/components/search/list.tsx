@@ -1,9 +1,9 @@
 import styles from "../grid/List.module.css";
 import {useRouter} from "next/router";
 import {MediaType} from "@prisma/client";
-import {useCallback} from "react";
+import {memo, useCallback} from "react";
 
-export default function List({list}: { list: { name: string, type: MediaType, id: number }[] }) {
+function List({list}: { list: { name: string, type: MediaType, id: number }[] }) {
     const history = useRouter();
 
     const handleClick = useCallback(async ({name, type, id}: { name: string, type: MediaType, id: number }) => {
@@ -27,4 +27,6 @@ export default function List({list}: { list: { name: string, type: MediaType, id
 
     else return null;
 }
+
+export default memo(List)
 

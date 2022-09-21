@@ -1,7 +1,8 @@
 import ss from "../ACCOUNT.module.css";
 import {useManageSections} from "../../../../utils/modify";
+import {memo} from "react";
 
-export default function About() {
+function About() {
     const response = ['about', 'help', 'feedback', 'privacy policy', 'terms of use'];
     const [side, setSide] = useManageSections(response);
 
@@ -16,3 +17,5 @@ export default function About() {
         </div>
     )
 }
+
+export default memo(About);

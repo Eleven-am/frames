@@ -235,7 +235,23 @@ export const useEditorPicks = () => {
             setState({...obj, statusType: true, process: 'MODIFY'});
     }, [setState]);
 
-    return {addPick, modifyPick, pushPickLib}
+    const deletePick = useCallback(async (cb: () => void) => {
+        const check = await base.makeRequest<boolean>(`/api/modify/deletePick?id=${state?.category}`, null, 'GET');
+        if (check)
+            setInform({
+                type: "success",
+                heading: 'Editor pick deleted successfully',
+                message: `The editor pick has been deleted successfully`
+            })
+        else setInform({
+            type: "warn",
+            heading: 'Something went wrong',
+            message: `Failed to delete the editor pick from the database`
+        })
+        cb();
+    }, [base, setInform]);
+
+    return {addPick, modifyPick, pushPickLib, deletePick}
 }
 
 export const useManageSections = (response?: string[], step2 = true): [s: string, Setter: (s: string) => void] => {

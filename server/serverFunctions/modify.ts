@@ -83,6 +83,11 @@ export default async (req: NextApiRequest, res: NextApiResponse, userId: string)
             response = true;
             break;
 
+        case 'deletePick':
+            await listEditor.deletePick(body.id);
+            response = true;
+            break;
+
         case 'recommend':
             response = await modify.getRecommended(body.tmdbId, body.type);
             break;
