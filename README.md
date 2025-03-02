@@ -3,7 +3,7 @@
 ![GitHub Repo stars](https://img.shields.io/github/stars/eleven-am/frames?style=social)
 ![Twitter Follow](https://img.shields.io/twitter/follow/maixperiyon?style=social)
 
-![Logo](https://frameshomebase.maix.ovh/favicons/android-chrome-192x192.png)
+![Logo](https://frames-demo.maix.ovh/favicons/android-chrome-192x192.png)
 
 # Frames
 
