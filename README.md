@@ -166,7 +166,6 @@ Frames features a sophisticated video player with:
 ![Video player with download dialog open, requesting auth key for download](art/24.png)
 ![Video player with Share dialog open asking to share from current position or not](art/25.png)
 
-
 ### GroupWatch
 
 This feature allows you to watch media with friends at the same time:
