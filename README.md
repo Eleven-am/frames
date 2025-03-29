@@ -48,12 +48,80 @@ Choose the installation method that best suits your needs:
 
 ### Docker (Recommended)
 
-The easiest way to get started with Frames is using Docker:
+The easiest way to get started with Frames is using Docker. You'll need to mount a directory for your media files and provide the necessary environment variables:
 
 ```bash
 docker pull elevenam/frames:latest
-docker run -p 3000:3000 elevenam/frames:latest
+docker run -p 3000:3000 \
+  -v /path/to/your/media:/media \
+  -e DATABASE_URL="postgres://username:password@host:5432/frames" \
+  -e DIRECT_DATABASE_URL="postgres://username:password@host:5432/frames" \
+  -e REDIS_HOST="redis-host" \
+  -e REDIS_PORT="6379" \
+  -e REDIS_TTL="86400" \
+  -e REDIS_DB="0" \
+  -e JWT_SECRET="your-secure-jwt-secret" \
+  elevenam/frames:latest
 ```
+
+Replace the values with your actual configuration:
+- `/path/to/your/media`: The local path where your media files are stored
+- Database credentials: Your PostgreSQL connection details
+- Redis configuration: Your Redis server details
+- JWT secret: A secure random string for authentication
+
+### Docker Compose (For Multi-Container Setup)
+
+For a more complete setup including PostgreSQL and Redis, you can use Docker Compose:
+
+```yaml
+version: '3'
+
+services:
+  frames:
+    image: elevenam/frames:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - /path/to/your/media:/media
+    environment:
+      - DATABASE_URL=postgres://frames:frames_password@postgres:5432/frames
+      - DIRECT_DATABASE_URL=postgres://frames:frames_password@postgres:5432/frames
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TTL=86400
+      - REDIS_DB=0
+      - JWT_SECRET=your-secure-jwt-secret
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=frames
+      - POSTGRES_PASSWORD=frames_password
+      - POSTGRES_DB=frames
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+Save this as `docker-compose.yml` and run:
+
+```bash
+docker-compose up -d
+```
+
+This will start Frames along with PostgreSQL and Redis containers, with data persistence through Docker volumes.
 
 ### Environment Variables
 
