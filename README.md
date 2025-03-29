@@ -128,22 +128,22 @@ For optimal performance and organization:
   * Place each episode in its corresponding Season folder (Recommended)
   * Place them directly in the Show folder if they follow naming conventions like "S01E01" or "S01 - E01"
 
-* Example:
-    ```
-    Movies/
-    ├── MovieName (2023)/
-    │   ├── movie.mp4
-    ├── MovieName (2022)/
-    │   ├── movie.mp4
-    TV Shows/
-    ├── ShowName/
-    │   ├── Season 1/
-    │   │   ├── S01E01 - EpisodeName.mp4
-    │   │   ├── S01E02 - EpisodeName.mp4
-    │   ├── Season 2/
-    │   │   ├── S02E01 - EpisodeName.mp4
-    │   │   ├── S02E02 - EpisodeName.mp4
-    ```
+    * Example:
+        ```
+        Movies/
+        ├── MovieName (2023)/
+        │   └── movie.mp4
+        └── MovieName (2022)/
+            └── movie.mp4
+        TV Shows/
+        └── ShowName/
+           ├── Season 1/
+           │   ├── S01E01 - EpisodeName.mp4
+           │   └── S01E02 - EpisodeName.mp4
+           └─── Season 2/
+               ├── S02E01 - EpisodeName.mp4
+               └── S02E02 - EpisodeName.mp4
+        ```
 
 ## Advanced Features
 
