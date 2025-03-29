@@ -1,0 +1,143 @@
+.first {
+    animation: firstMove 0.5s forwards;
+}
+
+.second {
+    animation: secondMove 0.5s forwards;
+}
+
+.third {
+    animation: thirdMove 0.5s forwards;
+}
+
+.firstBack {
+    animation: firstMoveBack 0.5s forwards;
+}
+
+.secondBack {
+    animation: secondMoveBack 0.5s forwards;
+}
+
+.thirdBack {
+    animation: thirdMoveBack 0.5s forwards;
+}
+
+@keyframes firstMove {
+    0% {
+        left: 5vw;
+        height: 45vh;
+    }
+    100% {
+        left: -87vw;
+        height: 40vh;
+    }
+}
+
+@keyframes secondMove {
+    0% {
+        left: 97vw;
+        height: 40vh;
+    }
+    100% {
+        left: 5vw;
+        height: 45vh;
+    }
+}
+
+@keyframes thirdMove {
+    0% {
+        left: 189vw;
+        height: 40vh;
+    }
+    100% {
+        left: 97vw;
+        height: 40vh;
+    }
+}
+
+@keyframes firstMoveBack {
+    0% {
+        left: -187vw;
+        height: 40vh;
+    }
+    100% {
+        left: -87vw;
+        height: 40vh;
+    }
+}
+
+@keyframes secondMoveBack {
+    0% {
+        left: -87vw;
+        height: 40vh;
+    }
+    100% {
+        left: 5vw;
+        height: 45vh;
+    }
+}
+
+@keyframes thirdMoveBack {
+    0% {
+        left: 5vw;
+        height: 45vh;
+    }
+    100% {
+        left: 97vw;
+        height: 40vh;
+    }
+}
+
+/*
+ enter: ({ position, direction }: CustomVars) => {
+        const x = direction === Direction.forward ?
+            position === Position.previous
+                ? '-200%' :
+                position === Position.current ? '-100%' : '0%' :
+            direction === Direction.backward ?
+                position === Position.next
+                    ? '200%' :
+                    position === Position.current ? '100%' : '0%'
+                : '0%';
+
+        const scale = (position === Position.previous && direction === Direction.forward) ||
+            (position === Position.next && direction === Direction.backward)
+            ? 1
+            : 0.9;
+
+        return {
+            x,
+            scale,
+        };
+    },
+    center: ({ position }: CustomVars) => {
+        const scale = position === Position.current ? 1 : 0.9;
+
+        return {
+            x: '0%',
+            zIndex: position === Position.current ? 1 : 0,
+            scale,
+        };
+    },
+    exit: ({ position, direction }: CustomVars) => {
+        const x = direction === Direction.forward ?
+            position === Position.previous
+                ? '200%' :
+                position === Position.current ? '100%' : '0%' :
+            direction === Direction.backward ?
+                position === Position.next
+                    ? '-200%' :
+                    position === Position.current ? '-100%' : '0%'
+                : '0%';
+
+        const scale = (position === Position.previous && direction === Direction.forward) ||
+            (position === Position.next && direction === Direction.backward)
+            ? 0.9
+            : 1;
+
+        return {
+            x,
+            scale,
+        };
+    },
+*/

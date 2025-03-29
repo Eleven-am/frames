@@ -1,0 +1,3295 @@
+[
+    {
+        "name": "Afghanistan",
+        "alpha2": "AF",
+        "englishName": "the Islamic Republic of Afghanistan",
+        "frenchName": "République islamique d'Afghanistan",
+        "capital": "Kabul",
+        "currency": "AFN",
+        "currencyName": "Afghani",
+        "languages": [
+            "fa",
+            "ps",
+            "uz",
+            "tk"
+        ]
+    },
+    {
+        "name": "Albania",
+        "alpha2": "AL",
+        "englishName": "the Republic of Albania",
+        "frenchName": "la République d'Albanie",
+        "capital": "Tirana",
+        "currency": "ALL",
+        "currencyName": "Lek",
+        "languages": [
+            "sq",
+            "el"
+        ]
+    },
+    {
+        "name": "Algeria",
+        "alpha2": "DZ",
+        "englishName": "the People's Democratic Republic of Algeria",
+        "frenchName": "la République algérienne démocratique et populaire",
+        "capital": "Algiers",
+        "currency": "DZD",
+        "currencyName": "Algerian Dinar",
+        "languages": [
+            "ar"
+        ]
+    },
+    {
+        "name": "American Samoa",
+        "alpha2": "AS",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Pago Pago",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en",
+            "sm",
+            "to"
+        ]
+    },
+    {
+        "name": "Andorra",
+        "alpha2": "AD",
+        "englishName": "the Principality of Andorra",
+        "frenchName": "la Principauté d'Andorre",
+        "capital": "Andorra la Vella",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "ca"
+        ]
+    },
+    {
+        "name": "Angola",
+        "alpha2": "AO",
+        "englishName": "the Republic of Angola",
+        "frenchName": "la République d'Angola",
+        "capital": "Luanda",
+        "currency": "AOA",
+        "currencyName": "Kwanza",
+        "languages": [
+            "pt"
+        ]
+    },
+    {
+        "name": "Anguilla",
+        "alpha2": "AI",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "The Valley",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Antigua and Barbuda",
+        "alpha2": "AG",
+        "englishName": "Antigua and Barbuda",
+        "frenchName": "Antigua-et-Barbuda [fém.]",
+        "capital": "St. John's",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Argentina",
+        "alpha2": "AR",
+        "englishName": "the Argentine Republic",
+        "frenchName": "la République argentine",
+        "capital": "Buenos Aires",
+        "currency": "ARS",
+        "currencyName": "Argentine Peso",
+        "languages": [
+            "es",
+            "en",
+            "it",
+            "de",
+            "fr",
+            "gn"
+        ]
+    },
+    {
+        "name": "Armenia",
+        "alpha2": "AM",
+        "englishName": "the Republic of Armenia",
+        "frenchName": "la République d'Arménie",
+        "capital": "Yerevan",
+        "currency": "AMD",
+        "currencyName": "Armenian Dram",
+        "languages": [
+            "hy"
+        ]
+    },
+    {
+        "name": "Aruba",
+        "alpha2": "AW",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Oranjestad",
+        "currency": "AWG",
+        "currencyName": "Aruban Florin",
+        "languages": [
+            "nl",
+            "es",
+            "en"
+        ]
+    },
+    {
+        "name": "Australia",
+        "alpha2": "AU",
+        "englishName": "Australia",
+        "frenchName": "l'Australie",
+        "capital": "Canberra",
+        "currency": "AUD",
+        "currencyName": "Australian Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Austria",
+        "alpha2": "AT",
+        "englishName": "the Republic of Austria",
+        "frenchName": "la République d'Autriche",
+        "capital": "Vienna",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "de",
+            "hr",
+            "hu",
+            "sl"
+        ]
+    },
+    {
+        "name": "Azerbaijan",
+        "alpha2": "AZ",
+        "englishName": "the Republic of Azerbaijan",
+        "frenchName": "la République d'Azerbaïdjan",
+        "capital": "Baku",
+        "currency": "AZN",
+        "currencyName": "Azerbaijan Manat",
+        "languages": [
+            "az",
+            "ru",
+            "hy"
+        ]
+    },
+    {
+        "name": "Bahamas",
+        "alpha2": "BS",
+        "englishName": "the Commonwealth of the Bahamas",
+        "frenchName": "le Commonwealth des Bahamas",
+        "capital": "Nassau",
+        "currency": "BSD",
+        "currencyName": "Bahamian Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Bahrain",
+        "alpha2": "BH",
+        "englishName": "the Kingdom of Bahrain",
+        "frenchName": "le Royaume de Bahreïn",
+        "capital": "Manama",
+        "currency": "BHD",
+        "currencyName": "Bahraini Dinar",
+        "languages": [
+            "ar",
+            "en",
+            "fa",
+            "ur"
+        ]
+    },
+    {
+        "name": "Bangladesh",
+        "alpha2": "BD",
+        "englishName": "the People's Republic of Bangladesh",
+        "frenchName": "la République populaire du Bangladesh",
+        "capital": "Dhaka",
+        "currency": "BDT",
+        "currencyName": "Taka",
+        "languages": [
+            "bn",
+            "en"
+        ]
+    },
+    {
+        "name": "Barbados",
+        "alpha2": "BB",
+        "englishName": "Barbados",
+        "frenchName": "la Barbade",
+        "capital": "Bridgetown",
+        "currency": "BBD",
+        "currencyName": "Barbados Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Belarus",
+        "alpha2": "BY",
+        "englishName": "the Republic of Belarus",
+        "frenchName": "la République du Bélarus",
+        "capital": "Minsk",
+        "currency": "BYN",
+        "currencyName": "Belarusian Ruble",
+        "languages": [
+            "be",
+            "ru"
+        ]
+    },
+    {
+        "name": "Belgium",
+        "alpha2": "BE",
+        "englishName": "the Kingdom of Belgium",
+        "frenchName": "le Royaume de Belgique",
+        "capital": "Brussels",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "nl",
+            "fr",
+            "de"
+        ]
+    },
+    {
+        "name": "Belize",
+        "alpha2": "BZ",
+        "englishName": "Belize",
+        "frenchName": "le Belize",
+        "capital": "Belmopan",
+        "currency": "BZD",
+        "currencyName": "Belize Dollar",
+        "languages": [
+            "en",
+            "es"
+        ]
+    },
+    {
+        "name": "Benin",
+        "alpha2": "BJ",
+        "englishName": "the Republic of Benin",
+        "frenchName": "la République du Bénin",
+        "capital": "Porto-Novo",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Bermuda",
+        "alpha2": "BM",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Hamilton",
+        "currency": "BMD",
+        "currencyName": "Bermudian Dollar",
+        "languages": [
+            "en",
+            "pt"
+        ]
+    },
+    {
+        "name": "Bhutan",
+        "alpha2": "BT",
+        "englishName": "the Kingdom of Bhutan",
+        "frenchName": "le Royaume du Bhoutan",
+        "capital": "Thimphu",
+        "currency": "INR,BTN",
+        "currencyName": "Indian Rupee,Ngultrum",
+        "languages": [
+            "dz"
+        ]
+    },
+    {
+        "name": "Bolivia, Plurinational State of",
+        "alpha2": "BO",
+        "englishName": "the Plurinational State of Bolivia",
+        "frenchName": "État plurinational de Bolivie",
+        "capital": "Sucre",
+        "currency": "BOB",
+        "currencyName": "Boliviano",
+        "languages": [
+            "es",
+            "qu",
+            "ay"
+        ]
+    },
+    {
+        "name": "Bonaire, Sint Eustatius and Saba",
+        "alpha2": "BQ",
+        "englishName": null,
+        "frenchName": null,
+        "capital": null,
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "nl",
+            "en"
+        ]
+    },
+    {
+        "name": "Bosnia and Herzegovina",
+        "alpha2": "BA",
+        "englishName": "Bosnia and Herzegovina",
+        "frenchName": "la Bosnie-Herzégovine",
+        "capital": "Sarajevo",
+        "currency": "BAM",
+        "currencyName": "Convertible Mark",
+        "languages": [
+            "bs",
+            "hr",
+            "sr"
+        ]
+    },
+    {
+        "name": "Botswana",
+        "alpha2": "BW",
+        "englishName": "the Republic of Botswana",
+        "frenchName": "la République du Botswana",
+        "capital": "Gaborone",
+        "currency": "BWP",
+        "currencyName": "Pula",
+        "languages": [
+            "en",
+            "tn"
+        ]
+    },
+    {
+        "name": "Brazil",
+        "alpha2": "BR",
+        "englishName": "the Federative Republic of Brazil",
+        "frenchName": "la République fédérative du Brésil",
+        "capital": "Brasilia",
+        "currency": "BRL",
+        "currencyName": "Brazilian Real",
+        "languages": [
+            "pt",
+            "es",
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "British Indian Ocean Territory",
+        "alpha2": "IO",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Diego Garcia",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Brunei Darussalam",
+        "alpha2": "BN",
+        "englishName": "Brunei Darussalam",
+        "frenchName": "le Brunéi Darussalam",
+        "capital": "Bandar Seri Begawan",
+        "currency": "BND",
+        "currencyName": "Brunei Dollar",
+        "languages": [
+            "ms",
+            "en"
+        ]
+    },
+    {
+        "name": "Bulgaria",
+        "alpha2": "BG",
+        "englishName": "the Republic of Bulgaria",
+        "frenchName": "la République de Bulgarie",
+        "capital": "Sofia",
+        "currency": "BGN",
+        "currencyName": "Bulgarian Lev",
+        "languages": [
+            "bg",
+            "tr"
+        ]
+    },
+    {
+        "name": "Burkina Faso",
+        "alpha2": "BF",
+        "englishName": "Burkina Faso",
+        "frenchName": "le Burkina Faso",
+        "capital": "Ouagadougou",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Burundi",
+        "alpha2": "BI",
+        "englishName": "the Republic of Burundi",
+        "frenchName": "la République du Burundi",
+        "capital": "Bujumbura",
+        "currency": "BIF",
+        "currencyName": "Burundi Franc",
+        "languages": [
+            "fr",
+            "rn"
+        ]
+    },
+    {
+        "name": "Cambodia",
+        "alpha2": "KH",
+        "englishName": "the Kingdom of Cambodia",
+        "frenchName": "le Royaume du Cambodge",
+        "capital": "Phnom Penh",
+        "currency": "KHR",
+        "currencyName": "Riel",
+        "languages": [
+            "km",
+            "fr",
+            "en"
+        ]
+    },
+    {
+        "name": "Cameroon",
+        "alpha2": "CM",
+        "englishName": "the Republic of Cameroon",
+        "frenchName": "la République du Cameroun",
+        "capital": "Yaounde",
+        "currency": "XAF",
+        "currencyName": "CFA Franc BEAC",
+        "languages": [
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "Canada",
+        "alpha2": "CA",
+        "englishName": "Canada",
+        "frenchName": "le Canada",
+        "capital": "Ottawa",
+        "currency": "CAD",
+        "currencyName": "Canadian Dollar",
+        "languages": [
+            "en",
+            "fr",
+            "iu"
+        ]
+    },
+    {
+        "name": "Cape Verde",
+        "alpha2": "CV",
+        "englishName": "the Republic of Cabo Verde",
+        "frenchName": "la République de Cabo Verde",
+        "capital": "Praia",
+        "currency": "CVE",
+        "currencyName": "Cabo Verde Escudo",
+        "languages": [
+            "pt"
+        ]
+    },
+    {
+        "name": "Cayman Islands",
+        "alpha2": "KY",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "George Town",
+        "currency": "KYD",
+        "currencyName": "Cayman Islands Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Central African Republic",
+        "alpha2": "CF",
+        "englishName": "the Central African Republic",
+        "frenchName": "la République centrafricaine",
+        "capital": "Bangui",
+        "currency": "XAF",
+        "currencyName": "CFA Franc BEAC",
+        "languages": [
+            "fr",
+            "sg",
+            "ln",
+            "kg"
+        ]
+    },
+    {
+        "name": "Chad",
+        "alpha2": "TD",
+        "englishName": "the Republic of Chad",
+        "frenchName": "la République du Tchad",
+        "capital": "N'Djamena",
+        "currency": "XAF",
+        "currencyName": "CFA Franc BEAC",
+        "languages": [
+            "fr",
+            "ar"
+        ]
+    },
+    {
+        "name": "Chile",
+        "alpha2": "CL",
+        "englishName": "the Republic of Chile",
+        "frenchName": "la République du Chili",
+        "capital": "Santiago",
+        "currency": "CLP",
+        "currencyName": "Chilean Peso",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "China",
+        "alpha2": "CN",
+        "englishName": "the People's Republic of China",
+        "frenchName": "la République populaire de Chine",
+        "capital": "Beijing",
+        "currency": "CNY",
+        "currencyName": "Yuan Renminbi",
+        "languages": [
+            "zh",
+            "ug",
+            "za"
+        ]
+    },
+    {
+        "name": "Christmas Island",
+        "alpha2": "CX",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Flying Fish Cove",
+        "currency": "AUD",
+        "currencyName": "Australian Dollar",
+        "languages": [
+            "en",
+            "zh",
+            "ms"
+        ]
+    },
+    {
+        "name": "Cocos (Keeling) Islands",
+        "alpha2": "CC",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "West Island",
+        "currency": "AUD",
+        "currencyName": "Australian Dollar",
+        "languages": [
+            "ms",
+            "en"
+        ]
+    },
+    {
+        "name": "Colombia",
+        "alpha2": "CO",
+        "englishName": "the Republic of Colombia",
+        "frenchName": "la République de Colombie",
+        "capital": "Bogota",
+        "currency": "COP",
+        "currencyName": "Colombian Peso",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Comoros",
+        "alpha2": "KM",
+        "englishName": "the Union of the Comoros",
+        "frenchName": "l'Union des Comores",
+        "capital": "Moroni",
+        "currency": "KMF",
+        "currencyName": "Comorian Franc",
+        "languages": [
+            "ar",
+            "fr"
+        ]
+    },
+    {
+        "name": "Congo",
+        "alpha2": "CG",
+        "englishName": "the Republic of the Congo",
+        "frenchName": "la République du Congo",
+        "capital": "Brazzaville",
+        "currency": "XAF",
+        "currencyName": "CFA Franc BEAC",
+        "languages": [
+            "fr",
+            "kg",
+            "ln"
+        ]
+    },
+    {
+        "name": "Congo, the Democratic Republic of the",
+        "alpha2": "CD",
+        "englishName": "the Democratic Republic of the Congo",
+        "frenchName": "la République démocratique du Congo",
+        "capital": "Kinshasa",
+        "currency": "CDF",
+        "currencyName": "Congolese Franc",
+        "languages": [
+            "fr",
+            "ln",
+            "kg",
+            "sw"
+        ]
+    },
+    {
+        "name": "Cook Islands",
+        "alpha2": "CK",
+        "englishName": "the Cook Islands",
+        "frenchName": "les Îles Cook",
+        "capital": "Avarua",
+        "currency": "NZD",
+        "currencyName": "New Zealand Dollar",
+        "languages": [
+            "en",
+            "mi"
+        ]
+    },
+    {
+        "name": "Costa Rica",
+        "alpha2": "CR",
+        "englishName": "the Republic of Costa Rica",
+        "frenchName": "la République du Costa Rica",
+        "capital": "San Jose",
+        "currency": "CRC",
+        "currencyName": "Costa Rican Colon",
+        "languages": [
+            "es",
+            "en"
+        ]
+    },
+    {
+        "name": "Croatia",
+        "alpha2": "HR",
+        "englishName": "the Republic of Croatia",
+        "frenchName": "la République de Croatie",
+        "capital": "Zagreb",
+        "currency": "HRK",
+        "currencyName": "Kuna",
+        "languages": [
+            "hr",
+            "sr"
+        ]
+    },
+    {
+        "name": "Cuba",
+        "alpha2": "CU",
+        "englishName": "the Republic of Cuba",
+        "frenchName": "la République de Cuba",
+        "capital": "Havana",
+        "currency": "CUP,CUC",
+        "currencyName": "Cuban Peso,Peso Convertible",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Curaçao",
+        "alpha2": "CW",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Willemstad",
+        "currency": "ANG",
+        "currencyName": "Netherlands Antillean Guilder",
+        "languages": [
+            "nl"
+        ]
+    },
+    {
+        "name": "Cyprus",
+        "alpha2": "CY",
+        "englishName": "the Republic of Cyprus",
+        "frenchName": "la République de Chypre",
+        "capital": "Nicosia",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "el",
+            "tr",
+            "en"
+        ]
+    },
+    {
+        "name": "Czech Republic",
+        "alpha2": "CZ",
+        "englishName": "the Czech Republic",
+        "frenchName": "la République tchèque",
+        "capital": "Prague",
+        "currency": "CZK",
+        "currencyName": "Czech Koruna",
+        "languages": [
+            "cs",
+            "sk"
+        ]
+    },
+    {
+        "name": "Côte d'Ivoire",
+        "alpha2": "CI",
+        "englishName": "the Republic of Côte d'Ivoire",
+        "frenchName": "la République de Côte d'Ivoire",
+        "capital": "Yamoussoukro",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Denmark",
+        "alpha2": "DK",
+        "englishName": "the Kingdom of Denmark",
+        "frenchName": "le Royaume du Danemark",
+        "capital": "Copenhagen",
+        "currency": "DKK",
+        "currencyName": "Danish Krone",
+        "languages": [
+            "da",
+            "en",
+            "fo",
+            "de"
+        ]
+    },
+    {
+        "name": "Djibouti",
+        "alpha2": "DJ",
+        "englishName": "the Republic of Djibouti",
+        "frenchName": "la République de Djibouti",
+        "capital": "Djibouti",
+        "currency": "DJF",
+        "currencyName": "Djibouti Franc",
+        "languages": [
+            "fr",
+            "ar",
+            "so",
+            "aa"
+        ]
+    },
+    {
+        "name": "Dominica",
+        "alpha2": "DM",
+        "englishName": "the Commonwealth of Dominica",
+        "frenchName": "le Commonwealth de Dominique",
+        "capital": "Roseau",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Dominican Republic",
+        "alpha2": "DO",
+        "englishName": "the Dominican Republic",
+        "frenchName": "la République dominicaine",
+        "capital": "Santo Domingo",
+        "currency": "DOP",
+        "currencyName": "Dominican Peso",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Ecuador",
+        "alpha2": "EC",
+        "englishName": "the Republic of Ecuador",
+        "frenchName": "la République de l'Équateur",
+        "capital": "Quito",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Egypt",
+        "alpha2": "EG",
+        "englishName": "the Arab Republic of Egypt",
+        "frenchName": "la République arabe d'Égypte",
+        "capital": "Cairo",
+        "currency": "EGP",
+        "currencyName": "Egyptian Pound",
+        "languages": [
+            "ar",
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "El Salvador",
+        "alpha2": "SV",
+        "englishName": "the Republic of El Salvador",
+        "frenchName": "la République d'El Salvador",
+        "capital": "San Salvador",
+        "currency": "SVC,USD",
+        "currencyName": "El Salvador Colon,US Dollar",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Equatorial Guinea",
+        "alpha2": "GQ",
+        "englishName": "the Republic of Equatorial Guinea",
+        "frenchName": "la République de Guinée équatoriale",
+        "capital": "Malabo",
+        "currency": "XAF",
+        "currencyName": "CFA Franc BEAC",
+        "languages": [
+            "es",
+            "fr"
+        ]
+    },
+    {
+        "name": "Eritrea",
+        "alpha2": "ER",
+        "englishName": "the State of Eritrea",
+        "frenchName": "l'État d'Érythrée",
+        "capital": "Asmara",
+        "currency": "ERN",
+        "currencyName": "Nakfa",
+        "languages": [
+            "aa",
+            "ar",
+            "ti"
+        ]
+    },
+    {
+        "name": "Estonia",
+        "alpha2": "EE",
+        "englishName": "the Republic of Estonia",
+        "frenchName": "la République d'Estonie",
+        "capital": "Tallinn",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "et",
+            "ru"
+        ]
+    },
+    {
+        "name": "Ethiopia",
+        "alpha2": "ET",
+        "englishName": "the Federal Democratic Republic of Ethiopia",
+        "frenchName": "la République fédérale démocratique d'Éthiopie",
+        "capital": "Addis Ababa",
+        "currency": "ETB",
+        "currencyName": "Ethiopian Birr",
+        "languages": [
+            "am",
+            "en",
+            "om",
+            "ti",
+            "so"
+        ]
+    },
+    {
+        "name": "Falkland Islands (Malvinas)",
+        "alpha2": "FK",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Stanley",
+        "currency": null,
+        "currencyName": null,
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Faroe Islands",
+        "alpha2": "FO",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Torshavn",
+        "currency": "DKK",
+        "currencyName": "Danish Krone",
+        "languages": [
+            "fo",
+            "da"
+        ]
+    },
+    {
+        "name": "Fiji",
+        "alpha2": "FJ",
+        "englishName": "the Republic of Fiji",
+        "frenchName": "la République des Fidji",
+        "capital": "Suva",
+        "currency": "FJD",
+        "currencyName": "Fiji Dollar",
+        "languages": [
+            "en",
+            "fj"
+        ]
+    },
+    {
+        "name": "Finland",
+        "alpha2": "FI",
+        "englishName": "the Republic of Finland",
+        "frenchName": "la République de Finlande",
+        "capital": "Helsinki",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fi",
+            "sv"
+        ]
+    },
+    {
+        "name": "France",
+        "alpha2": "FR",
+        "englishName": "the French Republic",
+        "frenchName": "la République française",
+        "capital": "Paris",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr",
+            "br",
+            "co",
+            "ca",
+            "eu",
+            "oc"
+        ]
+    },
+    {
+        "name": "French Guiana",
+        "alpha2": "GF",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Cayenne",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "French Polynesia",
+        "alpha2": "PF",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Papeete",
+        "currency": "XPF",
+        "currencyName": "CFP Franc",
+        "languages": [
+            "fr",
+            "ty"
+        ]
+    },
+    {
+        "name": "French Southern Territories",
+        "alpha2": "TF",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Port-aux-Francais",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Gabon",
+        "alpha2": "GA",
+        "englishName": "the Gabonese Republic",
+        "frenchName": "la République gabonaise",
+        "capital": "Libreville",
+        "currency": "XAF",
+        "currencyName": "CFA Franc BEAC",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Gambia",
+        "alpha2": "GM",
+        "englishName": "the Republic of the Gambia",
+        "frenchName": "la République de Gambie",
+        "capital": "Banjul",
+        "currency": "GMD",
+        "currencyName": "Dalasi",
+        "languages": [
+            "en",
+            "wo",
+            "ff"
+        ]
+    },
+    {
+        "name": "Georgia",
+        "alpha2": "GE",
+        "englishName": "Georgia",
+        "frenchName": "la Géorgie",
+        "capital": "Tbilisi",
+        "currency": "GEL",
+        "currencyName": "Lari",
+        "languages": [
+            "ka",
+            "ru",
+            "hy",
+            "az"
+        ]
+    },
+    {
+        "name": "Germany",
+        "alpha2": "DE",
+        "englishName": "the Federal Republic of Germany",
+        "frenchName": "la République fédérale d'Allemagne",
+        "capital": "Berlin",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "de"
+        ]
+    },
+    {
+        "name": "Ghana",
+        "alpha2": "GH",
+        "englishName": "the Republic of Ghana",
+        "frenchName": "la République du Ghana",
+        "capital": "Accra",
+        "currency": "GHS",
+        "currencyName": "Ghana Cedi",
+        "languages": [
+            "en",
+            "ak",
+            "ee",
+            "tw"
+        ]
+    },
+    {
+        "name": "Gibraltar",
+        "alpha2": "GI",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Gibraltar",
+        "currency": "GIP",
+        "currencyName": "Gibraltar Pound",
+        "languages": [
+            "en",
+            "es",
+            "it",
+            "pt"
+        ]
+    },
+    {
+        "name": "Greece",
+        "alpha2": "GR",
+        "englishName": "the Hellenic Republic",
+        "frenchName": "la République hellénique",
+        "capital": "Athens",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "el",
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "Greenland",
+        "alpha2": "GL",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Nuuk",
+        "currency": "DKK",
+        "currencyName": "Danish Krone",
+        "languages": [
+            "kl",
+            "da",
+            "en"
+        ]
+    },
+    {
+        "name": "Grenada",
+        "alpha2": "GD",
+        "englishName": "Grenada",
+        "frenchName": "la Grenade",
+        "capital": "St. George's",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Guadeloupe",
+        "alpha2": "GP",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Basse-Terre",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Guam",
+        "alpha2": "GU",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Hagatna",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en",
+            "ch"
+        ]
+    },
+    {
+        "name": "Guatemala",
+        "alpha2": "GT",
+        "englishName": "the Republic of Guatemala",
+        "frenchName": "la République du Guatemala",
+        "capital": "Guatemala City",
+        "currency": "GTQ",
+        "currencyName": "Quetzal",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Guernsey",
+        "alpha2": "GG",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "St Peter Port",
+        "currency": "GBP",
+        "currencyName": "Pound Sterling",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Guinea",
+        "alpha2": "GN",
+        "englishName": "the Republic of Guinea",
+        "frenchName": "la République de Guinée",
+        "capital": "Conakry",
+        "currency": "GNF",
+        "currencyName": "Guinean Franc",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Guinea-Bissau",
+        "alpha2": "GW",
+        "englishName": "the Republic of Guinea-Bissau",
+        "frenchName": "la République de Guinée-Bissau",
+        "capital": "Bissau",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "pt"
+        ]
+    },
+    {
+        "name": "Guyana",
+        "alpha2": "GY",
+        "englishName": "the Republic of Guyana",
+        "frenchName": "la République du Guyana",
+        "capital": "Georgetown",
+        "currency": "GYD",
+        "currencyName": "Guyana Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Haiti",
+        "alpha2": "HT",
+        "englishName": "the Republic of Haiti",
+        "frenchName": "la République d'Haïti",
+        "capital": "Port-au-Prince",
+        "currency": "HTG,USD",
+        "currencyName": "Gourde,US Dollar",
+        "languages": [
+            "ht",
+            "fr"
+        ]
+    },
+    {
+        "name": "Holy See (Vatican City State)",
+        "alpha2": "VA",
+        "englishName": "the Holy See",
+        "frenchName": "le Saint-Siège",
+        "capital": "Vatican City",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "la",
+            "it",
+            "fr"
+        ]
+    },
+    {
+        "name": "Honduras",
+        "alpha2": "HN",
+        "englishName": "the Republic of Honduras",
+        "frenchName": "la République du Honduras",
+        "capital": "Tegucigalpa",
+        "currency": "HNL",
+        "currencyName": "Lempira",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Hong Kong",
+        "alpha2": "HK",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Hong Kong",
+        "currency": "HKD",
+        "currencyName": "Hong Kong Dollar",
+        "languages": [
+            "zh",
+            "zh",
+            "en"
+        ]
+    },
+    {
+        "name": "Hungary",
+        "alpha2": "HU",
+        "englishName": "Hungary",
+        "frenchName": "la Hongrie",
+        "capital": "Budapest",
+        "currency": "HUF",
+        "currencyName": "Forint",
+        "languages": [
+            "hu"
+        ]
+    },
+    {
+        "name": "Iceland",
+        "alpha2": "IS",
+        "englishName": "the Republic of Iceland",
+        "frenchName": "la République d'Islande",
+        "capital": "Reykjavik",
+        "currency": "ISK",
+        "currencyName": "Iceland Krona",
+        "languages": [
+            "is",
+            "en",
+            "de",
+            "da",
+            "sv",
+            "no"
+        ]
+    },
+    {
+        "name": "India",
+        "alpha2": "IN",
+        "englishName": "the Republic of India",
+        "frenchName": "la République de l'Inde",
+        "capital": "New Delhi",
+        "currency": "INR",
+        "currencyName": "Indian Rupee",
+        "languages": [
+            "en",
+            "hi",
+            "bn",
+            "te",
+            "mr",
+            "ta",
+            "ur",
+            "gu",
+            "kn",
+            "ml",
+            "or",
+            "pa",
+            "as",
+            "bh",
+            "ks",
+            "ne",
+            "sd",
+            "sa",
+            "fr"
+        ]
+    },
+    {
+        "name": "Indonesia",
+        "alpha2": "ID",
+        "englishName": "the Republic of Indonesia",
+        "frenchName": "la République d'Indonésie",
+        "capital": "Jakarta",
+        "currency": "IDR",
+        "currencyName": "Rupiah",
+        "languages": [
+            "id",
+            "en",
+            "nl",
+            "jv"
+        ]
+    },
+    {
+        "name": "Iran, Islamic Republic of",
+        "alpha2": "IR",
+        "englishName": "the Islamic Republic of Iran",
+        "frenchName": "la République islamique d'Iran",
+        "capital": "Tehran",
+        "currency": "IRR",
+        "currencyName": "Iranian Rial",
+        "languages": [
+            "fa",
+            "ku"
+        ]
+    },
+    {
+        "name": "Iraq",
+        "alpha2": "IQ",
+        "englishName": "the Republic of Iraq",
+        "frenchName": "la République d'Iraq",
+        "capital": "Baghdad",
+        "currency": "IQD",
+        "currencyName": "Iraqi Dinar",
+        "languages": [
+            "ar",
+            "ku",
+            "hy"
+        ]
+    },
+    {
+        "name": "Ireland",
+        "alpha2": "IE",
+        "englishName": "Ireland",
+        "frenchName": "l'Irlande",
+        "capital": "Dublin",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "en",
+            "ga"
+        ]
+    },
+    {
+        "name": "Isle of Man",
+        "alpha2": "IM",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Douglas",
+        "currency": "GBP",
+        "currencyName": "Pound Sterling",
+        "languages": [
+            "en",
+            "gv"
+        ]
+    },
+    {
+        "name": "Israel",
+        "alpha2": "IL",
+        "englishName": "the State of Israel",
+        "frenchName": "l'État d'Israël",
+        "capital": "Jerusalem",
+        "currency": "ILS",
+        "currencyName": "New Israeli Sheqel",
+        "languages": [
+            "he",
+            "ar",
+            "en"
+        ]
+    },
+    {
+        "name": "Italy",
+        "alpha2": "IT",
+        "englishName": "the Republic of Italy",
+        "frenchName": "la République italienne",
+        "capital": "Rome",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "it",
+            "de",
+            "fr",
+            "sc",
+            "ca",
+            "co",
+            "sl"
+        ]
+    },
+    {
+        "name": "Jamaica",
+        "alpha2": "JM",
+        "englishName": "Jamaica",
+        "frenchName": "la Jamaïque",
+        "capital": "Kingston",
+        "currency": "JMD",
+        "currencyName": "Jamaican Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Japan",
+        "alpha2": "JP",
+        "englishName": "Japan",
+        "frenchName": "le Japon",
+        "capital": "Tokyo",
+        "currency": "JPY",
+        "currencyName": "Yen",
+        "languages": [
+            "ja"
+        ]
+    },
+    {
+        "name": "Jersey",
+        "alpha2": "JE",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Saint Helier",
+        "currency": "GBP",
+        "currencyName": "Pound Sterling",
+        "languages": [
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "Jordan",
+        "alpha2": "JO",
+        "englishName": "the Hashemite Kingdom of Jordan",
+        "frenchName": "le Royaume hachémite de Jordanie",
+        "capital": "Amman",
+        "currency": "JOD",
+        "currencyName": "Jordanian Dinar",
+        "languages": [
+            "ar",
+            "en"
+        ]
+    },
+    {
+        "name": "Kazakhstan",
+        "alpha2": "KZ",
+        "englishName": "the Republic of Kazakhstan",
+        "frenchName": "la République du Kazakhstan",
+        "capital": "Astana",
+        "currency": "KZT",
+        "currencyName": "Tenge",
+        "languages": [
+            "kk",
+            "ru"
+        ]
+    },
+    {
+        "name": "Kenya",
+        "alpha2": "KE",
+        "englishName": "the Republic of Kenya",
+        "frenchName": "la République du Kenya",
+        "capital": "Nairobi",
+        "currency": "KES",
+        "currencyName": "Kenyan Shilling",
+        "languages": [
+            "en",
+            "sw"
+        ]
+    },
+    {
+        "name": "Kiribati",
+        "alpha2": "KI",
+        "englishName": "the Republic of Kiribati",
+        "frenchName": "la République de Kiribati",
+        "capital": "Tarawa",
+        "currency": "AUD",
+        "currencyName": "Australian Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Korea, Democratic People's Republic of",
+        "alpha2": "KP",
+        "englishName": "the Democratic People's Republic of Korea",
+        "frenchName": "la République populaire démocratique de Corée",
+        "capital": "Pyongyang",
+        "currency": "KPW",
+        "currencyName": "North Korean Won",
+        "languages": [
+            "ko"
+        ]
+    },
+    {
+        "name": "Korea, Republic of",
+        "alpha2": "KR",
+        "englishName": "the Republic of Korea",
+        "frenchName": "la République de Corée",
+        "capital": "Seoul",
+        "currency": "KRW",
+        "currencyName": "Won",
+        "languages": [
+            "ko",
+            "en"
+        ]
+    },
+    {
+        "name": "Kuwait",
+        "alpha2": "KW",
+        "englishName": "the State of Kuwait",
+        "frenchName": "l'État du Koweït",
+        "capital": "Kuwait City",
+        "currency": "KWD",
+        "currencyName": "Kuwaiti Dinar",
+        "languages": [
+            "ar",
+            "en"
+        ]
+    },
+    {
+        "name": "Kyrgyzstan",
+        "alpha2": "KG",
+        "englishName": "the Kyrgyz Republic",
+        "frenchName": "la République kirghize",
+        "capital": "Bishkek",
+        "currency": "KGS",
+        "currencyName": "Som",
+        "languages": [
+            "ky",
+            "uz",
+            "ru"
+        ]
+    },
+    {
+        "name": "Lao People's Democratic Republic",
+        "alpha2": "LA",
+        "englishName": "the Lao People's Democratic Republic",
+        "frenchName": "la République démocratique populaire lao",
+        "capital": "Vientiane",
+        "currency": "LAK",
+        "currencyName": "Lao Kip",
+        "languages": [
+            "lo",
+            "fr",
+            "en"
+        ]
+    },
+    {
+        "name": "Latvia",
+        "alpha2": "LV",
+        "englishName": "the Republic of Latvia",
+        "frenchName": "la République de Lettonie",
+        "capital": "Riga",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "lv",
+            "ru",
+            "lt"
+        ]
+    },
+    {
+        "name": "Lebanon",
+        "alpha2": "LB",
+        "englishName": "the Lebanese Republic",
+        "frenchName": "la République libanaise",
+        "capital": "Beirut",
+        "currency": "LBP",
+        "currencyName": "Lebanese Pound",
+        "languages": [
+            "ar",
+            "fr",
+            "en",
+            "hy"
+        ]
+    },
+    {
+        "name": "Lesotho",
+        "alpha2": "LS",
+        "englishName": "the Kingdom of Lesotho",
+        "frenchName": "le Royaume du Lesotho",
+        "capital": "Maseru",
+        "currency": "LSL,ZAR",
+        "currencyName": "Loti,Rand",
+        "languages": [
+            "en",
+            "st",
+            "zu",
+            "xh"
+        ]
+    },
+    {
+        "name": "Liberia",
+        "alpha2": "LR",
+        "englishName": "the Republic of Liberia",
+        "frenchName": "la République du Libéria",
+        "capital": "Monrovia",
+        "currency": "LRD",
+        "currencyName": "Liberian Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Libya",
+        "alpha2": "LY",
+        "englishName": "Libya",
+        "frenchName": "la Libye",
+        "capital": "Tripoli",
+        "currency": "LYD",
+        "currencyName": "Libyan Dinar",
+        "languages": [
+            "ar",
+            "it",
+            "en"
+        ]
+    },
+    {
+        "name": "Liechtenstein",
+        "alpha2": "LI",
+        "englishName": "the Principality of Liechtenstein",
+        "frenchName": "la Principauté du Liechtenstein",
+        "capital": "Vaduz",
+        "currency": "CHF",
+        "currencyName": "Swiss Franc",
+        "languages": [
+            "de"
+        ]
+    },
+    {
+        "name": "Lithuania",
+        "alpha2": "LT",
+        "englishName": "the Republic of Lithuania",
+        "frenchName": "la République de Lituanie",
+        "capital": "Vilnius",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "lt",
+            "ru",
+            "pl"
+        ]
+    },
+    {
+        "name": "Luxembourg",
+        "alpha2": "LU",
+        "englishName": "the Grand Duchy of Luxembourg",
+        "frenchName": "le Grand-Duché de Luxembourg",
+        "capital": "Luxembourg",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "lb",
+            "de",
+            "fr"
+        ]
+    },
+    {
+        "name": "Macao",
+        "alpha2": "MO",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Macao",
+        "currency": "MOP",
+        "currencyName": "Pataca",
+        "languages": [
+            "zh",
+            "zh",
+            "pt"
+        ]
+    },
+    {
+        "name": "Macedonia, the Former Yugoslav Republic of",
+        "alpha2": "MK",
+        "englishName": "the former Yugoslav Republic of Macedonia",
+        "frenchName": "l'ex-République yougoslave de Macédoine [fém.]",
+        "capital": "Skopje",
+        "currency": "MKD",
+        "currencyName": "Denar",
+        "languages": [
+            "mk",
+            "sq",
+            "tr",
+            "sr"
+        ]
+    },
+    {
+        "name": "Madagascar",
+        "alpha2": "MG",
+        "englishName": "the Republic of Madagascar",
+        "frenchName": "la République de Madagascar",
+        "capital": "Antananarivo",
+        "currency": "MGA",
+        "currencyName": "Malagasy Ariary",
+        "languages": [
+            "fr",
+            "mg"
+        ]
+    },
+    {
+        "name": "Malawi",
+        "alpha2": "MW",
+        "englishName": "the Republic of Malawi",
+        "frenchName": "la République du Malawi",
+        "capital": "Lilongwe",
+        "currency": "MWK",
+        "currencyName": "Malawi Kwacha",
+        "languages": [
+            "ny"
+        ]
+    },
+    {
+        "name": "Malaysia",
+        "alpha2": "MY",
+        "englishName": "Malaysia",
+        "frenchName": "la Malaisie",
+        "capital": "Kuala Lumpur",
+        "currency": "MYR",
+        "currencyName": "Malaysian Ringgit",
+        "languages": [
+            "ms",
+            "en",
+            "zh",
+            "ta",
+            "te",
+            "ml",
+            "pa",
+            "th"
+        ]
+    },
+    {
+        "name": "Maldives",
+        "alpha2": "MV",
+        "englishName": "the Republic of Maldives",
+        "frenchName": "la République des Maldives",
+        "capital": "Male",
+        "currency": "MVR",
+        "currencyName": "Rufiyaa",
+        "languages": [
+            "dv",
+            "en"
+        ]
+    },
+    {
+        "name": "Mali",
+        "alpha2": "ML",
+        "englishName": "the Republic of Mali",
+        "frenchName": "la République du Mali",
+        "capital": "Bamako",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "fr",
+            "bm"
+        ]
+    },
+    {
+        "name": "Malta",
+        "alpha2": "MT",
+        "englishName": "the Republic of Malta",
+        "frenchName": "la République de Malte",
+        "capital": "Valletta",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "mt",
+            "en"
+        ]
+    },
+    {
+        "name": "Marshall Islands",
+        "alpha2": "MH",
+        "englishName": "the Republic of the Marshall Islands",
+        "frenchName": "la République des Îles Marshall",
+        "capital": "Majuro",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "mh",
+            "en"
+        ]
+    },
+    {
+        "name": "Martinique",
+        "alpha2": "MQ",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Fort-de-France",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Mauritania",
+        "alpha2": "MR",
+        "englishName": "the Islamic Republic of Mauritania",
+        "frenchName": "la République islamique de Mauritanie",
+        "capital": "Nouakchott",
+        "currency": "MRU",
+        "currencyName": "Ouguiya",
+        "languages": [
+            "ar",
+            "fr",
+            "wo"
+        ]
+    },
+    {
+        "name": "Mauritius",
+        "alpha2": "MU",
+        "englishName": "the Republic of Mauritius",
+        "frenchName": "la République de Maurice",
+        "capital": "Port Louis",
+        "currency": "MUR",
+        "currencyName": "Mauritius Rupee",
+        "languages": [
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "Mayotte",
+        "alpha2": "YT",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Mamoudzou",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Mexico",
+        "alpha2": "MX",
+        "englishName": "the United Mexican States",
+        "frenchName": "les États-Unis du Mexique",
+        "capital": "Mexico City",
+        "currency": "MXN",
+        "currencyName": "Mexican Peso",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Micronesia, Federated States of",
+        "alpha2": "FM",
+        "englishName": "the Federated States of Micronesia",
+        "frenchName": "les États fédérés de Micronésie",
+        "capital": "Palikir",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Moldova, Republic of",
+        "alpha2": "MD",
+        "englishName": "the Republic of Moldova",
+        "frenchName": "la République de Moldova",
+        "capital": "Chisinau",
+        "currency": "MDL",
+        "currencyName": "Moldovan Leu",
+        "languages": [
+            "ro",
+            "ru",
+            "tr"
+        ]
+    },
+    {
+        "name": "Monaco",
+        "alpha2": "MC",
+        "englishName": "the Principality of Monaco",
+        "frenchName": "la Principauté de Monaco",
+        "capital": "Monaco",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr",
+            "en",
+            "it"
+        ]
+    },
+    {
+        "name": "Mongolia",
+        "alpha2": "MN",
+        "englishName": "Mongolia",
+        "frenchName": "la Mongolie",
+        "capital": "Ulan Bator",
+        "currency": "MNT",
+        "currencyName": "Tugrik",
+        "languages": [
+            "mn",
+            "ru"
+        ]
+    },
+    {
+        "name": "Montenegro",
+        "alpha2": "ME",
+        "englishName": "Montenegro",
+        "frenchName": "le Monténégro",
+        "capital": "Podgorica",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "sr",
+            "hu",
+            "bs",
+            "sq",
+            "hr"
+        ]
+    },
+    {
+        "name": "Montserrat",
+        "alpha2": "MS",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Plymouth",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Morocco",
+        "alpha2": "MA",
+        "englishName": "the Kingdom of Morocco",
+        "frenchName": "le Royaume du Maroc",
+        "capital": "Rabat",
+        "currency": "MAD",
+        "currencyName": "Moroccan Dirham",
+        "languages": [
+            "ar",
+            "fr"
+        ]
+    },
+    {
+        "name": "Mozambique",
+        "alpha2": "MZ",
+        "englishName": "the Republic of Mozambique",
+        "frenchName": "la République du Mozambique",
+        "capital": "Maputo",
+        "currency": "MZN",
+        "currencyName": "Mozambique Metical",
+        "languages": [
+            "pt"
+        ]
+    },
+    {
+        "name": "Myanmar",
+        "alpha2": "MM",
+        "englishName": "the Republic of the Union of Myanmar",
+        "frenchName": "la République de l'Union du Myanmar",
+        "capital": "Nay Pyi Taw",
+        "currency": "MMK",
+        "currencyName": "Kyat",
+        "languages": [
+            "my"
+        ]
+    },
+    {
+        "name": "Namibia",
+        "alpha2": "NA",
+        "englishName": "the Republic of Namibia",
+        "frenchName": "la République de Namibie",
+        "capital": "Windhoek",
+        "currency": "NAD,ZAR",
+        "currencyName": "Namibia Dollar,Rand",
+        "languages": [
+            "en",
+            "af",
+            "de",
+            "hz"
+        ]
+    },
+    {
+        "name": "Nauru",
+        "alpha2": "NR",
+        "englishName": "the Republic of Nauru",
+        "frenchName": "la République de Nauru",
+        "capital": "Yaren",
+        "currency": "AUD",
+        "currencyName": "Australian Dollar",
+        "languages": [
+            "na",
+            "en"
+        ]
+    },
+    {
+        "name": "Nepal",
+        "alpha2": "NP",
+        "englishName": "the Federal Democratic Republic of Nepal",
+        "frenchName": "la République fédérale démocratique du Népal",
+        "capital": "Kathmandu",
+        "currency": "NPR",
+        "currencyName": "Nepalese Rupee",
+        "languages": [
+            "ne",
+            "en"
+        ]
+    },
+    {
+        "name": "Netherlands",
+        "alpha2": "NL",
+        "englishName": "the Kingdom of the Netherlands",
+        "frenchName": "le Royaume des Pays-Bas",
+        "capital": "Amsterdam",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "nl",
+            "fy"
+        ]
+    },
+    {
+        "name": "New Caledonia",
+        "alpha2": "NC",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Noumea",
+        "currency": "XPF",
+        "currencyName": "CFP Franc",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "New Zealand",
+        "alpha2": "NZ",
+        "englishName": "New Zealand",
+        "frenchName": "la Nouvelle-Zélande",
+        "capital": "Wellington",
+        "currency": "NZD",
+        "currencyName": "New Zealand Dollar",
+        "languages": [
+            "en",
+            "mi"
+        ]
+    },
+    {
+        "name": "Nicaragua",
+        "alpha2": "NI",
+        "englishName": "the Republic of Nicaragua",
+        "frenchName": "la République du Nicaragua",
+        "capital": "Managua",
+        "currency": "NIO",
+        "currencyName": "Cordoba Oro",
+        "languages": [
+            "es",
+            "en"
+        ]
+    },
+    {
+        "name": "Niger",
+        "alpha2": "NE",
+        "englishName": "the Republic of the Niger",
+        "frenchName": "la République du Niger",
+        "capital": "Niamey",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "fr",
+            "ha",
+            "kr"
+        ]
+    },
+    {
+        "name": "Nigeria",
+        "alpha2": "NG",
+        "englishName": "the Federal Republic of Nigeria",
+        "frenchName": "la République fédérale du Nigéria",
+        "capital": "Abuja",
+        "currency": "NGN",
+        "currencyName": "Naira",
+        "languages": [
+            "en",
+            "ha",
+            "yo",
+            "ig",
+            "ff"
+        ]
+    },
+    {
+        "name": "Niue",
+        "alpha2": "NU",
+        "englishName": "Niue",
+        "frenchName": "Nioué",
+        "capital": "Alofi",
+        "currency": "NZD",
+        "currencyName": "New Zealand Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Norfolk Island",
+        "alpha2": "NF",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Kingston",
+        "currency": "AUD",
+        "currencyName": "Australian Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Northern Mariana Islands",
+        "alpha2": "MP",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Saipan",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "tl",
+            "zh",
+            "ch",
+            "en"
+        ]
+    },
+    {
+        "name": "Norway",
+        "alpha2": "NO",
+        "englishName": "the Kingdom of Norway",
+        "frenchName": "le Royaume de Norvège",
+        "capital": "Oslo",
+        "currency": "NOK",
+        "currencyName": "Norwegian Krone",
+        "languages": [
+            "no",
+            "nb",
+            "nn",
+            "se",
+            "fi"
+        ]
+    },
+    {
+        "name": "Oman",
+        "alpha2": "OM",
+        "englishName": "the Sultanate of Oman",
+        "frenchName": "le Sultanat d'Oman",
+        "capital": "Muscat",
+        "currency": "OMR",
+        "currencyName": "Rial Omani",
+        "languages": [
+            "ar",
+            "en",
+            "ur"
+        ]
+    },
+    {
+        "name": "Pakistan",
+        "alpha2": "PK",
+        "englishName": "the Islamic Republic of Pakistan",
+        "frenchName": "la République islamique du Pakistan",
+        "capital": "Islamabad",
+        "currency": "PKR",
+        "currencyName": "Pakistan Rupee",
+        "languages": [
+            "ur",
+            "en",
+            "pa",
+            "sd",
+            "ps"
+        ]
+    },
+    {
+        "name": "Palau",
+        "alpha2": "PW",
+        "englishName": "the Republic of Palau",
+        "frenchName": "la République des Palaos",
+        "capital": "Melekeok",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en",
+            "ja",
+            "zh"
+        ]
+    },
+    {
+        "name": "Palestine, State of",
+        "alpha2": "PS",
+        "englishName": "State of Palestine",
+        "frenchName": "État de Palestine",
+        "capital": "East Jerusalem",
+        "currency": null,
+        "currencyName": "No universal currency",
+        "languages": [
+            "ar"
+        ]
+    },
+    {
+        "name": "Panama",
+        "alpha2": "PA",
+        "englishName": "the Republic of Panama",
+        "frenchName": "la République du Panama",
+        "capital": "Panama City",
+        "currency": "PAB,USD",
+        "currencyName": "Balboa,US Dollar",
+        "languages": [
+            "es",
+            "en"
+        ]
+    },
+    {
+        "name": "Papua New Guinea",
+        "alpha2": "PG",
+        "englishName": "Independent State of Papua New Guinea",
+        "frenchName": "l'État indépendant de Papouasie-Nouvelle-Guinée",
+        "capital": "Port Moresby",
+        "currency": "PGK",
+        "currencyName": "Kina",
+        "languages": [
+            "en",
+            "ho"
+        ]
+    },
+    {
+        "name": "Paraguay",
+        "alpha2": "PY",
+        "englishName": "the Republic of Paraguay",
+        "frenchName": "la République du Paraguay",
+        "capital": "Asuncion",
+        "currency": "PYG",
+        "currencyName": "Guarani",
+        "languages": [
+            "es",
+            "gn"
+        ]
+    },
+    {
+        "name": "Peru",
+        "alpha2": "PE",
+        "englishName": "the Republic of Peru",
+        "frenchName": "la République du Pérou",
+        "capital": "Lima",
+        "currency": "PEN",
+        "currencyName": "Sol",
+        "languages": [
+            "es",
+            "qu",
+            "ay"
+        ]
+    },
+    {
+        "name": "Philippines",
+        "alpha2": "PH",
+        "englishName": "the Republic of the Philippines",
+        "frenchName": "la République des Philippines",
+        "capital": "Manila",
+        "currency": "PHP",
+        "currencyName": "Philippine Peso",
+        "languages": [
+            "tl",
+            "en"
+        ]
+    },
+    {
+        "name": "Pitcairn",
+        "alpha2": "PN",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Adamstown",
+        "currency": "NZD",
+        "currencyName": "New Zealand Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Poland",
+        "alpha2": "PL",
+        "englishName": "the Republic of Poland",
+        "frenchName": "la République de Pologne",
+        "capital": "Warsaw",
+        "currency": "PLN",
+        "currencyName": "Zloty",
+        "languages": [
+            "pl"
+        ]
+    },
+    {
+        "name": "Portugal",
+        "alpha2": "PT",
+        "englishName": "the Portuguese Republic",
+        "frenchName": "la République portugaise",
+        "capital": "Lisbon",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "pt"
+        ]
+    },
+    {
+        "name": "Puerto Rico",
+        "alpha2": "PR",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "San Juan",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en",
+            "es"
+        ]
+    },
+    {
+        "name": "Qatar",
+        "alpha2": "QA",
+        "englishName": "the State of Qatar",
+        "frenchName": "l'État du Qatar",
+        "capital": "Doha",
+        "currency": "QAR",
+        "currencyName": "Qatari Rial",
+        "languages": [
+            "ar",
+            "es"
+        ]
+    },
+    {
+        "name": "Romania",
+        "alpha2": "RO",
+        "englishName": "Romania",
+        "frenchName": "la Roumanie",
+        "capital": "Bucharest",
+        "currency": "RON",
+        "currencyName": "Romanian Leu",
+        "languages": [
+            "ro",
+            "hu"
+        ]
+    },
+    {
+        "name": "Russian Federation",
+        "alpha2": "RU",
+        "englishName": "the Russian Federation",
+        "frenchName": "la Fédération de Russie",
+        "capital": "Moscow",
+        "currency": "RUB",
+        "currencyName": "Russian Ruble",
+        "languages": [
+            "ru",
+            "tt",
+            "kv",
+            "ce",
+            "cv",
+            "ba",
+            "av"
+        ]
+    },
+    {
+        "name": "Rwanda",
+        "alpha2": "RW",
+        "englishName": "the Republic of Rwanda",
+        "frenchName": "la République du Rwanda",
+        "capital": "Kigali",
+        "currency": "RWF",
+        "currencyName": "Rwanda Franc",
+        "languages": [
+            "rw",
+            "en",
+            "fr",
+            "sw"
+        ]
+    },
+    {
+        "name": "Réunion",
+        "alpha2": "RE",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Saint-Denis",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Saint Barthélemy",
+        "alpha2": "BL",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Gustavia",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Saint Helena, Ascension and Tristan da Cunha",
+        "alpha2": "SH",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Jamestown",
+        "currency": "SHP",
+        "currencyName": "Saint Helena Pound",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Saint Kitts and Nevis",
+        "alpha2": "KN",
+        "englishName": "Saint Kitts and Nevis",
+        "frenchName": "Saint-Kitts-et-Nevis [masc.]",
+        "capital": "Basseterre",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Saint Lucia",
+        "alpha2": "LC",
+        "englishName": "Saint Lucia",
+        "frenchName": "Sainte-Lucie [fém.]",
+        "capital": "Castries",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Saint Martin (French part)",
+        "alpha2": "MF",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Marigot",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Saint Pierre and Miquelon",
+        "alpha2": "PM",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Saint-Pierre",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Saint Vincent and the Grenadines",
+        "alpha2": "VC",
+        "englishName": "Saint Vincent and the Grenadines",
+        "frenchName": "Saint-Vincent-et-les Grenadines [fém.]",
+        "capital": "Kingstown",
+        "currency": "XCD",
+        "currencyName": "East Caribbean Dollar",
+        "languages": [
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "Samoa",
+        "alpha2": "WS",
+        "englishName": "the Independent State of Samoa",
+        "frenchName": "l'État indépendant du Samoa",
+        "capital": "Apia",
+        "currency": "WST",
+        "currencyName": "Tala",
+        "languages": [
+            "sm",
+            "en"
+        ]
+    },
+    {
+        "name": "San Marino",
+        "alpha2": "SM",
+        "englishName": "the Republic of San Marino",
+        "frenchName": "la République de Saint-Marin",
+        "capital": "San Marino",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "it"
+        ]
+    },
+    {
+        "name": "Sao Tome and Principe",
+        "alpha2": "ST",
+        "englishName": "the Democratic Republic of Sao Tome and Principe",
+        "frenchName": "la République démocratique de Sao Tomé-et-Principe",
+        "capital": "Sao Tome",
+        "currency": "STN",
+        "currencyName": "Dobra",
+        "languages": [
+            "pt"
+        ]
+    },
+    {
+        "name": "Saudi Arabia",
+        "alpha2": "SA",
+        "englishName": "the Kingdom of Saudi Arabia",
+        "frenchName": "le Royaume d'Arabie saoudite",
+        "capital": "Riyadh",
+        "currency": "SAR",
+        "currencyName": "Saudi Riyal",
+        "languages": [
+            "ar"
+        ]
+    },
+    {
+        "name": "Senegal",
+        "alpha2": "SN",
+        "englishName": "the Republic of Senegal",
+        "frenchName": "la République du Sénégal",
+        "capital": "Dakar",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "fr",
+            "wo"
+        ]
+    },
+    {
+        "name": "Serbia",
+        "alpha2": "RS",
+        "englishName": "the Republic of Serbia",
+        "frenchName": "la République de Serbie",
+        "capital": "Belgrade",
+        "currency": "RSD",
+        "currencyName": "Serbian Dinar",
+        "languages": [
+            "sr",
+            "hu",
+            "bs"
+        ]
+    },
+    {
+        "name": "Seychelles",
+        "alpha2": "SC",
+        "englishName": "the Republic of Seychelles",
+        "frenchName": "la République des Seychelles",
+        "capital": "Victoria",
+        "currency": "SCR",
+        "currencyName": "Seychelles Rupee",
+        "languages": [
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "Sierra Leone",
+        "alpha2": "SL",
+        "englishName": "the Republic of Sierra Leone",
+        "frenchName": "la République de Sierra Leone",
+        "capital": "Freetown",
+        "currency": "SLL",
+        "currencyName": "Leone",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Singapore",
+        "alpha2": "SG",
+        "englishName": "the Republic of Singapore",
+        "frenchName": "la République de Singapour",
+        "capital": "Singapore",
+        "currency": "SGD",
+        "currencyName": "Singapore Dollar",
+        "languages": [
+            "en",
+            "ms",
+            "ta",
+            "zh"
+        ]
+    },
+    {
+        "name": "Sint Maarten (Dutch part)",
+        "alpha2": "SX",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Philipsburg",
+        "currency": "ANG",
+        "currencyName": "Netherlands Antillean Guilder",
+        "languages": [
+            "nl",
+            "en"
+        ]
+    },
+    {
+        "name": "Slovakia",
+        "alpha2": "SK",
+        "englishName": "the Slovak Republic",
+        "frenchName": "la République slovaque",
+        "capital": "Bratislava",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "sk",
+            "hu"
+        ]
+    },
+    {
+        "name": "Slovenia",
+        "alpha2": "SI",
+        "englishName": "the Republic of Slovenia",
+        "frenchName": "la République de Slovénie",
+        "capital": "Ljubljana",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "sl",
+            "sh"
+        ]
+    },
+    {
+        "name": "Solomon Islands",
+        "alpha2": "SB",
+        "englishName": "Solomon Islands",
+        "frenchName": "les Îles Salomon",
+        "capital": "Honiara",
+        "currency": "SBD",
+        "currencyName": "Solomon Islands Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Somalia",
+        "alpha2": "SO",
+        "englishName": "the Federal Republic of Somalia",
+        "frenchName": "la République fédérale de Somalie",
+        "capital": "Mogadishu",
+        "currency": "SOS",
+        "currencyName": "Somali Shilling",
+        "languages": [
+            "so",
+            "ar",
+            "it",
+            "en"
+        ]
+    },
+    {
+        "name": "South Africa",
+        "alpha2": "ZA",
+        "englishName": "the Republic of South Africa",
+        "frenchName": "la République sud-africaine",
+        "capital": "Pretoria",
+        "currency": "ZAR",
+        "currencyName": "Rand",
+        "languages": [
+            "zu",
+            "xh",
+            "af",
+            "en",
+            "tn",
+            "st",
+            "ts",
+            "ss",
+            "ve",
+            "nr"
+        ]
+    },
+    {
+        "name": "South Georgia and the South Sandwich Islands",
+        "alpha2": "GS",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Grytviken",
+        "currency": null,
+        "currencyName": "No universal currency",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "South Sudan",
+        "alpha2": "SS",
+        "englishName": "the Republic of South Sudan",
+        "frenchName": "la République du Soudan du Sud",
+        "capital": "Juba",
+        "currency": "SSP",
+        "currencyName": "South Sudanese Pound",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Spain",
+        "alpha2": "ES",
+        "englishName": "the Kingdom of Spain",
+        "frenchName": "le Royaume d'Espagne",
+        "capital": "Madrid",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "es",
+            "ca",
+            "gl",
+            "eu",
+            "oc"
+        ]
+    },
+    {
+        "name": "Sri Lanka",
+        "alpha2": "LK",
+        "englishName": "the Democratic Socialist Republic of Sri Lanka",
+        "frenchName": "la République socialiste démocratique de Sri Lanka",
+        "capital": "Colombo",
+        "currency": "LKR",
+        "currencyName": "Sri Lanka Rupee",
+        "languages": [
+            "si",
+            "ta",
+            "en"
+        ]
+    },
+    {
+        "name": "Sudan",
+        "alpha2": "SD",
+        "englishName": "the Republic of the Sudan",
+        "frenchName": "la République du Soudan",
+        "capital": "Khartoum",
+        "currency": "SDG",
+        "currencyName": "Sudanese Pound",
+        "languages": [
+            "ar",
+            "en"
+        ]
+    },
+    {
+        "name": "Suriname",
+        "alpha2": "SR",
+        "englishName": "the Republic of Suriname",
+        "frenchName": "la République du Suriname",
+        "capital": "Paramaribo",
+        "currency": "SRD",
+        "currencyName": "Surinam Dollar",
+        "languages": [
+            "nl",
+            "en",
+            "jv"
+        ]
+    },
+    {
+        "name": "Svalbard and Jan Mayen",
+        "alpha2": "SJ",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Longyearbyen",
+        "currency": "NOK",
+        "currencyName": "Norwegian Krone",
+        "languages": [
+            "no",
+            "ru"
+        ]
+    },
+    {
+        "name": "Swaziland",
+        "alpha2": "SZ",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Mbabane",
+        "currency": "SZL",
+        "currencyName": "Lilangeni",
+        "languages": [
+            "en",
+            "ss"
+        ]
+    },
+    {
+        "name": "Sweden",
+        "alpha2": "SE",
+        "englishName": "the Kingdom of Sweden",
+        "frenchName": "le Royaume de Suède",
+        "capital": "Stockholm",
+        "currency": "SEK",
+        "currencyName": "Swedish Krona",
+        "languages": [
+            "sv",
+            "se",
+            "fi"
+        ]
+    },
+    {
+        "name": "Switzerland",
+        "alpha2": "CH",
+        "englishName": "the Swiss Confederation",
+        "frenchName": "la Confédération suisse",
+        "capital": "Bern",
+        "currency": "CHF",
+        "currencyName": "Swiss Franc",
+        "languages": [
+            "de",
+            "fr",
+            "it",
+            "rm"
+        ]
+    },
+    {
+        "name": "Syrian Arab Republic",
+        "alpha2": "SY",
+        "englishName": "the Syrian Arab Republic",
+        "frenchName": "la République arabe syrienne",
+        "capital": "Damascus",
+        "currency": "SYP",
+        "currencyName": "Syrian Pound",
+        "languages": [
+            "ar",
+            "ku",
+            "hy",
+            "fr",
+            "en"
+        ]
+    },
+    {
+        "name": "Taiwan, Province of China",
+        "alpha2": "TW",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Taipei",
+        "currency": null,
+        "currencyName": null,
+        "languages": [
+            "zh",
+            "zh"
+        ]
+    },
+    {
+        "name": "Tajikistan",
+        "alpha2": "TJ",
+        "englishName": "the Republic of Tajikistan",
+        "frenchName": "la République du Tadjikistan",
+        "capital": "Dushanbe",
+        "currency": "TJS",
+        "currencyName": "Somoni",
+        "languages": [
+            "tg",
+            "ru"
+        ]
+    },
+    {
+        "name": "Tanzania, United Republic of",
+        "alpha2": "TZ",
+        "englishName": "the United Republic of Tanzania",
+        "frenchName": "la République-Unie de Tanzanie",
+        "capital": "Dodoma",
+        "currency": "TZS",
+        "currencyName": "Tanzanian Shilling",
+        "languages": [
+            "sw",
+            "en",
+            "ar"
+        ]
+    },
+    {
+        "name": "Thailand",
+        "alpha2": "TH",
+        "englishName": "the Kingdom of Thailand",
+        "frenchName": "le Royaume de Thaïlande",
+        "capital": "Bangkok",
+        "currency": "THB",
+        "currencyName": "Baht",
+        "languages": [
+            "th",
+            "en"
+        ]
+    },
+    {
+        "name": "Timor-Leste",
+        "alpha2": "TL",
+        "englishName": "the Democratic Republic of Timor-Leste",
+        "frenchName": "la République démocratique du Timor-Leste",
+        "capital": "Dili",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "pt",
+            "id",
+            "en"
+        ]
+    },
+    {
+        "name": "Togo",
+        "alpha2": "TG",
+        "englishName": "the Togolese Republic",
+        "frenchName": "la République togolaise",
+        "capital": "Lome",
+        "currency": "XOF",
+        "currencyName": "CFA Franc BCEAO",
+        "languages": [
+            "fr",
+            "ee",
+            "ha"
+        ]
+    },
+    {
+        "name": "Tokelau",
+        "alpha2": "TK",
+        "englishName": null,
+        "frenchName": null,
+        "capital": null,
+        "currency": "NZD",
+        "currencyName": "New Zealand Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Tonga",
+        "alpha2": "TO",
+        "englishName": "the Kingdom of Tonga",
+        "frenchName": "le Royaume des Tonga",
+        "capital": "Nuku'alofa",
+        "currency": "TOP",
+        "currencyName": "Pa’anga",
+        "languages": [
+            "to",
+            "en"
+        ]
+    },
+    {
+        "name": "Trinidad and Tobago",
+        "alpha2": "TT",
+        "englishName": "the Republic of Trinidad and Tobago",
+        "frenchName": "la République de Trinité-et-Tobago",
+        "capital": "Port of Spain",
+        "currency": "TTD",
+        "currencyName": "Trinidad and Tobago Dollar",
+        "languages": [
+            "en",
+            "fr",
+            "es",
+            "zh"
+        ]
+    },
+    {
+        "name": "Tunisia",
+        "alpha2": "TN",
+        "englishName": "the Republic of Tunisia",
+        "frenchName": "la République tunisienne",
+        "capital": "Tunis",
+        "currency": "TND",
+        "currencyName": "Tunisian Dinar",
+        "languages": [
+            "ar",
+            "fr"
+        ]
+    },
+    {
+        "name": "Turkey",
+        "alpha2": "TR",
+        "englishName": "the Republic of Turkey",
+        "frenchName": "la République turque",
+        "capital": "Ankara",
+        "currency": "TRY",
+        "currencyName": "Turkish Lira",
+        "languages": [
+            "tr",
+            "ku",
+            "az",
+            "av"
+        ]
+    },
+    {
+        "name": "Turkmenistan",
+        "alpha2": "TM",
+        "englishName": "Turkmenistan",
+        "frenchName": "le Turkménistan",
+        "capital": "Ashgabat",
+        "currency": "TMT",
+        "currencyName": "Turkmenistan New Manat",
+        "languages": [
+            "tk",
+            "ru",
+            "uz"
+        ]
+    },
+    {
+        "name": "Turks and Caicos Islands",
+        "alpha2": "TC",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Cockburn Town",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Tuvalu",
+        "alpha2": "TV",
+        "englishName": "Tuvalu",
+        "frenchName": "Tuvalu (les) [masc.]",
+        "capital": "Funafuti",
+        "currency": "AUD",
+        "currencyName": "Australian Dollar",
+        "languages": [
+            "en",
+            "sm"
+        ]
+    },
+    {
+        "name": "Uganda",
+        "alpha2": "UG",
+        "englishName": "the Republic of Uganda",
+        "frenchName": "la République de l'Ouganda",
+        "capital": "Kampala",
+        "currency": "UGX",
+        "currencyName": "Uganda Shilling",
+        "languages": [
+            "en",
+            "lg",
+            "sw",
+            "ar"
+        ]
+    },
+    {
+        "name": "Ukraine",
+        "alpha2": "UA",
+        "englishName": "Ukraine",
+        "frenchName": "l'Ukraine",
+        "capital": "Kyiv",
+        "currency": "UAH",
+        "currencyName": "Hryvnia",
+        "languages": [
+            "uk",
+            "ru",
+            "pl",
+            "hu"
+        ]
+    },
+    {
+        "name": "United Arab Emirates",
+        "alpha2": "AE",
+        "englishName": "the United Arab Emirates",
+        "frenchName": "les Émirats arabes unis",
+        "capital": "Abu Dhabi",
+        "currency": "AED",
+        "currencyName": "UAE Dirham",
+        "languages": [
+            "ar",
+            "fa",
+            "en",
+            "hi",
+            "ur"
+        ]
+    },
+    {
+        "name": "United Kingdom",
+        "alpha2": "GB",
+        "englishName": "the United Kingdom of Great Britain and Northern Ireland",
+        "frenchName": "le Royaume-Uni de Grande- Bretagne et d'Irlande du Nord",
+        "capital": "London",
+        "currency": "GBP",
+        "currencyName": "Pound Sterling",
+        "languages": [
+            "en",
+            "cy",
+            "gd"
+        ]
+    },
+    {
+        "name": "United States",
+        "alpha2": "US",
+        "englishName": "the United States of America",
+        "frenchName": "les États-Unis d'Amérique",
+        "capital": "Washington",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en",
+            "es",
+            "fr"
+        ]
+    },
+    {
+        "name": "United States Minor Outlying Islands",
+        "alpha2": "UM",
+        "englishName": null,
+        "frenchName": null,
+        "capital": null,
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Uruguay",
+        "alpha2": "UY",
+        "englishName": "the Eastern Republic of Uruguay",
+        "frenchName": "la République orientale de l'Uruguay",
+        "capital": "Montevideo",
+        "currency": "UYU",
+        "currencyName": "Peso Uruguayo",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Uzbekistan",
+        "alpha2": "UZ",
+        "englishName": "the Republic of Uzbekistan",
+        "frenchName": "la République d'Ouzbékistan",
+        "capital": "Tashkent",
+        "currency": "UZS",
+        "currencyName": "Uzbekistan Sum",
+        "languages": [
+            "uz",
+            "ru",
+            "tg"
+        ]
+    },
+    {
+        "name": "Vanuatu",
+        "alpha2": "VU",
+        "englishName": "the Republic of Vanuatu",
+        "frenchName": "la République de Vanuatu",
+        "capital": "Port Vila",
+        "currency": "VUV",
+        "currencyName": "Vatu",
+        "languages": [
+            "bi",
+            "en",
+            "fr"
+        ]
+    },
+    {
+        "name": "Venezuela, Bolivarian Republic of",
+        "alpha2": "VE",
+        "englishName": "the Bolivarian Republic of Venezuela",
+        "frenchName": "la République bolivarienne du Venezuela",
+        "capital": "Caracas",
+        "currency": "VES",
+        "currencyName": "Bolívar",
+        "languages": [
+            "es"
+        ]
+    },
+    {
+        "name": "Viet Nam",
+        "alpha2": "VN",
+        "englishName": "the Socialist Republic of Viet Nam",
+        "frenchName": "la République socialiste du Viet Nam",
+        "capital": "Hanoi",
+        "currency": "VND",
+        "currencyName": "Dong",
+        "languages": [
+            "vi",
+            "en",
+            "fr",
+            "zh",
+            "km"
+        ]
+    },
+    {
+        "name": "Virgin Islands, British",
+        "alpha2": "VG",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Road Town",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Virgin Islands, U.S.",
+        "alpha2": "VI",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Charlotte Amalie",
+        "currency": "USD",
+        "currencyName": "US Dollar",
+        "languages": [
+            "en"
+        ]
+    },
+    {
+        "name": "Wallis and Futuna",
+        "alpha2": "WF",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Mata Utu",
+        "currency": "XPF",
+        "currencyName": "CFP Franc",
+        "languages": [
+            "fr"
+        ]
+    },
+    {
+        "name": "Western Sahara",
+        "alpha2": "EH",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "El-Aaiun",
+        "currency": "MAD",
+        "currencyName": "Moroccan Dirham",
+        "languages": [
+            "ar"
+        ]
+    },
+    {
+        "name": "Yemen",
+        "alpha2": "YE",
+        "englishName": "the Republic of Yemen",
+        "frenchName": "la République du Yémen",
+        "capital": "Sanaa",
+        "currency": "YER",
+        "currencyName": "Yemeni Rial",
+        "languages": [
+            "ar"
+        ]
+    },
+    {
+        "name": "Zambia",
+        "alpha2": "ZM",
+        "englishName": "the Republic of Zambia",
+        "frenchName": "la République de Zambie",
+        "capital": "Lusaka",
+        "currency": "ZMW",
+        "currencyName": "Zambian Kwacha",
+        "languages": [
+            "en",
+            "ny"
+        ]
+    },
+    {
+        "name": "Zimbabwe",
+        "alpha2": "ZW",
+        "englishName": "the Republic of Zimbabwe",
+        "frenchName": "la République du Zimbabwe",
+        "capital": "Harare",
+        "currency": "ZWL",
+        "currencyName": "Zimbabwe Dollar",
+        "languages": [
+            "en",
+            "sn",
+            "nr",
+            "nd"
+        ]
+    },
+    {
+        "name": "Åland Islands",
+        "alpha2": "AX",
+        "englishName": null,
+        "frenchName": null,
+        "capital": "Mariehamn",
+        "currency": "EUR",
+        "currencyName": "Euro",
+        "languages": [
+            "sv"
+        ]
+    }
+]

@@ -1,0 +1,77 @@
+FROM node:21-alpine3.19 AS finstall
+
+# Install only necessary build dependencies
+RUN apk add --no-cache make gcc g++ python3
+
+# Avoid "gyp ERR! stack Error: certificate has expired"
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
+WORKDIR /usr/src/app
+
+COPY frontend/package*.json ./
+
+# Use npm ci for faster, reproducible installs
+RUN npm ci
+
+FROM finstall AS fbuild
+
+COPY frontend .
+RUN npm run build
+
+FROM node:21-alpine3.19 AS binstall
+
+WORKDIR /usr/src/app
+
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma/
+
+RUN npm ci --omit=dev && \
+    npx prisma generate && \
+    npm prune --production
+
+FROM binstall AS bbuild
+
+COPY backend .
+RUN npm run build
+
+FROM node:21-alpine3.19 AS final
+
+# Pass the arguments through to the image as environment variables
+ARG IMAGE_TAG
+ARG IMAGE_NAME
+
+ENV DOCKER_IMAGE_NAME=$IMAGE_NAME
+ENV DOCKER_IMAGE_TAG=$IMAGE_TAG
+ENV NODE_ENV=production
+
+# Install only necessary runtime dependencies
+RUN apk add --no-cache bash ffmpeg
+
+RUN addgroup --system --gid 1001 nestgroup && \
+    adduser --system --uid 1001 nestuser --ingroup nestgroup
+
+WORKDIR /usr/src/app
+
+# Copy only necessary files from previous stages
+COPY --from=bbuild /usr/src/app/dist ./dist
+COPY --from=bbuild /usr/src/app/views ./views
+COPY --from=binstall /usr/src/app/node_modules ./node_modules
+COPY --from=fbuild /usr/src/app/dist/assets ./public/assets
+COPY --from=fbuild /usr/src/app/dist/favicons ./public/favicons
+
+COPY backend/prisma ./prisma
+COPY backend/start.sh backend/wait-for-it.sh ./
+RUN chmod +x start.sh wait-for-it.sh
+
+# Combine RUN commands to reduce layers
+RUN cd public && \
+    REACT_MAIN_JS=$(ls assets/*.js | head -n 1) && \
+    echo "REACT_MAIN_JS=/$REACT_MAIN_JS" >> ../.env && \
+    REACT_MAIN_CSS=$(ls assets/*.css | head -n 1) && \
+    echo "REACT_MAIN_CSS=/$REACT_MAIN_CSS" >> ../.env && \
+    chown -R nestuser:nestgroup /usr/src/app
+
+USER nestuser
+EXPOSE 3000
+
+CMD ["./start.sh"]

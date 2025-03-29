@@ -1,0 +1,3 @@
+export const SESSION_CACHE_PREFIX = 'session:';
+export const SESSION_CONTEXT_KEY = 'SESSION_CONTEXT_KEY';
+export const SESSION_COOKIE_NAME = 'SESSION_COOKIE_NAME';

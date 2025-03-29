@@ -1,0 +1,3 @@
+export const AUTHORIZATION_COOKIE = 'AUTHORIZATION_COOKIE';
+export const COOKIE_VALIDITY = 60 * 60 * 24 * 7 * 1000;
+export const GUEST_VALIDITY = 60 * 60 * 2 * 1000;

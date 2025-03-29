@@ -1,174 +1,224 @@
-![Typescript](https://img.shields.io/badge/built%20with-Typescript-informational)
-![GitHub](https://img.shields.io/github/license/eleven-am/frames)
-![GitHub Repo stars](https://img.shields.io/github/stars/eleven-am/frames?style=social)
-![Twitter Follow](https://img.shields.io/twitter/follow/maixperiyon?style=social)
+<p align="center">
+  <img src="art/frames.png" alt="Frames Logo" width="128" height="128"/>
+</p>
 
-![Logo](https://frames-demo.maix.ovh/favicons/android-chrome-192x192.png)
+<h1 align="center">Frames: Your Modern Streaming Platform</h1>
 
-# Frames
+<p align="center">
+  <img src="https://img.shields.io/badge/built%20with-Typescript-informational" alt="Typescript"/>
+  <img src="https://img.shields.io/github/license/eleven-am/frames" alt="GitHub"/>
+  <img src="https://img.shields.io/docker/pulls/elevenam/frames" alt="Docker Pulls"/>
+  <img src="https://img.shields.io/github/stars/eleven-am/frames?style=social" alt="GitHub Repo stars"/>
+</p>
 
-Frames is a VOD streaming service built with react and NextJs around the Google Drive API.
+**Tired of the limitations and costs of proprietary streaming platforms?** Frames offers a modern, feature-rich solution to organize and stream your personal media collection from virtually anywhere. Built with the latest web technologies, Frames provides a stunning user experience and unparalleled flexibility.
 
-### What is frames and how does it work ?
-Frames is a web application that allows you to store, organise, download and stream media contents available on your Google Drive.
-The application enables you share this library without compromising the integrity of the original files.
-It organises the Movies and TV shows on your drive account, providing you with their trailer, HD images and other info
+## What is Frames?
+
+Frames is a modern SVOD (Subscription Video on Demand) streaming service built with React and NestJS, evolved from its original version that was built around the Google Drive API. This new version allows you to stream MP4 files from virtually any provider including local storage, S3, Dropbox, Google Drive, and more.
+
+The application enables you to share your media library without compromising the integrity of the original files. It organizes Movies and TV shows, providing you with trailers, HD images, and comprehensive information about your media. This new version includes significant improvements over the original, including expanded subtitle support for all languages and enhanced playlist functionality.
+
+## Why Choose Frames?
+
+* **Truly Universal Media Support:** Stream your MP4 files from **any** cloud storage, including local drives, Amazon S3, Dropbox, Google Drive, and more.
+* **Free Forever, Unlike Plex:** Frames offers all features, including remote play and group watch, **without requiring any premium subscription**.
+* **Stunning and Intuitive Interface:** Experience your media through our modern, dark-themed UI designed for both aesthetics and functionality.
+* **Rich Media Information:** Automatically fetches detailed information about your media using TMDB, Fanart, and Apple's artwork collection.
+* **Smart Recommendations:** Using OpenAI embeddings, Frames provides intelligent content suggestions based on similarities.
+* **Watch Together with GroupWatch:** Host virtual movie nights with friends with synchronized viewing.
+* **Comprehensive Media Organization:** Sophisticated organization of your Movies and TV Shows with extensive metadata.
+* **Create and Share Playlists:** Curate and share your favorite content with other users.
+
+## Key Features at a Glance
+
+* ✨ **Stunning UI:** Modern, intuitive, and visually appealing interface
+* ☁️ **Universal Media Support:** Stream from any cloud provider
+* 💰 **No Paywalls:** All features free to use, unlike Plex
+* ℹ️ **Rich Media Information:** Auto-fetched from TMDB, Fanart, and Apple
+* 🧠 **Smart Recommendations:** AI-powered with OpenAI embeddings
+* 🤝 **GroupWatch:** Synchronized viewing with friends
+* 📂 **Media Organization:** Automatic organization with metadata
+* ▶️ **Advanced Player:** Feature-rich with support for all subtitle languages
+* 📝 **Playlist Creation and Sharing:** Create and share with other users
 
 ## Installation
-Clone the repository 
+
+Choose the installation method that best suits your needs:
+
+### Docker (Recommended)
+
+The easiest way to get started with Frames is using Docker:
 
 ```bash
-  git clone https://github.com/Eleven-am/frames.git
-```
-Install the dependencies
-
- ```bash
-  npm install
- ```
-Go to the project directory 
-
-```bash
-  cd frames
+docker pull elevenam/frames:latest
+docker run -p 3000:3000 elevenam/frames:latest
 ```
 
-Open the framesConfig.ts file and configure the parameters
-To do this you need to open the file in your favorite text editor,
-have a Supabase project, a TMDB API key, FANART API key and a Google Drive API credentials and token.
+### Environment Variables
 
- ```bash
-  vim framesConfig.ts
- ```
+Frames requires the following primary environment variables:
 
-Once you have configured the file, you can generate an environment file with the following command:
+- **Database Configuration**:
+  - `DATABASE_URL`: PostgreSQL connection string (used for connection pooling)
+  - `DIRECT_DATABASE_URL`: Direct PostgreSQL connection string (used for migrations)
 
- ```bash
-  npm run generate-env
- ```
+- **Redis Configuration**:
+  - `REDIS_HOST`: Redis host
+  - `REDIS_PORT`: Redis port (default: 6379)
+  - `REDIS_TTL`: Redis TTL in seconds (default: 86400)
+  - `REDIS_DB`: Redis database number
 
-Once you have done this, you can build the application with the following command:
+- **Authentication**:
+  - `JWT_SECRET`: Secret key for JWT token generation
 
-```bash
-  npm run setup
-```
+### Kubernetes Deployment
 
-The application will be available on http://localhost:3000/
+For production environments, you can deploy Frames using Kubernetes. A sample deployment file is included in the repository.
 
-## How to arrange the files
-* For movies, it is recommended that only the movie file itself is placed directly in the movie folder like so ![](art/22.png) but folders containing the movie file can be placed in the movie folder.
-* For TV shows every Show should be placed in its folder like so ![](art/24.png)
-* When arranging the episodes you have two options
-    * Place each episode in its corresponding Season folder, like so (Recommended) ![](art/25.png) ![](art/26.png)
-    * Alternatively you can place them directly in the Show folder but only if they can pass this s|SXX .. eE|XX naming scheme, for example;
-        * S01 - E01
-        * S01 randomText E01
-        * s01e01 | S01E01
-          like so ![](art/23.png)
+## User Interface
 
-## Images and Features
-### Disclaimer: The Social OAUTH feature requires a connection to a Phoenix-Elixir server. I intend to make my private server available to the public in the future.
-* The boarding page includes social authentication methods as well as email. Every user registered must be provided an auth key 
-    ![](art/1.png)
-    ![](art/2.png)
-    ![](art/3.png)
-    ![](art/4.png)
+### Home Page and Media Discovery
 
-* The home page includes (ideally 7, may be less or 0) trending media that are available in your library. A synopsis of the media and trailer are also available directly from here
-   ![](art/trailer.gif)
-   ![](art/5.png)
+The home page displays trending media with high-quality artwork, synopsis, and direct access to trailers. The clean, dark-themed interface provides an immersive viewing experience.
 
-#### The navigation bar
-* All the movies and tv shows available in the library are show in descending order from most recent or trending to less recent. The media can be filtered by genre or decade. just by interacting with the page.
-  ![](art/6.png)
-  ![](art/7.png)
+![Home Page with Featured Content](art/19.png)
+![Selected trending Content](art/20.png)
+![Suggested Content based on activity and OPENAI Embeddings](art/21.png)
+![Gif showing Trailer Feature](art/1.gif)
 
-* Frames has the collection page that shows you default collection for media in your library
-  ![](art/41.png)
-  ![](art/42.png)
+### Detailed Media Pages
 
-* Here's how a media's metadata is displayed on frames
-  ![](art/12.png)
-  ![](art/13.png)
-  ![](art/10.png)
-  ![](art/11.png)
+Each movie or TV show has a dedicated page with comprehensive information including:
+- Synopsis and basic information (rating, genre, release year, duration)
+- Cast and crew with profile images
+- Production companies
+- Episode listings for TV shows with thumbnails and descriptions
+- Similar content recommendations
 
-* Media produced by a specific company can be seen by simply clicking on the company's name in the details pane
-  ![](art/14.png)
-    * Clicking on the company's logo begins playback of all the media produced by the company in the order they were made available by said company
+![Media Details Page](art/7.png)
+![Media Details Showing Episodes](art/8.png)
+![Media Details Showing Cast, Crew and Production Companies](art/9.png)
+![Media Details Showing add Media to playlist dialog](art/31.png)
 
-* Media a specific actor or director took part in creating are easily viewable by clicking on their name
-  ![](art/28.png)
-    * Clicking on the person's name begins playback of all the media they have taken part in.
+### Content Filtering and Organization
 
-#### Frames(aka the video player)
-* Frames supports only mp4 files. These files are streamed securely to the user and your Google credentials are never made available to the client.
-  ![](art/player.gif)
-  ![](art/48.png)
-    * The left controls include, in that order, the AirPlay/Cast button (if available), the share button, the playlist button, the volume controls and download button
-    * If logged in as a guest user, the download button and the Share button are not available
-      ![](art/15.png)
-      ![](art/18.png)
-      ![](art/17.png)
-  
-    * The right side controls include the player settings button(in development), the groupwatch button, the picture in picture button, the subtitle button, the up next button and the fullscreen button
-  ![](art/32.png)
-      * Clicking on the up next button plays the next video as expected. 
+Browse all movies and TV shows in your library with easy filtering by genre (Action, Adventure, Animation, etc.), making content discovery simple and intuitive.
 
-    * Frames supports only three subtitle languages at this point (English, French, and German)      
-      ![](art/33.png)
+![Content Browser with Filters activated](art/11.png)
+![Content Browser with Filters](art/22.png)
 
-* GroupWatch: This feature allows you to watch a media with your friends at the same time.
-  ![](art/46.png) 
-  ### Disclaimer: The groupwatch feature requires a connection to a Phoenix-Elixir server. I intend to make my private server available to the public in the future.
-    ###### How it works
-    * To create a new session click on one of these buttons 
-    ![](art/36.png)
-        The join button in the video player
-    ![](art/40.png)
-        The join button in the info page
-    * When a session is created a link is copied to your clipboard anyone with access to this link can join the session
-    ![](art/37.png)
-    * A session spans multiple videos. As long as all parties remain connected, the session allows you to actually binge-watch videos together.
-    * There's no limit to the amount of people that can join a session
-    ![](art/38.png)
-    * Users in a session can send a ping to themselves with a maximum of 280 characters. Ping history isn't saved
-    ![](art/39.png)
+### Playlists
 
-* Frames has AirPlay and Chromecast functionality built in
-  ![](art/16.png)
-  ![](art/19.png)
-    * Obviously frames controls the remote player based on local interactions
-    
-#### Miscellaneous 
-* By clicking on the edit button inside a media page you can modify the information of the media. The images, TMDB ID
-  ![](art/20.png)
-  ![](art/27.png)
+Create, manage, and share playlists with other users:
+- Public and private playlist options
+- Video count displayed for each playlist
+- Playlist sharing with other users
+- Shuffle and continuous playback
 
-* The up next UI when the present video is done playing
-  ![](art/21.png)
+![Playlist Management](art/15.png)
 
-* Frames allows any non-guest user download video files provided they are given a key from the admin(These links are only valid for 2 hours)
-     ![](art/43.png)
-     ![](art/44.png)
+## Media Organization
 
-* You can add three personalised categories to the home page.
-    * These categories include a list of previously chosen media and a name to display said media
-      ![](art/30.png)
-    * Two of these categories appear like this
-      ![](art/34.png)
-    * And the last one appears like this
-      ![](art/35.png)
-  
-    * Adding these editor picks is as easy as visiting the settings page => Mange => manage picks.Here you can modify or create new editor picks to display on the homepage
-      ![](art/31.png)
-      ![](art/29.png)
-  
-    * You can also delete editor picks by clicking on the delete button
-    * The home page has infinite scrolling, it will load more content as you scroll down based on the amount of content you have and the user's activity
-    
-* Admin accounts can create and manage auth keys. These keys are used to create new accounts or download videos
-  ![](art/45.png)
+For optimal performance and organization:
 
-## Upcoming features
-* Creating and sharing your playlists with others
+* **Movies**: It's recommended to place movie files directly in their own folders e.g., `MovieName (2023)/movie.mp4`
+* **TV Shows**: Each show should be placed in its own folder, with subfolders for each season:
+* **TV Episodes**: You have two options:
+  * Place each episode in its corresponding Season folder (Recommended)
+  * Place them directly in the Show folder if they follow naming conventions like "S01E01" or "S01 - E01"
 
-####* Creating a playlist is already supported by Frames but sharing your playlist is not
+* Example:
+    ```
+    Movies/
+    ├── MovieName (2023)/
+    │   ├── movie.mp4
+    ├── MovieName (2022)/
+    │   ├── movie.mp4
+    TV Shows/
+    ├── ShowName/
+    │   ├── Season 1/
+    │   │   ├── S01E01 - EpisodeName.mp4
+    │   │   ├── S01E02 - EpisodeName.mp4
+    │   ├── Season 2/
+    │   │   ├── S02E01 - EpisodeName.mp4
+    │   │   ├── S02E02 - EpisodeName.mp4
+    ```
+
+## Advanced Features
+
+### Video Player
+
+Frames features a sophisticated video player with:
+- AirPlay support (Chromecast support coming soon)
+- Playlist management
+- Volume controls
+- Download capability (for authorized users)
+- Subtitle support for all languages (significantly expanded from the previous version)
+- Picture-in-picture mode
+- Fullscreen mode
+
+![Video Player with Hidden controls](art/23.png)
+![Video player with user hovering over progress showing seek thumbnail](art/1.png)
+![Video player with left controls](art/2.png)
+![Video player with right controls and Upnext hover](art/3.png)
+![Video player with Settings open](art/4.png)
+![Video player with download dialog open, requesting auth key for download](art/24.png)
+![Video player with Share dialog open asking to share from current position or not](art/25.png)
+
+
+### GroupWatch
+
+This feature allows you to watch media with friends at the same time:
+- Create a session and share a link
+- No limit to the number of people who can join
+- Send messages to other viewers
+- Synchronized viewing experience across multiple videos
+
+![GroupWatch Start Session page](art/13.png)
+![Video player with GroupWatch chat showing](art/26.png)
+
+### Admin Features
+
+Admin accounts can:
+- Modify media information
+- Manage authentication keys
+- Create personalized categories for the home page
+- Control download permissions
+
+![Personalised categories list page](art/28.png)
+![Personalised categories edit page](art/29.png)
+![Libraries page showcasing  local and drive libraries](art/30.png)
+![Media Details Showing Edit dialog with General tab](art/32.png)
+![Media Details Showing Edit dialog with Image tab](art/33.png)
+![Media Details Showing Edit dialog with Permission tab](art/34.png)
+
+
+## Coming Soon
+
+- **Chromecast Support**: Cast your media to Chromecast-enabled devices (currently being redeveloped)
+- **Permissions System**: Granular access control to specify which users can access specific media
+
+## For Developers
+
+Frames provides an API for developers who want to extend functionality or integrate with other services:
+
+- API documentation is available at the `/swagger` endpoint on your Frames server
+- Contributions to the project are welcome!
+
+### Contributing
+
+We welcome contributions from the community! If you're interested in improving Frames, please:
+
+1. Check out our issues page for current needs
+2. Fork the repository
+3. Create a feature branch
+4. Submit a pull request
+
+## Support
+
+If you encounter any issues or have questions about Frames, please visit our GitHub repository.
+
+---
+
+Built with ❤️ using NestJS and React

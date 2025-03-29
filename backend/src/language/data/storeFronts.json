@@ -1,0 +1,147 @@
+[
+  {
+    "countryCode": "US",
+    "languageCode": "en",
+    "storeFrontId": 143441
+  },
+  {
+    "countryCode": "GB",
+    "languageCode": "en",
+    "storeFrontId": 143444
+  },
+  {
+    "countryCode": "AU",
+    "languageCode": "en",
+    "storeFrontId": 143460
+  },
+  {
+    "countryCode": "CA",
+    "languageCode": "en",
+    "storeFrontId": 143455
+  },
+  {
+    "countryCode": "DE",
+    "languageCode": "de",
+    "storeFrontId": 143443
+  },
+  {
+    "countryCode": "FR",
+    "languageCode": "fr",
+    "storeFrontId": 143442
+  },
+  {
+    "countryCode": "IT",
+    "languageCode": "it",
+    "storeFrontId": 143450
+  },
+  {
+    "countryCode": "JP",
+    "languageCode": "ja",
+    "storeFrontId": 143462
+  },
+  {
+    "countryCode": "NL",
+    "languageCode": "nl",
+    "storeFrontId": 143452
+  },
+  {
+    "countryCode": "ES",
+    "languageCode": "es",
+    "storeFrontId": 143454
+  },
+  {
+    "countryCode": "SE",
+    "languageCode": "sv",
+    "storeFrontId": 143457
+  },
+  {
+    "countryCode": "NO",
+    "languageCode": "no",
+    "storeFrontId": 143458
+  },
+  {
+    "countryCode": "DK",
+    "languageCode": "da",
+    "storeFrontId": 143459
+  },
+  {
+    "countryCode": "FI",
+    "languageCode": "fi",
+    "storeFrontId": 143447
+  },
+  {
+    "countryCode": "NZ",
+    "languageCode": "en",
+    "storeFrontId": 143461
+  },
+  {
+    "countryCode": "IE",
+    "languageCode": "en",
+    "storeFrontId": 143446
+  },
+  {
+    "countryCode": "CH",
+    "languageCode": "de",
+    "storeFrontId": 143445
+  },
+  {
+    "countryCode": "AT",
+    "languageCode": "de",
+    "storeFrontId": 143448
+  },
+  {
+    "countryCode": "BE",
+    "languageCode": "fr",
+    "storeFrontId": 143449
+  },
+  {
+    "countryCode": "LU",
+    "languageCode": "fr",
+    "storeFrontId": 143451
+  },
+  {
+    "countryCode": "SG",
+    "languageCode": "en",
+    "storeFrontId": 143464
+  },
+  {
+    "countryCode": "HK",
+    "languageCode": "en",
+    "storeFrontId": 143465
+  },
+  {
+    "countryCode": "KR",
+    "languageCode": "ko",
+    "storeFrontId": 143466
+  },
+  {
+    "countryCode": "TW",
+    "languageCode": "zh",
+    "storeFrontId": 143467
+  },
+  {
+    "countryCode": "CN",
+    "languageCode": "zh",
+    "storeFrontId": 143468
+  },
+  {
+    "countryCode": "IN",
+    "languageCode": "en",
+    "storeFrontId": 143470
+  },
+  {
+    "countryCode": "RU",
+    "languageCode": "ru",
+    "storeFrontId": 143469
+  },
+  {
+    "countryCode": "TR",
+    "languageCode": "tr",
+    "storeFrontId": 143473
+  },
+  {
+    "countryCode": "AE",
+    "languageCode": "en",
+    "storeFrontId": 143474
+  }
+]

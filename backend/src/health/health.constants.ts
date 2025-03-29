@@ -1,0 +1,2 @@
+export const DOCKER_IMAGE_NAME = 'DOCKER_IMAGE_NAME';
+export const DOCKER_IMAGE_TAG = 'DOCKER_IMAGE_TAG';

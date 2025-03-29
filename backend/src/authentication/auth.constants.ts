@@ -1,0 +1,1 @@
+export const WEB_AUTHN_CACHE_KEY = 'WEB_AUTHN_CACHE_KEY';

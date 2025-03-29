@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+
+    <!-- favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+    <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="manifest" href="/favicons/site.webmanifest">
+    <link rel="shortcut icon" href="/favicons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/favicons/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Primary Meta Tags -->
+    <title><%= name %></title>
+    <meta name="title" content="<%= name %>">
+    <meta name="description" content="<%= overview %>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= link %>">
+    <meta property="og:title" content="<%= name %>">
+    <meta property="og:description" content="<%= overview %>">
+    <meta property="og:image" content="<%= poster %>">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="<%= link %>">
+    <meta property="twitter:title" content="<%= name %>">
+    <meta property="twitter:description" content="<%= overview %>">
+    <meta property="twitter:image" content="<%= poster %>">
+    <script type="module" crossorigin src="<%= process.env.REACT_MAIN_JS %>"></script>
+    <link rel="stylesheet" crossorigin href="<%= process.env.REACT_MAIN_CSS %>">
+
+    <!-- Google Cast SDK and YouTube API -->
+    <script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body class="bg-darkD select-none m-0 p-0 scrollbar-hide">
+    <div id="root"></div>
+</body>
+</html>

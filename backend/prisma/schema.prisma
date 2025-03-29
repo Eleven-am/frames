@@ -1,0 +1,597 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+model Session {
+  id        String          @id @default(cuid())
+  session   String          @unique
+  valid     DateTime
+  created   DateTime        @default(now())
+  updated   DateTime        @updatedAt
+  browserId String
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  identity  UserIdentifier?
+}
+
+model AuthKey {
+  id          String     @id @default(cuid())
+  authKey     String     @unique
+  revoked     Boolean    @default(false)
+  created     DateTime   @default(now())
+  useCase     UseCase    @default(SIGNUP)
+  updated     DateTime   @updatedAt
+  userId      String
+  viewId      String?
+  groupId     String?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  view        View?      @relation(fields: [viewId], references: [id], onDelete: Cascade)
+  downloads   Download[]
+  UserGroup   UserGroup? @relation(fields: [userGroupId], references: [id])
+  userGroupId String?
+}
+
+model Company {
+  id      String         @id @default(cuid())
+  name    String
+  tmdbId  Int
+  type    CompanyType
+  logo    String         @db.VarChar(250)
+  created DateTime       @default(now())
+  updated DateTime       @updatedAt
+  media   CompanyMedia[]
+
+  @@unique([tmdbId, type], name: "companyType")
+}
+
+model CompanyMedia {
+  id        String   @id @default(cuid())
+  companyId String
+  mediaId   String
+  created   DateTime @default(now())
+  updated   DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model UserIdentifier {
+  id          String   @id @default(cuid())
+  browserName String
+  osName      String
+  country     String
+  region      String
+  city        String
+  address     String
+  userId      String
+  sessionId   String   @unique
+  created     DateTime @default(now())
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PickCategory {
+  id           String     @id @default(cuid())
+  name         String     @unique
+  type         PickType   @default(EDITOR)
+  active       Boolean    @default(true)
+  displayOrder Int        @default(0)
+  created      DateTime   @default(now())
+  updated      DateTime   @updatedAt
+  picks        PickItem[]
+}
+
+model PickItem {
+  id           String       @id @default(cuid())
+  mediaId      String
+  categoryId   String
+  displayOrder Int
+  created      DateTime     @default(now())
+  updated      DateTime     @updatedAt
+  category     PickCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  media        Media        @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, categoryId], name: "pickIndex")
+}
+
+model Episode {
+  id      String    @id @default(cuid())
+  season  Int
+  episode Int
+  showId  String
+  videoId String    @unique
+  created DateTime  @default(now())
+  updated DateTime  @updatedAt
+  media   Media     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  video   Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  views   View[]
+  watched Watched[]
+
+  @@unique([season, episode, showId], name: "episodeIndex")
+}
+
+model Folder {
+  id             String       @id @default(cuid())
+  location       String       @unique
+  mediaId        String       @unique
+  cloudStorageId String
+  created        DateTime     @default(now())
+  updated        DateTime     @updatedAt
+  cloudStorage   CloudStorage @relation(fields: [cloudStorageId], references: [id], onDelete: Cascade)
+  media          Media        @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model Frame {
+  id         String   @id @default(cuid())
+  cypher     String   @unique @default(cuid())
+  percentage Float
+  userId     String
+  accessed   Int      @default(0)
+  viewId     String
+  created    DateTime @default(now())
+  updated    DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  view       View     @relation(fields: [viewId], references: [id], onDelete: Cascade)
+}
+
+model ListItem {
+  id      String   @id @default(cuid())
+  mediaId String
+  userId  String
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, userId], name: "listIndex")
+}
+
+model Rating {
+  id      String   @id @default(cuid())
+  rate    Boolean  @default(true)
+  mediaId String
+  userId  String
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, userId], name: "ratedByUser")
+}
+
+model PlaylistVideo {
+  id         String   @id @default(cuid())
+  videoId    String
+  playlistId String
+  index      Int
+  created    DateTime @default(now())
+  updated    DateTime @updatedAt
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  views      View[]
+}
+
+model Playlist {
+  id             String          @id @default(cuid())
+  userId         String
+  name           String
+  overview       String
+  generator      Generator       @default(FRAMES)
+  isPublic       Boolean         @default(false)
+  created        DateTime        @default(now())
+  updated        DateTime        @updatedAt
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlistVideos PlaylistVideo[]
+  sharedUsers    SharedWith[]
+
+  @@unique([userId, name], name: "playlistIndex")
+}
+
+model SharedWith {
+  id         String       @id @default(cuid())
+  userId     String
+  playlistId String
+  access     AccessPolicy @default(READ)
+  created    DateTime     @default(now())
+  updated    DateTime     @updatedAt
+  playlist   Playlist     @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, playlistId], name: "sharedWithIndex")
+}
+
+model Suggestion {
+  id      String   @id @default(cuid())
+  times   Float
+  mediaId String
+  userId  String
+  seen    Boolean  @default(false)
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  opened     Boolean  @default(false)
+  message    String
+  title      String
+  image      String
+  url        String
+  senderId   String
+  receiverId String
+  created    DateTime @default(now())
+  updated    DateTime @updatedAt
+  receiver   User     @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User     @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  password       String
+  username       String           @unique
+  role           Role             @default(USER)
+  inform         Boolean          @default(true)
+  autoplay       Boolean          @default(true)
+  confirmedEmail Boolean          @default(false)
+  confirmToken   String?
+  defaultLang    String           @default("None")
+  channel        String           @default(cuid())
+  incognito      Boolean          @default(false)
+  revoked        Boolean          @default(false)
+  created        DateTime         @default(now())
+  updated        DateTime         @updatedAt
+  auths          AuthKey[]
+  downloads      Download[]
+  frames         Frame[]
+  lists          ListItem[]
+  notifications  Notification[]   @relation("receiver")
+  messages       Notification[]   @relation("sender")
+  playlists      Playlist[]
+  ratings        Rating[]
+  seenMedia      SeenMedia[]
+  sessions       Session[]
+  shared         SharedWith[]
+  suggestions    Suggestion[]
+  userEmbeds     UserEmbeds?
+  identifiers    UserIdentifier[]
+  views          View[]
+  watched        Watched[]
+  groups         UserGroupLink[]
+  storages       CloudStorage[]
+  passKeys       PassKey[]
+}
+
+model Video {
+  id             String          @id @default(uuid())
+  location       String          @unique
+  mediaId        String
+  cloudStorageId String
+  created        DateTime        @default(now())
+  updated        DateTime        @updatedAt
+  episode        Episode?
+  playlistVideos PlaylistVideo[]
+  subtitles      Subtitle[]
+  cloudStorage   CloudStorage    @relation(fields: [cloudStorageId], references: [id], onDelete: Cascade)
+  media          Media           @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  views          View[]
+  watched        Watched[]
+  artworks       Artwork[]
+}
+
+model Artwork {
+  id         String @id @default(cuid())
+  url        String
+  percentage Float
+  videoId    String
+  video      Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model Subtitle {
+  id           String   @id @default(cuid())
+  url          String
+  languageCode String
+  vtt          String
+  languageName String
+  created      DateTime @default(now())
+  updated      DateTime @updatedAt
+  subtitles    Json?
+  offset       Int      @default(0)
+  videoId      String
+  video        Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model Room {
+  id      String   @id @default(cuid())
+  viewId  String
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  view    View     @relation(fields: [viewId], references: [id], onDelete: Cascade)
+}
+
+model Download {
+  id        String   @id @default(cuid())
+  location  String   @unique @default(cuid())
+  userId    String
+  viewId    String
+  authKeyId String
+  created   DateTime @default(now())
+  updated   DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  view      View     @relation(fields: [viewId], references: [id], onDelete: Cascade)
+  authKey   AuthKey  @relation(fields: [authKeyId], references: [id], onDelete: Cascade)
+}
+
+model View {
+  id         String         @id @default(uuid())
+  userId     String
+  videoId    String
+  episodeId  String?
+  playlistId String?
+  inform     Boolean        @default(true)
+  created    DateTime       @default(now())
+  updated    DateTime       @updatedAt
+  auths      AuthKey[]
+  downloads  Download[]
+  frames     Frame[]
+  rooms      Room[]
+  episode    Episode?       @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  playlist   PlaylistVideo? @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video      Video          @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model Watched {
+  id         String   @id @default(cuid())
+  userId     String
+  videoId    String
+  percentage Float    @default(0)
+  mediaId    String
+  episodeId  String?
+  times      Int      @default(0)
+  created    DateTime @default(now())
+  updated    DateTime @updatedAt
+  episode    Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId], name: "seenByUser")
+}
+
+model SeenMedia {
+  id      String   @id @default(cuid())
+  userId  String
+  mediaId String
+  times   Int
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+  media   Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, userId], name: "seenByUser")
+}
+
+model Media {
+  id           String         @id @default(cuid())
+  name         String
+  tmdbId       Int
+  poster       String         @db.Text
+  posterBlur   String
+  backdrop     String         @db.Text
+  backdropBlur String
+  portrait     String         @db.Text
+  portraitBlur String
+  logo         String?        @db.Text
+  logoBlur     String?
+  type         MediaType      @default(MOVIE)
+  created      DateTime       @default(now())
+  updated      DateTime       @updatedAt
+  genres       String[]
+  releaseDate  DateTime?
+  credits      Credit[]
+  episodes     Episode[]
+  folder       Folder?
+  lists        ListItem[]
+  embeds       MediaEmbeds?
+  editors      PickItem[]
+  ratings      Rating[]
+  seenMedia    SeenMedia[]
+  suggestions  Suggestion[]
+  videos       Video[]
+  watched      Watched[]
+  companies    CompanyMedia[]
+  groups       MediaGroup[]   @relation("MediaGroupLink")
+
+  @@unique([tmdbId, type])
+}
+
+model Credit {
+  id        String   @id @default(cuid())
+  mediaId   String
+  tmdbId    Int
+  name      String
+  character String?
+  job       String?
+  type      CastType
+  created   DateTime @default(now())
+  updated   DateTime @updatedAt
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model CloudStorage {
+  id             String     @id @default(cuid())
+  name           String
+  drive          CloudDrive
+  credentials    Json
+  userId         String?
+  modify         Boolean    @default(false)
+  movieLocations String[]
+  showLocations  String[]
+  created        DateTime   @default(now())
+  updated        DateTime   @updatedAt
+  user           User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folders        Folder[]
+  videos         Video[]
+}
+
+model MediaEmbeds {
+  id       String                 @id @default(cuid())
+  mediaId  String                 @unique
+  metadata String
+  vector   Unsupported("vector")?
+  media    Media                  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model UserEmbeds {
+  id       String                 @id @default(cuid())
+  userId   String                 @unique
+  metadata String
+  vector   Unsupported("vector")?
+  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserGroup {
+  id      String          @id @default(cuid())
+  name    String
+  users   UserGroupLink[]
+  authKey AuthKey[]
+  policy  Policy[]
+}
+
+model UserGroupLink {
+  userGroupId String
+  userId      String
+  group       UserGroup    @relation(fields: [userGroupId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupAccess AccessPolicy @default(READ)
+
+  @@id([userGroupId, userId])
+}
+
+model MediaGroup {
+  id     String   @id @default(cuid())
+  name   String
+  media  Media[]  @relation("MediaGroupLink")
+  policy Policy[]
+}
+
+model Policy {
+  id           String       @id @default(cuid())
+  name         String
+  mediaGroupId String
+  userGroupId  String
+  access       AccessPolicy @default(READ)
+  created      DateTime     @default(now())
+  updated      DateTime     @updatedAt
+
+  mediaGroup MediaGroup @relation(fields: [mediaGroupId], references: [id], onDelete: Cascade)
+  userGroup  UserGroup  @relation(fields: [userGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaGroupId, userGroupId], name: "groupIndex")
+}
+
+model OauthClient {
+  id            String   @id @default(cuid())
+  name          String
+  clientId      String
+  clientSecret  String
+  tokenHost     String
+  authorizeHost String
+  tokenPath     String
+  authorizePath String
+  buttonLabel   String
+  userDataUrl   String
+  color         String
+  scopes        String[]
+  logo          String
+  created       DateTime @default(now())
+  updated       DateTime @updatedAt
+}
+
+model PassKey {
+  id           String   @id @default(cuid())
+  credentialId String
+  publicKey    String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String[]
+  email        String
+  created      DateTime @default(now())
+  updated      DateTime @updatedAt
+  user         User     @relation(fields: [email], references: [email], onDelete: Cascade)
+
+  @@unique([credentialId, email], name: "passKeyIndex")
+}
+
+model Config {
+  id      String   @id @default(cuid())
+  key     String   @unique
+  value   String
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+enum AccessPolicy {
+  DENY
+  READ
+  WRITE
+  UPDATE
+  DELETE
+}
+
+enum UseCase {
+  SIGNUP
+  DOWNLOAD
+}
+
+enum PickType {
+  BASIC
+  EDITOR
+}
+
+enum Generator {
+  FRAMES
+  USER
+}
+
+enum Role {
+  USER
+  ADMIN
+  GUEST
+  OAUTH
+  SYSTEM
+}
+
+enum CastType {
+  ACTOR
+  DIRECTOR
+  WRITER
+  PRODUCER
+}
+
+enum MediaType {
+  MOVIE
+  SHOW
+}
+
+enum CloudDrive {
+  GDRIVE
+  DROPBOX
+  S3
+  LOCAL
+}
+
+enum CompanyType {
+  PRODUCTION
+  DISTRIBUTION
+}
