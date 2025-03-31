@@ -1,5 +1,6 @@
 import { TaskEither, Either, createUnauthorizedError } from '@eleven-am/fp';
 import { Context } from '@eleven-am/pondsocket-nest';
+import { AuthorizationContext } from "@eleven-am/authorizer";
 import { Injectable, ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role, Session, User } from '@prisma/client';
@@ -155,26 +156,26 @@ export class SessionService {
             }));
     }
 
-    retrieveUser (context: ExecutionContext | Context) {
+    retrieveUser (context: AuthorizationContext) {
         return TaskEither
             .of(context)
             .matchTask([
                 {
-                    predicate: (context) => context instanceof Context,
-                    run: () => this.getSocketsSession(context as Context),
+                    predicate: (context) => context.isSocket,
+                    run: () => this.getSocketsSession(context.socketContext),
                 },
                 {
-                    predicate: () => true,
-                    run: () => this.getHTTPSession(context as ExecutionContext),
+                    predicate: (context) => context.isHttp,
+                    run: () => this.getHTTPSession(context.httpContext),
                 }
             ])
     }
 
-    allowNoRulesAccess (context: ExecutionContext | Context) {
+    allowNoRulesAccess (context: AuthorizationContext) {
         return TaskEither
             .of(context)
             .filter(
-                (context) => !(context instanceof Context),
+                (context) => context.isHttp,
                 () => createUnauthorizedError('User is not authenticated'),
             )
             .map(() => true);
