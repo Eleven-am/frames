@@ -169,6 +169,8 @@ export class SessionService {
                     run: () => this.getHTTPSession(context.httpContext),
                 }
             ])
+            .ioErrorSync(console.error)
+            .ioSync(console.log)
     }
 
     allowNoRulesAccess (context: AuthorizationContext) {
@@ -178,6 +180,8 @@ export class SessionService {
                 (context) => context.isHttp,
                 () => createUnauthorizedError('User is not authenticated'),
             )
+            .ioErrorSync(console.error)
+            .ioSync(console.log)
             .map(() => true);
     }
 
