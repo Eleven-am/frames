@@ -5,9 +5,9 @@ import { OPEN_SUBTITLES_CONFIG } from '../playback/playback.constants';
 
 
 export interface OpenSubtitleOptions {
-    useragent: string | null;
-    username: string | null;
-    password: string | null;
+    useragent: string;
+    username: string;
+    password: string;
     ssl: boolean;
 }
 
@@ -47,8 +47,14 @@ export type OpenSubtitlesResultConstructor = new (
 
 export const OpenSubtitlesConfig: Provider = {
     provide: OPEN_SUBTITLES_CONFIG,
-    useFactory: async (retrieveService: RetrieveService): Promise<OpenSubtitleOptions> => {
-        const { username, password, userAgent } = await retrieveService.openSubtitlesConfig.toPromise();
+    useFactory: async (retrieveService: RetrieveService): Promise<OpenSubtitleOptions | null> => {
+        const data = await retrieveService.openSubtitlesConfig.toNullable();
+
+        if (!data) {
+            return null;
+        }
+
+        const { userAgent, username, password } = data;
 
         return {
             useragent: userAgent,

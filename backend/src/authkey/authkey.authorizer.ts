@@ -1,7 +1,14 @@
-import { WillAuthorize, RuleBuilder, Action, AppAbilityType, Permission, Authorizer } from '@eleven-am/authorizer';
+import {
+    WillAuthorize,
+    RuleBuilder,
+    Action,
+    AppAbilityType,
+    Permission,
+    Authorizer,
+    AuthorizationContext
+} from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
-import { User, Role } from '@prisma/client';
+import {User, Role } from '@prisma/client';
 
 import { AuthKeyService } from './authkey.service';
 
@@ -26,10 +33,15 @@ export class AuthKeyAuthorizer implements WillAuthorize {
         can(Action.Manage, 'AuthKey');
     }
 
-    checkHttpAction (_ability: AppAbilityType, rules: Permission[], context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, _ability: AppAbilityType, rules: Permission[]) {
+        const request = context.getRequest();
         const authKey = request.params.authKey;
         const authKeyRules = rules.filter((rule) => rule.resource === 'AuthKey');
+
+        console.log({
+            authKey,
+            authKeyRules,
+        })
 
         if (
             (
@@ -40,6 +52,8 @@ export class AuthKeyAuthorizer implements WillAuthorize {
         ) {
             return TaskEither.of(true);
         }
+
+        console.log('authKeyRules', authKeyRules);
 
         return this.authKeyService.findByAuthKey(authKey)
             .map((authKey) => {

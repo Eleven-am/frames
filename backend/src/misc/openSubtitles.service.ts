@@ -21,9 +21,9 @@ export class OpenSubtitlesService {
     private openSubtitles: OpenSubtitles | null;
 
     constructor (
-        @Inject(OPEN_SUBTITLES_CONFIG) options: OpenSubtitleOptions,
+        @Inject(OPEN_SUBTITLES_CONFIG) options: OpenSubtitleOptions | null,
     ) {
-        if (Object.values(options).some((value) => value === null)) {
+        if (!options) {
             this.openSubtitles = null;
         } else {
             this.openSubtitles = new OS(options);

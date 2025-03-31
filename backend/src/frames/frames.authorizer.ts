@@ -1,8 +1,15 @@
 import { accessibleBy } from '@casl/prisma';
-import { WillAuthorize, Authorizer, RuleBuilder, Action, AppAbilityType, Permission } from '@eleven-am/authorizer';
+import {
+    WillAuthorize,
+    Authorizer,
+    RuleBuilder,
+    Action,
+    AppAbilityType,
+    Permission,
+    AuthorizationContext
+} from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
-import { User, AccessPolicy } from '@prisma/client';
+import { User, AccessPolicy, Frame } from '@prisma/client';
 
 import { MediaAuthorizer } from '../media/media.authorizer';
 import { PrismaService } from '../prisma/prisma.service';
@@ -42,8 +49,8 @@ export class FramesAuthorizer implements WillAuthorize {
         });
     }
 
-    checkHttpAction (ability: AppAbilityType, _rules: Permission[], context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, ability: AppAbilityType, _rules: Permission[]) {
+        const request = context.getRequest<{ frame: Frame }>();
         const cypher = request.params.cypher;
 
         if (cypher === undefined) {

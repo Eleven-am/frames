@@ -6,10 +6,9 @@ import {
     RuleBuilder,
     Action,
     AppAbilityType,
-    Permission,
+    Permission, AuthorizationContext,
 } from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
 import { AccessPolicy, Role, User, Playlist, PlaylistVideo } from '@prisma/client';
 import { Request } from 'express';
 
@@ -215,8 +214,8 @@ export class PlaylistsAuthorizer implements WillAuthorize {
         });
     }
 
-    checkHttpAction (ability: AppAbilityType, rules: Permission[], context: ExecutionContext): TaskEither<boolean> {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]): TaskEither<boolean> {
+        const request = context.getRequest<{ playlist: Playlist, playlistVideo: PlaylistVideo }>();
         const playlistId = request.params.playlistId;
         const playlistVideoId = request.params.playlistVideoId;
         const playlistRules = rules.filter((rule) => rule.resource === 'Playlist');

@@ -1,10 +1,9 @@
 import { TaskEither, Either, createUnauthorizedError } from '@eleven-am/fp';
-import { Context } from '@eleven-am/pondsocket-nest';
 import { AuthorizationContext } from "@eleven-am/authorizer";
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role, Session, User } from '@prisma/client';
-import { Response, Request } from 'express';
+import { Response } from 'express';
 import { Details } from 'express-useragent';
 import { v4 as uuid } from 'uuid';
 import { AUTHORIZATION_COOKIE, COOKIE_VALIDITY, GUEST_VALIDITY } from '../authorisation/auth.constants';
@@ -157,20 +156,21 @@ export class SessionService {
     }
 
     retrieveUser (context: AuthorizationContext) {
+        const token: string | null = context.isHttp ?
+            context.getRequest().cookies[AUTHORIZATION_COOKIE] ??
+            context.getRequest().query.token ??
+            context.getRequest().headers.authorization ?? null :
+            context.getSocketContext().connection?.cookies[AUTHORIZATION_COOKIE] ??
+            context.getSocketContext().user?.assigns.token ?? null;
+
+        const sessionToken = token?.replace('Bearer', '').trim() || null;
+
         return TaskEither
-            .of(context)
-            .matchTask([
-                {
-                    predicate: (context) => context.isSocket,
-                    run: () => this.getSocketsSession(context.socketContext),
-                },
-                {
-                    predicate: (context) => context.isHttp,
-                    run: () => this.getHTTPSession(context.httpContext),
-                }
-            ])
-            .ioErrorSync(console.error)
-            .ioSync(console.log)
+            .fromNullable(sessionToken)
+            .ioSync((token) => context.addData(SESSION_COOKIE_NAME, token))
+            .chain((token) => this.retrieveSession(token))
+            .ioSync((session) => context.addData(SESSION_CONTEXT_KEY, session))
+            .map((session) => session.user);
     }
 
     allowNoRulesAccess (context: AuthorizationContext) {
@@ -180,8 +180,6 @@ export class SessionService {
                 (context) => context.isHttp,
                 () => createUnauthorizedError('User is not authenticated'),
             )
-            .ioErrorSync(console.error)
-            .ioSync(console.log)
             .map(() => true);
     }
 
@@ -197,33 +195,6 @@ export class SessionService {
                 })))
             .chain((session) => session.toTaskEither())
             .mapError(() => createUnauthorizedError('User is not authenticated'));
-    }
-
-    private getHTTPSession (context: ExecutionContext) {
-        const request: Request & { session: CachedSession | null, authToken: string} = context.switchToHttp().getRequest();
-        const cookie = request.cookies[AUTHORIZATION_COOKIE];
-        const tokenQuery = request.query.token as string | undefined;
-        const authorizationHeader = request.headers.authorization;
-        const authorization = cookie ?? tokenQuery ?? authorizationHeader ?? '';
-        const sessionToken = authorization.replace('Bearer', '').trim();
-
-        return TaskEither
-            .fromNullable(sessionToken)
-            .chain((token) => this.retrieveSession(token))
-            .ioSync((session) => {
-                request.session = session;
-                request.authToken = sessionToken;
-            })
-            .map((session) => session.user);
-    }
-
-    private getSocketsSession (context: Context) {
-        return TaskEither
-            .fromNullable(context.connection?.cookies[AUTHORIZATION_COOKIE] ?? context.user?.assigns.token ?? null)
-            .ioSync((token) => context.addData(SESSION_COOKIE_NAME, token))
-            .chain((token) => this.retrieveSession(token))
-            .ioSync((session) => context.addData(SESSION_CONTEXT_KEY, session))
-            .map((session) => session.user);
     }
 
     private writeHttpCookie (res: Response, token: string) {

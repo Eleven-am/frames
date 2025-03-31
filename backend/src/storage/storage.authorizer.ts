@@ -6,11 +6,11 @@ import {
     RuleBuilder,
     Action,
     AppAbilityType,
-    Permission,
+    Permission, AuthorizationContext,
 } from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext, Inject } from '@nestjs/common';
-import { Role, User } from '@prisma/client';
+import { Inject } from '@nestjs/common';
+import {CloudStorage, Role, User} from '@prisma/client';
 
 import { ADMIN_EMAIL_SYMBOL } from './storage.constants';
 import { PrismaService } from '../prisma/prisma.service';
@@ -40,8 +40,8 @@ export class StorageAuthorizer implements WillAuthorize {
         can(Action.Delete, 'CloudStorage', { userId: user.id });
     }
 
-    checkHttpAction (ability: AppAbilityType, rules: Permission[], context: ExecutionContext): TaskEither<boolean> {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]): TaskEither<boolean> {
+        const request = context.getRequest<{ storage: CloudStorage }>();
         const storageId = request.params.storageId;
         const storageRules = rules.filter((rule) => rule.resource === 'CloudStorage');
 
