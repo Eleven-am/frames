@@ -42,7 +42,7 @@ export class ScannerService implements OnModuleInit {
     ) {}
 
     onModuleInit () {
-       // return this.requestServerScan().toPromise();
+       return this.requestServerScan().toPromise();
     }
 
     requestServerScan () {
