@@ -6,15 +6,13 @@ import {
     RuleBuilder,
     Action,
     AppAbilityType,
-    Permission,
+    Permission, AuthorizationContext,
 } from '@eleven-am/authorizer';
 import { TaskEither, createForbiddenError } from '@eleven-am/fp';
-import { Context } from '@eleven-am/pondsocket-nest';
-import { ExecutionContext } from '@nestjs/common';
 import { User, AccessPolicy } from '@prisma/client';
 
 import { ROOM_DATA_KEY } from './rooms.constants';
-import { RoomAssigns, RoomData } from './rooms.contracts';
+import { RoomData } from './rooms.contracts';
 import { MediaAuthorizer } from '../media/media.authorizer';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -56,25 +54,8 @@ export class RoomsAuthorizer implements WillAuthorize {
         });
     }
 
-    checkHttpAction (ability: AppAbilityType, rules: Permission[], context: ExecutionContext): TaskEither<boolean> {
-        const request = context.switchToHttp().getRequest();
-        const roomRules = rules.filter((rule) => rule.resource === 'Room');
-        const [leastPermissive] = sortActions(roomRules.map((rule) => rule.action));
-        const roomId = request.params.roomId;
-
-        if (roomId === undefined && (leastPermissive === undefined || leastPermissive === Action.Create)) {
-            return TaskEither.of(true);
-        }
-
-        return this.validateRoom(ability, roomId, leastPermissive)
-            .ioSync((room) => {
-                request.room = room;
-            })
-            .map(() => true);
-    }
-
-    checkSocketAction (ability: AppAbilityType, rules: Permission[], context: Context<'/:roomId', unknown, RoomAssigns>): TaskEither<boolean> {
-        const roomId = context.event?.params?.roomId ?? context.user?.assigns.roomId ?? null;
+    authorize(context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]) {
+        const roomId = context.isHttp ? context.getRequest().params.roomId : context.getSocketContext<'/:roomId'>().event?.params?.roomId ?? context.getSocketContext().user?.assigns.roomId ?? null;
         const roomRules = rules.filter((rule) => rule.resource === 'Room');
         const [leastPermissive] = sortActions(roomRules.map((rule) => rule.action));
 

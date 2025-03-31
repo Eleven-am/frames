@@ -6,10 +6,9 @@ import {
     Action,
     AppAbilityType,
     Permission,
-    sortActions,
+    sortActions, AuthorizationContext,
 } from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
 import { AccessPolicy, Episode, Media, Role, User } from '@prisma/client';
 import { Request } from 'express';
 
@@ -187,8 +186,8 @@ export class MediaAuthorizer implements WillAuthorize {
         can(Action.Delete, 'Media', MediaAuthorizer.getQuery(user, AccessPolicy.DELETE));
     }
 
-    checkHttpAction (ability: AppAbilityType, rules: Permission[], context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]) {
+        const request = context.getRequest<{ media: Media, episode: Episode }>();
         const mediaId = request.params.mediaId;
         const episodeId = request.params.episodeId;
         const mediaRules = rules.filter((rule) => rule.resource === 'Media');

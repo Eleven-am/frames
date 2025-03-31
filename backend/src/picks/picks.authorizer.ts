@@ -1,8 +1,15 @@
 import { accessibleBy } from '@casl/prisma';
-import { WillAuthorize, Authorizer, RuleBuilder, Action, AppAbilityType, Permission } from '@eleven-am/authorizer';
+import {
+    WillAuthorize,
+    Authorizer,
+    RuleBuilder,
+    Action,
+    AppAbilityType,
+    Permission,
+    AuthorizationContext
+} from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
-import { User, Role, AccessPolicy } from '@prisma/client';
+import { User, Role, AccessPolicy, PickCategory } from '@prisma/client';
 
 import { MediaAuthorizer } from '../media/media.authorizer';
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,8 +37,8 @@ export class PicksAuthorizer implements WillAuthorize {
         }
     }
 
-    checkHttpAction (ability: AppAbilityType, _rules: Permission[], context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, ability: AppAbilityType, _rules: Permission[]) {
+        const request = context.getRequest<{ pickCategory: PickCategory }>();
         const categoryId = request.params.categoryId;
 
         if (categoryId === undefined) {

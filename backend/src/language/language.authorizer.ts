@@ -1,9 +1,8 @@
-import { WillAuthorize, Authorizer, AppAbilityType, Permission } from '@eleven-am/authorizer';
+import {WillAuthorize, Authorizer, AppAbilityType, Permission, AuthorizationContext} from '@eleven-am/authorizer';
 import { TaskEither, createNotFoundError } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
 
 import { LanguageService } from './language.service';
-
+import { LanguageReturn } from "./language.types";
 
 @Authorizer()
 export class LanguageAuthorizer implements WillAuthorize {
@@ -11,8 +10,8 @@ export class LanguageAuthorizer implements WillAuthorize {
 
     forUser () {}
 
-    checkHttpAction (_: AppAbilityType, __: Permission[], context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, _: AppAbilityType, __: Permission[]) {
+        const request = context.getRequest<{ headerLang: LanguageReturn, lang: LanguageReturn }>();
         const language = request.params.language;
         const headerLanguage = request.headers['accept-language'] || '';
 

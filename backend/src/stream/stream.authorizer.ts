@@ -1,7 +1,14 @@
 import { subject } from '@casl/ability';
-import { WillAuthorize, Authorizer, RuleBuilder, Action, AppAbilityType, Permission } from '@eleven-am/authorizer';
+import {
+    WillAuthorize,
+    Authorizer,
+    RuleBuilder,
+    Action,
+    AppAbilityType,
+    Permission,
+    AuthorizationContext
+} from '@eleven-am/authorizer';
 import { TaskEither, createForbiddenError } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
 import { User } from '@prisma/client';
 
 import { StreamService } from './stream.service';
@@ -25,8 +32,8 @@ export class StreamAuthorizer implements WillAuthorize {
         });
     }
 
-    checkHttpAction (ability: AppAbilityType, _: Permission[], context: ExecutionContext) {
-        const request = context.switchToHttp().getRequest();
+    authorize (context: AuthorizationContext, ability: AppAbilityType, _: Permission[]) {
+        const request = context.getRequest();
         const streamId = request.params.streamId;
 
         if (streamId === undefined) {

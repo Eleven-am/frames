@@ -29,7 +29,7 @@ export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
     }
 
     onModuleInit () {
-       /* return TaskEither
+        return TaskEither
             .tryCatch(
                 () => this.prismaService.cloudStorage.findMany({
                     where: {
@@ -56,7 +56,7 @@ export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
             .map(() => ({
                 message: 'Storage watcher started',
             }))
-            .toPromise();*/
+            .toPromise();
     }
 
     onModuleDestroy () {

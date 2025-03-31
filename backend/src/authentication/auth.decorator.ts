@@ -3,7 +3,6 @@ import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { Request } from 'express';
 import * as useragent from 'express-useragent';
 
-
 import { WEB_AUTHN_CACHE_KEY } from './auth.constants';
 import { EmailResponseSchema } from './auth.contracts';
 import { getHTTPCurrentData } from '../utils/helper.fp';

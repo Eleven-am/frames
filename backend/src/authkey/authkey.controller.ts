@@ -1,13 +1,11 @@
 import { CanPerform, Action, AppAbilityType, CurrentAbility } from '@eleven-am/authorizer';
-import { Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthKey } from '@prisma/client';
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CurrentSession } from '../authorisation/auth.decorators';
 import { CachedSession } from '../session/session.contracts';
 import { PaginateArgs } from '../utils/utils.contracts';
 
 import { AuthKeyEntitySchema, PageResponseAuthKeySchema } from './authkey.contracts';
-import { CurrentAuthKey } from './authkey.decorators';
 import { AuthKeyService } from './authkey.service';
 
 
@@ -59,7 +57,12 @@ export class AuthKeyController {
         summary: 'Get an auth key by key',
         description: 'Get an auth key by key, returns an authKey only if it is not revoked',
     })
-    findByAuthKey (@CurrentAuthKey() authKey: AuthKey) {
-        return authKey;
+    @ApiParam({
+        name: 'authKey',
+        type: String,
+        description: 'The auth key to use for the download',
+    })
+    findByAuthKey (@Param('authKey') authKey: string) {
+        return this.authKeyService.findByAuthKey(authKey)
     }
 }

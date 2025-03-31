@@ -6,10 +6,9 @@ import {
     Action,
     AppAbilityType,
     Permission,
-    sortActions,
+    sortActions, AuthorizationContext,
 } from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
 import { AccessPolicy, User, Video } from '@prisma/client';
 import { Request } from 'express';
 
@@ -64,9 +63,9 @@ export class PlaybackAuthorizer implements WillAuthorize {
         });
     }
 
-    checkHttpAction (ability: AppAbilityType, rules: Permission[], context: ExecutionContext) {
+    authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]) {
         const playbackRules = rules.filter((rule) => rule.resource === 'View');
-        const request = context.switchToHttp().getRequest();
+        const request = context.getRequest<{ playback: Playback, video: Video }>();
         const playbackId = request.params.playbackId;
         const videoId = request.params.videoId;
 
