@@ -97,7 +97,7 @@ services:
       - redis
 
   postgres:
-    image: postgres:14
+    image: pgvector/pgvector:pg14
     environment:
       - POSTGRES_USER=frames
       - POSTGRES_PASSWORD=frames_password
