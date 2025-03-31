@@ -38,11 +38,6 @@ export class AuthKeyAuthorizer implements WillAuthorize {
         const authKey = request.params.authKey;
         const authKeyRules = rules.filter((rule) => rule.resource === 'AuthKey');
 
-        console.log({
-            authKey,
-            authKeyRules,
-        })
-
         if (
             (
                 (!authKeyRules.length) ||
@@ -52,8 +47,6 @@ export class AuthKeyAuthorizer implements WillAuthorize {
         ) {
             return TaskEither.of(true);
         }
-
-        console.log('authKeyRules', authKeyRules);
 
         return this.authKeyService.findByAuthKey(authKey)
             .map((authKey) => {
