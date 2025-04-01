@@ -449,8 +449,9 @@ export class AuthController {
     getCurrentUser (
         @CurrentToken.HTTP() token: string,
         @CurrentSession.HTTP() session: CachedSession,
+        @Res({ passthrough: true }) response: Response,
     ) {
-        return this.authService.getCurrentUser(token, session);
+        return this.authService.getCurrentUser(token, session, response);
     }
 
     @Get(':provider/authenticate')

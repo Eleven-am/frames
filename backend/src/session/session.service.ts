@@ -70,7 +70,7 @@ export class SessionService {
      * @param sessionId - The session id to remove
      * @param res - The response object
      */
-    removeSession (userId: string, sessionId: string, res?: Response) {
+    removeSession (userId: string, sessionId: string, res: Response) {
         return TaskEither
             .tryCatch(
                 () => this.prisma.session.delete({
@@ -155,15 +155,16 @@ export class SessionService {
     /**
      * @desc Get the session
      * @param session - The session to get
+     * @param res - The response object
      */
-    getSession (session: CachedSession) {
+    getSession (session: CachedSession, res: Response) {
         const deleteGuestSession = (session: CachedSession) => TaskEither
             .of(session)
             .filter(
                 (session) => session.user.role === Role.GUEST,
                 () => createUnauthorizedError('Session not found'),
             )
-            .chain(() => this.removeSession(session.userId, session.id));
+            .chain(() => this.removeSession(session.userId, session.id, res))
 
         return TaskEither
             .of(session)
@@ -238,8 +239,8 @@ export class SessionService {
         });
     }
 
-    private clearHttpCookie (res?: Response) {
-        res?.clearCookie(AUTHORIZATION_COOKIE, {
+    private clearHttpCookie (res: Response) {
+        res.clearCookie(AUTHORIZATION_COOKIE, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
