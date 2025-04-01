@@ -111,8 +111,8 @@ services:
       - redis_data:/data
 
 volumes:
-  postgres_data:
-  redis_data:
+  postgres_data: {}
+  redis_data: {}
 ```
 
 Save this as `docker-compose.yml` and run:
