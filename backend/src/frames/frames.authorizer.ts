@@ -9,7 +9,7 @@ import {
     AuthorizationContext
 } from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { User, AccessPolicy, Frame } from '@prisma/client';
+import { User, AccessPolicy } from '@prisma/client';
 
 import { MediaAuthorizer } from '../media/media.authorizer';
 import { PrismaService } from '../prisma/prisma.service';
@@ -50,7 +50,11 @@ export class FramesAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, ability: AppAbilityType, _rules: Permission[]) {
-        const request = context.getRequest<{ frame: Frame }>();
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
+        const request = context.getRequest();
         const cypher = request.params.cypher;
 
         if (cypher === undefined) {

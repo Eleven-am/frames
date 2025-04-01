@@ -2,8 +2,6 @@ import {WillAuthorize, Authorizer, AppAbilityType, Permission, AuthorizationCont
 import { TaskEither, createNotFoundError } from '@eleven-am/fp';
 
 import { LanguageService } from './language.service';
-import { LanguageReturn } from "./language.types";
-
 @Authorizer()
 export class LanguageAuthorizer implements WillAuthorize {
     constructor (private readonly languageService: LanguageService) {}
@@ -11,7 +9,11 @@ export class LanguageAuthorizer implements WillAuthorize {
     forUser () {}
 
     authorize (context: AuthorizationContext, _: AppAbilityType, __: Permission[]) {
-        const request = context.getRequest<{ headerLang: LanguageReturn, lang: LanguageReturn }>();
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
+        const request = context.getRequest();
         const language = request.params.language;
         const headerLanguage = request.headers['accept-language'] || '';
 

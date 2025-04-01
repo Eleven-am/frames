@@ -33,6 +33,10 @@ export class StreamAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, ability: AppAbilityType, _: Permission[]) {
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
         const request = context.getRequest();
         const streamId = request.params.streamId;
 

@@ -64,6 +64,10 @@ export class PlaybackAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]) {
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
         const playbackRules = rules.filter((rule) => rule.resource === 'View');
         const request = context.getRequest<{ playback: Playback, video: Video }>();
         const playbackId = request.params.playbackId;

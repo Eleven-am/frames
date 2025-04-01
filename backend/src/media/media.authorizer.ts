@@ -187,6 +187,10 @@ export class MediaAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]) {
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
         const request = context.getRequest<{ media: Media, episode: Episode }>();
         const mediaId = request.params.mediaId;
         const episodeId = request.params.episodeId;

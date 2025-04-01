@@ -9,7 +9,7 @@ import {
     AuthorizationContext
 } from '@eleven-am/authorizer';
 import { TaskEither, createNotFoundError } from '@eleven-am/fp';
-import { User, Role, AccessPolicy, Download } from '@prisma/client';
+import { User, Role, AccessPolicy } from '@prisma/client';
 import { MediaAuthorizer } from '../media/media.authorizer';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -68,7 +68,11 @@ export class DownloadsAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, ability: AppAbilityType, _rules: Permission[]) {
-        const request = context.getRequest<{ download: Download }>();
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
+        const request = context.getRequest();
         const downloadId = request.params.downloadId;
 
         if (downloadId === undefined) {

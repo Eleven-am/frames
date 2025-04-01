@@ -6,10 +6,9 @@ import {
     sortActions,
     Action,
     Permission,
-    AppAbilityType,
+    AppAbilityType, AuthorizationContext,
 } from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
-import { ExecutionContext } from '@nestjs/common';
 import { User, AccessPolicy } from '@prisma/client';
 
 import { MediaAuthorizer } from '../media/media.authorizer';
@@ -45,9 +44,13 @@ export class SubtitlesAuthorizer implements WillAuthorize {
         });
     }
 
-    checkHttpAction (ability: AppAbilityType, rules: Permission[], context: ExecutionContext) {
+    authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]) {
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
+        const request = context.getRequest();
         const subtitleRules = rules.filter((rule) => rule.resource === 'Subtitle');
-        const request = context.switchToHttp().getRequest();
         const subtitleId = request.params.subtitleId;
 
         if (subtitleId === undefined) {

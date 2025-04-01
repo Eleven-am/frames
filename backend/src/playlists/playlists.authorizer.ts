@@ -215,6 +215,10 @@ export class PlaylistsAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]): TaskEither<boolean> {
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
         const request = context.getRequest<{ playlist: Playlist, playlistVideo: PlaylistVideo }>();
         const playlistId = request.params.playlistId;
         const playlistVideoId = request.params.playlistVideoId;

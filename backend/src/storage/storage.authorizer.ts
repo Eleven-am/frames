@@ -10,7 +10,7 @@ import {
 } from '@eleven-am/authorizer';
 import { TaskEither } from '@eleven-am/fp';
 import { Inject } from '@nestjs/common';
-import {CloudStorage, Role, User} from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 import { ADMIN_EMAIL_SYMBOL } from './storage.constants';
 import { PrismaService } from '../prisma/prisma.service';
@@ -41,7 +41,11 @@ export class StorageAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, ability: AppAbilityType, rules: Permission[]): TaskEither<boolean> {
-        const request = context.getRequest<{ storage: CloudStorage }>();
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
+        const request = context.getRequest();
         const storageId = request.params.storageId;
         const storageRules = rules.filter((rule) => rule.resource === 'CloudStorage');
 

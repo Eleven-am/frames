@@ -34,6 +34,10 @@ export class AuthKeyAuthorizer implements WillAuthorize {
     }
 
     authorize (context: AuthorizationContext, _ability: AppAbilityType, rules: Permission[]) {
+        if (context.isSocket) {
+            return TaskEither.of(true);
+        }
+
         const request = context.getRequest();
         const authKey = request.params.authKey;
         const authKeyRules = rules.filter((rule) => rule.resource === 'AuthKey');
