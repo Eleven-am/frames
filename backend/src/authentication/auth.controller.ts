@@ -35,7 +35,7 @@ import {
     PublicKeyCredentialRequestOptionsJSONSchema,
     EmailResponseSchema,
 } from './auth.contracts';
-import { ApiEmailResponse, ServerAddress, UserAgent, HostAddress, PassKeySession } from './auth.decorator';
+import {ApiEmailResponse, ServerAddress, UserAgent, HostAddress, PassKeySession, IsSecure} from './auth.decorator';
 import { AuthService } from './auth.service';
 
 
@@ -67,11 +67,12 @@ export class AuthController {
     login (
         @Ip() ip: string,
         @UserAgent() agent: Details,
+        @IsSecure() isSecure: boolean,
         @Body() loginParams: LoginParams,
         @ServerAddress() endpoint: string,
         @Res({ passthrough: true }) response: Response,
     ) {
-        return this.authService.login(ip, agent, loginParams, endpoint, response);
+        return this.authService.login(ip, agent, loginParams, endpoint, response, isSecure);
     }
 
     @Post('register')
@@ -219,10 +220,11 @@ export class AuthController {
     resetPasswordConfirm (
         @Ip() ip: string,
         @UserAgent() agent: Details,
+        @IsSecure() isSecure: boolean,
         @Res({ passthrough: true }) response: Response,
         @Body() resetPasswordParams: ResetPasswordParams,
     ) {
-        return this.authService.resetPasswordConfirm(ip, agent, response, resetPasswordParams);
+        return this.authService.resetPasswordConfirm(ip, agent, response, resetPasswordParams, isSecure);
     }
 
     @Get('create-guest-session')
@@ -237,9 +239,10 @@ export class AuthController {
     createGuestSession (
         @Ip() ip: string,
         @UserAgent() agent: Details,
+        @IsSecure() isSecure: boolean,
         @Res({ passthrough: true }) response: Response,
     ) {
-        return this.authService.createGuestSession(agent, response, ip);
+        return this.authService.createGuestSession(agent, response, ip, isSecure);
     }
 
     @Get('webauthn/enabled')
@@ -342,6 +345,7 @@ export class AuthController {
         @Ip() ip: string,
         @UserAgent() agent: Details,
         @HostAddress() host: string,
+        @IsSecure() isSecure: boolean,
         @ServerAddress() endpoint: string,
         @PassKeySession() passkey: PassKeyData,
         @Body() body: RegistrationResponseValidator,
@@ -355,6 +359,7 @@ export class AuthController {
             endpoint,
             host,
             response,
+            isSecure,
         );
     }
 
@@ -396,6 +401,7 @@ export class AuthController {
         @Ip() ip: string,
         @UserAgent() agent: Details,
         @HostAddress() host: string,
+        @IsSecure() isSecure: boolean,
         @ServerAddress() endpoint: string,
         @PassKeySession() passkey: PassKeyData,
         @Body() body: AuthenticationResponseValidator,
@@ -409,6 +415,7 @@ export class AuthController {
             ip,
             agent,
             response,
+            isSecure,
         );
     }
 
@@ -472,12 +479,13 @@ export class AuthController {
     @ApiUnauthorizedException('Unauthorized')
     getOauthUrlCallback (
         @Param() params: OauthParams,
+        @IsSecure() isSecure: boolean,
         @ServerAddress() endpoint: string,
         @Query() query: OauthCallbackQuery,
         @Res({ passthrough: true }) response: Response,
     ) {
         return this.oauthService.getOauthData(params.provider, query.code, query.state, endpoint)
-            .chain((profile) => this.authService.oauthAuthentication(profile, response));
+            .chain((profile) => this.authService.oauthAuthentication(profile, response, isSecure))
     }
 
     @Post('validate-oauth-account')
@@ -493,9 +501,10 @@ export class AuthController {
     validateOauthAccount (
         @Ip() ip: string,
         @UserAgent() agent: Details,
+        @IsSecure() isSecure: boolean,
         @Body() body: OauthAuthKeyBody,
         @Res({ passthrough: true }) response: Response,
     ) {
-        return this.authService.validateOauthAccount(ip, agent, body, response);
+        return this.authService.validateOauthAccount(ip, agent, body, response, isSecure)
     }
 }

@@ -34,7 +34,7 @@ export class SessionService {
         private readonly languageService: LanguageService,
     ) {}
 
-    createSession (agent: Details, ip: string, res: Response, user: User) {
+    createSession (agent: Details, ip: string, res: Response, user: User, isSecure: boolean) {
         const validDate = user.role === Role.GUEST
             ? new Date(Date.now() + GUEST_VALIDITY)
             : new Date(Date.now() + COOKIE_VALIDITY);
@@ -53,7 +53,7 @@ export class SessionService {
                 'Failed to create session',
             )
             .chain((session) => this.storeDeviceAndLocation(agent, ip, session))
-            .ioSync((session) => this.writeHttpCookie(res, session.token));
+            .ioSync((session) => this.writeHttpCookie(res, session.token, isSecure));
     }
 
     removeSession (userId: string, sessionId: string, res?: Response) {
@@ -197,10 +197,10 @@ export class SessionService {
             .mapError(() => createUnauthorizedError('User is not authenticated'));
     }
 
-    private writeHttpCookie (res: Response, token: string) {
+    private writeHttpCookie (res: Response, token: string, isSecure: boolean) {
         res.cookie(AUTHORIZATION_COOKIE, token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'production' && isSecure,
             sameSite: 'strict',
             maxAge: COOKIE_VALIDITY,
             path: '/',

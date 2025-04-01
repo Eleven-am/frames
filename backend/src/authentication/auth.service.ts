@@ -59,8 +59,9 @@ export class AuthService {
      * @param params - The login parameters
      * @param serverAddress - The server address
      * @param response - The response
+     * @param isSecure - The secure flag checking if the request is secure (https)
      */
-    login (ip: string, agent: Details, params: LoginParams, serverAddress: string, response: Response) {
+    login (ip: string, agent: Details, params: LoginParams, serverAddress: string, response: Response, isSecure: boolean) {
         return this.userService.findByEmail(params.email, false)
             .chain((user) => TaskEither
                 .tryCatch(
@@ -71,7 +72,7 @@ export class AuthService {
                     (isMatch) => isMatch,
                     () => createForbiddenError('Invalid password'),
                 )
-                .chain(() => this.createSessionOrSendEmail(user, ip, agent, response, serverAddress)));
+                .chain(() => this.createSessionOrSendEmail(user, ip, agent, response, serverAddress, isSecure)));
     }
 
     /**
@@ -107,8 +108,9 @@ export class AuthService {
      * @description Register a user with oauth
      * @param params - The oauth response data
      * @param response - The response
+     * @param isSecure - The secure flag checking if the request is secure (https)
      */
-    oauthAuthentication (params: OauthResponseData, response: Response) {
+    oauthAuthentication (params: OauthResponseData, response: Response, isSecure: boolean) {
         const generateHTML = <T extends object>(params: T) => `
             <!DOCTYPE html>
             <html lang="en">
@@ -169,7 +171,7 @@ export class AuthService {
 
         const createSession = (params: OauthResponseData, user: User) => this
             .sessionService
-            .createSession(params.details, params.ip, response, user)
+            .createSession(params.details, params.ip, response, user, isSecure)
             .map((session) => ({
                 session,
                 action: OauthAction.LOGIN,
@@ -218,8 +220,9 @@ export class AuthService {
      * @param agent - The user agent
      * @param params - The oauth account parameters
      * @param response - The response
+     * @param isSecure - The secure flag checking if the request is secure (https)
      */
-    validateOauthAccount (ip: string, agent: Details, params: OauthAuthKeyBody, response: Response) {
+    validateOauthAccount (ip: string, agent: Details, params: OauthAuthKeyBody, response: Response, isSecure: boolean) {
         return this.authKeyService.findByAuthKey(params.authKey)
             .chain(() => this.userService.findByToken(params.token))
             .filter(
@@ -242,7 +245,7 @@ export class AuthService {
                     }),
                     'Failed to update user',
                 ))
-            .chain((user) => this.sessionService.createSession(agent, ip, response, user));
+            .chain((user) => this.sessionService.createSession(agent, ip, response, user, isSecure));
     }
 
     /**
@@ -332,8 +335,9 @@ export class AuthService {
    * @param agent - The user agent
    * @param response - The response
    * @param params - The reset password confirm parameters
+   * @param isSecure - The secure flag checking if the request is secure (https)
    */
-    resetPasswordConfirm (ip: string, agent: Details, response: Response, params: ResetPasswordParams) {
+    resetPasswordConfirm (ip: string, agent: Details, response: Response, params: ResetPasswordParams, isSecure: boolean) {
         return this.userService.findByToken(params.token)
             .chain((user) => TaskEither
                 .tryCatch(
@@ -355,7 +359,7 @@ export class AuthService {
                     }),
                     'Failed to update user',
                 )
-                .chain(() => this.sessionService.createSession(agent, ip, response, user)));
+                .chain(() => this.sessionService.createSession(agent, ip, response, user, isSecure)));
     }
 
     /**
@@ -363,8 +367,9 @@ export class AuthService {
    * @param agent - The user agent
    * @param response - The response
    * @param ip - The ip address
+   * @param isSecure - The secure flag checking if the request is secure (https)
    */
-    createGuestSession (agent: Details, response: Response, ip: string) {
+    createGuestSession (agent: Details, response: Response, ip: string, isSecure: boolean) {
         const username = Date.now()
             .toString(36) + Math.random()
             .toString(36)
@@ -385,7 +390,7 @@ export class AuthService {
                 }),
                 'Failed to create user',
             )
-            .chain((user) => this.sessionService.createSession(agent, ip, response, user));
+            .chain((user) => this.sessionService.createSession(agent, ip, response, user, isSecure));
     }
 
     /**
@@ -540,12 +545,13 @@ export class AuthService {
    * @param ip - The ip address
    * @param agent - The user agent
    * @param response - The response object
+   * @param isSecure - The secure flag checking if the request is secure (https)
    */
     loginWebAuthnConfirm (
         body: AuthenticationResponseJSON,
         passKeyData: PassKeyData, serverAddress: string,
         hostname: string, ip: string, agent: Details,
-        response: Response,
+        response: Response, isSecure: boolean,
     ) {
         return TaskEither
             .tryCatch(
@@ -601,7 +607,7 @@ export class AuthService {
                     'Error retrieving user',
                 ))
             .map((passKey) => passKey.user)
-            .chain((user) => this.createSessionOrSendEmail(user, ip, agent, response, serverAddress));
+            .chain((user) => this.createSessionOrSendEmail(user, ip, agent, response, serverAddress, isSecure));
     }
 
     /**
@@ -661,16 +667,17 @@ export class AuthService {
    * @param serverAddress - The server address
    * @param hostname - The hostname
    * @param response - The response
+   * @param isSecure - The secure flag checking if the request is secure (https)
    */
     createFirstPassKey (
         body: RegistrationResponseJSON,
         passKeyData: PassKeyData, ip: string,
         agent: Details, serverAddress: string,
-        hostname: string, response: Response,
+        hostname: string, response: Response, isSecure: boolean,
     ) {
         return this.userService.findByEmail(passKeyData.email)
             .chain((user) => this.verifyPasskey(body, passKeyData, serverAddress, hostname, user))
-            .chain((user) => this.createSessionOrSendEmail(user, ip, agent, response, serverAddress));
+            .chain((user) => this.createSessionOrSendEmail(user, ip, agent, response, serverAddress, isSecure));
     }
 
     /**
@@ -692,7 +699,7 @@ export class AuthService {
             .map((user) => user.passKeys.length > 0);
     }
 
-    private createSessionOrSendEmail (user: User, ip: string, agent: Details, response: Response, endpoint: string) {
+    private createSessionOrSendEmail (user: User, ip: string, agent: Details, response: Response, endpoint: string, isSecure: boolean) {
         const deviceName = `${agent.browser} ${agent.version}, ${agent.platform} ${agent.os}`;
 
         return TaskEither
@@ -704,7 +711,7 @@ export class AuthService {
             .matchTask([
                 {
                     predicate: (user) => user.confirmedEmail,
-                    run: (user): TaskEither<EmailResponseSchema | SessionSchema> => this.sessionService.createSession(agent, ip, response, user),
+                    run: (user): TaskEither<EmailResponseSchema | SessionSchema> => this.sessionService.createSession(agent, ip, response, user, isSecure),
                 },
                 {
                     predicate: (user) => !user.confirmedEmail,
