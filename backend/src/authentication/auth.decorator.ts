@@ -25,6 +25,14 @@ export const ServerAddress = createParamDecorator(
     },
 );
 
+export const IsSecure = createParamDecorator(
+    (data: unknown, context: ExecutionContext) => {
+        const request: Request = context.switchToHttp().getRequest();
+
+        return request.secure || request.headers['x-forwarded-proto'] === 'https';
+    },
+);
+
 export const HostAddress = getHTTPCurrentData(
     (request: Request) => {
         const address = request.get('host') || request.get('x-forwarded-host');
