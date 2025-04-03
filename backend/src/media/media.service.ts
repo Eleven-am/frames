@@ -846,7 +846,11 @@ export class MediaService {
     playMedia (session: CachedSession, media: Media, ability: AppAbilityType) {
         return TaskEither.of(media)
             .chain((media) => this.recommendationsService.getVideoFromMedia(media, ability))
-            .chain((video) => this.playbackService.getPlaybackSession(video, session, video.percentage));
+            .chain((video) => this.playbackService.getPlaybackSession({
+                video,
+                cachedSession: session,
+                percentage: video.percentage,
+            }));
     }
 
     /**
@@ -880,9 +884,11 @@ export class MediaService {
             )
             .nonNullable('Episode not found')
             .chain((episode) => this.playbackService.getPlaybackSession(
-                episode.video,
-                session,
-                reset ? 0 : episode.video.watched[0]?.percentage ?? 0,
+                {
+                    video: episode.video,
+                    cachedSession: session,
+                    percentage: reset ? 0 : episode.video.watched[0]?.percentage ?? 0,
+                }
             ));
     }
 

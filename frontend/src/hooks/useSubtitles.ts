@@ -43,11 +43,11 @@ const subtitleProvider = new SubtitleProvider();
 const useSubtitleState = subtitleProvider.createStateHook();
 const useSubtitleActions = subtitleProvider.createActionsHook();
 
-export function useFetchSubtitles (availableSubtitles: SubtitleSchema[]) {
+export function useFetchSubtitles (availableSubtitles: SubtitleSchema[], canAccessStream: boolean) {
     const { setLanguage } = useSubtitleActions();
     const language = useSubtitleState((state) => state.language);
     const subtitleId = useMemo(() => availableSubtitles.find((sub) => sub.language === language)?.subtitleId, [availableSubtitles, language]);
-    const { data } = useQuery(watchQueries.cues(subtitleId));
+    const { data } = useQuery(watchQueries.cues(subtitleId, canAccessStream));
 
     const subtitleData = useMemo((): SubtitleData | null => {
         if (!data) {
@@ -71,9 +71,9 @@ export function useFetchSubtitles (availableSubtitles: SubtitleSchema[]) {
     };
 }
 
-export function useSubtitles (availableSubtitles: SubtitleSchema[]) {
+export function useSubtitles (availableSubtitles: SubtitleSchema[], canAccessStream: boolean) {
     const { setSyncTime } = usePlayerUIActions();
-    const { cues, setLanguage, language, subtitleId, offset } = useFetchSubtitles(availableSubtitles);
+    const { cues, setLanguage, language, subtitleId, offset } = useFetchSubtitles(availableSubtitles, canAccessStream);
     const { syncTime, displayControls } = usePlayerUI(({ syncTime, displayControls }) => ({
         syncTime,
         displayControls,
@@ -106,9 +106,9 @@ export function useSubtitles (availableSubtitles: SubtitleSchema[]) {
     }), [paused, subtitle, subtitleId, displayControls, setLanguage, language]);
 }
 
-export function useThumbnails (playbackId: string) {
+export function useThumbnails (playbackId: string, canAccessStream: boolean) {
     const [enableFetch, setEnableFetch] = useState(true);
-    const { data: thumbnails } = useQuery(watchQueries.thumbnails(playbackId, enableFetch));
+    const { data: thumbnails } = useQuery(watchQueries.thumbnails(playbackId, canAccessStream, enableFetch));
 
     useEffect(() => {
         if (thumbnails?.find((thumbnail) => thumbnail.percentage > 0.9)) {

@@ -631,6 +631,8 @@ export interface PlaybackSessionSchema {
   autoPlay: boolean;
   /** The percentage of the playback */
   percentage: number;
+  /** Whether the user is allowed to access the underlying stream */
+  canAccessStream: boolean;
 }
 
 export interface CreateGroupArgs {

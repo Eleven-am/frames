@@ -13,18 +13,18 @@ import { usePlayerUIActions } from '@/providers/watched/playerUI';
 import { videoBridge } from '@/providers/watched/videoBridge';
 import { watchMutations } from '@/queries/watch';
 
-export function usePlayerSettings (availableSubtitles: SubtitleSchema[], playbackId: string) {
+export function usePlayerSettings (availableSubtitles: SubtitleSchema[], playbackId: string, canAccessStream: boolean) {
     const { stop, start } = useTimer();
     const { mutate } = useMutation(watchMutations.updateOffset);
     const { closeSettings, setSyncTime } = usePlayerUIActions();
     const [displayedSubtitle, setDisplayedSubtitle] = useState(false);
     const { stop: stopUpdateOffset, start: startUpdateOffset } = useTimer();
     const { setInform, setAutoPlay, setIncognito } = usePlayerSessionActions();
-    const { subtitle, setLanguage, language, subtitleId } = useSubtitles(availableSubtitles);
     const { settingsOpen, syncTime, incognito, rate, inform, autoPlay } = usePlaybackModalSelector();
+    const { subtitle, setLanguage, language, subtitleId } = useSubtitles(availableSubtitles, canAccessStream);
+    const languages = useMemo(() => availableSubtitles.map((sub) => sub.language), [availableSubtitles]);
     const handleAutoPlayChange = useCallback((autoPlay: boolean) => setAutoPlay(autoPlay), [setAutoPlay]);
     const handleInformChange = useCallback((inform: boolean) => setInform(inform, playbackId), [setInform, playbackId]);
-    const languages = useMemo(() => availableSubtitles.map((sub) => sub.language), [availableSubtitles]);
 
     const manageDisplaySubtitle = useCallback(() => {
         stop();
