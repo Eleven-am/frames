@@ -58,7 +58,7 @@ export class PlaybackService {
 
     getPlaybackSession ({ video, cachedSession, playlistVideo = null, percentage, inform = true, isFrame = false }: GetPlaybackSessionParams) {
         const newPercentage = percentage >= COMPLETED_VIDEO_POSITION ? 0 : percentage;
-        const cannotAccessStream = cachedSession.user.role !== Role.GUEST || isFrame;
+        const canAccessStream = cachedSession.user.role !== Role.GUEST || isFrame;
 
         const performPresenceCheck = (value: PlaybackData) => this.notificationService
             .getMetadata(cachedSession)
@@ -75,14 +75,14 @@ export class PlaybackService {
                 .map(
                     (playbackData): PlaybackSession => ({
                         ...session,
+                        canAccessStream,
                         percentage: newPercentage,
                         playbackId: playbackData.id,
                         inform: playbackData.inform,
-                        canAccessStream: !cannotAccessStream,
                         autoPlay: cachedSession.user.autoplay,
                     }),
                 ))
-            .chain((session) => this.createStreamLink(session, video, cannotAccessStream))
+            .chain((session) => this.createStreamLink(session, video, canAccessStream))
             .ioSync((session) => {
                 const metadata: MetadataSchema = {
                     name: session.name,
