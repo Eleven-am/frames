@@ -37,11 +37,17 @@ RUN npm run build
 FROM node:21-alpine3.19 AS final
 
 # Pass the arguments through to the image as environment variables
-ARG IMAGE_TAG
 ARG IMAGE_NAME
+ARG IMAGE_TIMESTAMP
+ARG IMAGE_PREFIXES
+ARG IMAGE_ARCH
 
 ENV DOCKER_IMAGE_NAME=$IMAGE_NAME
-ENV DOCKER_IMAGE_TAG=$IMAGE_TAG
+ENV DOCKER_IMAGE_TIMESTAMP=$IMAGE_TIMESTAMP
+ENV DOCKER_IMAGE_PREFIXES=$IMAGE_PREFIXES
+ENV DOCKER_IMAGE_ARCH=$IMAGE_ARCH
+
+# Set the environment variable for production
 ENV NODE_ENV=production
 
 # Install only necessary runtime dependencies

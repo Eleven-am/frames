@@ -77,7 +77,9 @@ BASE_ARM_TAG="$IMAGE_NAME:build-$TIMESTAMP-arm"
 echo "Building x86 image..."
 docker buildx build --platform linux/amd64 \
     --build-arg IMAGE_NAME="$IMAGE_NAME" \
-    --build-arg IMAGE_TAG="build-$TIMESTAMP-x86" \
+    --build-arg IMAGE_TIMESTAMP="$TIMESTAMP" \
+    --build-arg IMAGE_PREFIXES="${PREFIXES[*]}" \
+    --build-arg IMAGE_ARCH="x86" \
     -t "$BASE_X86_TAG" \
     --load \
     .
@@ -86,7 +88,9 @@ check_status "Failed to build x86 Docker image"
 echo "Building ARM image..."
 docker buildx build --platform linux/arm64 \
     --build-arg IMAGE_NAME="$IMAGE_NAME" \
-    --build-arg IMAGE_TAG="build-$TIMESTAMP-arm" \
+    --build-arg IMAGE_TIMESTAMP="$TIMESTAMP" \
+    --build-arg IMAGE_PREFIXES="${PREFIXES[*]}" \
+    --build-arg IMAGE_ARCH="arm" \
     -t "$BASE_ARM_TAG" \
     --load \
     .
@@ -130,7 +134,7 @@ for PREFIX in "${PREFIXES[@]}"; do
 
     # Create multi-architecture manifests
     echo "Creating multi-architecture manifest for timestamp tag: $TIMESTAMP_TAG"
-    docker manifest create "$IMAGE_NAME:$TIMESTAMP_TAG" \
+    docker manifest create --amend "$IMAGE_NAME:$TIMESTAMP_TAG" \
         "$IMAGE_NAME:$TIMESTAMP_TAG-x86" \
         "$IMAGE_NAME:$TIMESTAMP_TAG-arm"
     check_status "Failed to create timestamp manifest for $PREFIX"
@@ -139,7 +143,7 @@ for PREFIX in "${PREFIXES[@]}"; do
     check_status "Failed to push timestamp manifest for $PREFIX"
 
     echo "Creating multi-architecture manifest for stable tag: $STABLE_TAG"
-    docker manifest create "$IMAGE_NAME:$STABLE_TAG" \
+    docker manifest create --amend "$IMAGE_NAME:$STABLE_TAG" \
         "$IMAGE_NAME:$STABLE_TAG-x86" \
         "$IMAGE_NAME:$STABLE_TAG-arm"
     check_status "Failed to create stable manifest for $PREFIX"
@@ -166,7 +170,7 @@ if [ "$USE_LATEST" = true ] && [ ${#PREFIXES[@]} -eq 0 -o "${PREFIXES[0]}" != ""
 
     # Create multi-architecture manifest for latest tag
     echo "Creating multi-architecture manifest for latest tag"
-    docker manifest create "$IMAGE_NAME:latest" \
+    docker manifest create --amend "$IMAGE_NAME:latest" \
         "$IMAGE_NAME:latest-x86" \
         "$IMAGE_NAME:latest-arm"
     check_status "Failed to create latest manifest"

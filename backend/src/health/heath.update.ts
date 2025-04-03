@@ -2,18 +2,25 @@ import { Either, TaskEither } from '@eleven-am/fp';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '../http/http.service';
-import { DOCKER_IMAGE_NAME, DOCKER_IMAGE_TAG } from './health.constants';
+import { DOCKER_IMAGE_ARCH, DOCKER_IMAGE_NAME, DOCKER_IMAGE_PREFIXES, DOCKER_IMAGE_TIMESTAMP } from './health.constants';
 import { DockerTag, RepoName, dockerResultsSchema, VersionInfo } from './health.contracts';
 
 @Injectable()
 export class DockerVersionService {
     private static readonly baseUrl = 'https://hub.docker.com/v2/repositories';
     private readonly imageName: string;
-    private readonly currentTag: string;
+    private readonly possibleTags: string[];
+    private readonly prefixes: string[];
 
     constructor (private readonly httpService: HttpService, configService: ConfigService) {
         this.imageName = configService.getOrThrow<string>(DOCKER_IMAGE_NAME);
-        this.currentTag = configService.getOrThrow<string>(DOCKER_IMAGE_TAG);
+        const timestamp = configService.getOrThrow<string>(DOCKER_IMAGE_TIMESTAMP);
+        const arch = configService.getOrThrow<string>(DOCKER_IMAGE_ARCH);
+        const prefixes = configService.getOrThrow<string>(DOCKER_IMAGE_PREFIXES)
+            .split(' ').filter((p) => p.trim() !== '');
+
+        this.prefixes = prefixes.length ? prefixes : ['latest'];
+        this.possibleTags = this.prefixes.map((prefix) => `${prefix}-${timestamp}-${arch}`);
     }
 
     /**
@@ -21,13 +28,14 @@ export class DockerVersionService {
      */
     isUpToDate () {
         const getCurrentTag = (tags: DockerTag[]) => {
-            const tag = tags.find(tag => tag.name === this.currentTag);
+            const latestTag = tags.find((tag) => this.prefixes.includes(tag.name));
+            const currentTag= tags.find((tag) => this.possibleTags.includes(tag.name));
+
             return TaskEither
-                .fromNullable(tag)
-                .map((tag) => ({
-                    currentTag: tag,
-                    latestTag: tags[0],
-                }))
+                .fromBind({
+                    currentTag: TaskEither.fromNullable(currentTag),
+                    latestTag: TaskEither.fromNullable(latestTag),
+                })
         }
 
         return Either
@@ -54,7 +62,7 @@ export class DockerVersionService {
             .sortBy('last_updated', 'desc')
             .chain(getCurrentTag)
             .map(({ currentTag, latestTag }): VersionInfo => ({
-                isLatest: currentTag.name === latestTag.name,
+                isLatest: currentTag.digest === latestTag.digest,
                 latestCreated: latestTag.last_updated,
                 currentVersion: currentTag.name,
                 latestVersion: latestTag.name,
