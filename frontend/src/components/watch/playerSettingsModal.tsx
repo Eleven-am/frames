@@ -14,9 +14,10 @@ import { usePlayerSettings } from '@/hooks/usePlayerSettings';
 interface PlayerSettingsModalProps {
     availableSubtitles: SubtitleSchema[];
     playbackId: string;
+    canAccessStream: boolean;
 }
 
-export function PlayerSettingsModal ({ availableSubtitles, playbackId }: PlayerSettingsModalProps) {
+export function PlayerSettingsModal ({ availableSubtitles, playbackId, canAccessStream }: PlayerSettingsModalProps) {
     const {
         incognito, setIncognito,
         inform, handleInformChange,
@@ -26,7 +27,7 @@ export function PlayerSettingsModal ({ availableSubtitles, playbackId }: PlayerS
         rate, handlePlaybackSpeedChange,
         subtitle, displayedSubtitle, languages,
         activeSubtitle, handleActiveSubtitleChange,
-    } = usePlayerSettings(availableSubtitles, playbackId);
+    } = usePlayerSettings(availableSubtitles, playbackId, canAccessStream);
 
     return (
         <Modal

@@ -88,9 +88,12 @@ export class FramesService {
                 'Failed to get frames',
             )
             .chain((frame) => this.playbackService.getPlaybackSession(
-                frame.view.video,
-                session,
-                frame.percentage,
+                {
+                    video: frame.view.video,
+                    cachedSession: session,
+                    percentage: frame.percentage,
+                    isFrame: true,
+                }
             ));
     }
 

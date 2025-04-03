@@ -84,9 +84,9 @@ export function Listener ({ playbackId }: { playbackId: string }) {
 }
 
 export function Controls ({ session }: { session: PlaybackSessionSchema }) {
-    useFetchSubtitles(session.availableSubtitles);
+    useFetchSubtitles(session.availableSubtitles, session.canAccessStream);
     const { showControls } = usePlayerUIActions();
-    const thumbnails = useThumbnails(session.playbackId);
+    const thumbnails = useThumbnails(session.playbackId, session.canAccessStream);
     const shrunk = useCountdown((state) => Boolean(state));
     const handleMouseMove = useCallback(() => showControls(), [showControls]);
     const displayControls = usePlayerUI((state) => state.displayControls || state.playbackBlocked);
@@ -99,7 +99,10 @@ export function Controls ({ session }: { session: PlaybackSessionSchema }) {
         <>
             <Casting name={session.name} backdrop={session.backdrop} />
             <Buffering />
-            <Subtitles availableSubtitles={session.availableSubtitles} />
+            <Subtitles
+                availableSubtitles={session.availableSubtitles}
+                canAccessStream={session.canAccessStream}
+            />
             <MediaInformation
                 name={session.name}
                 poster={session.poster}
@@ -138,6 +141,7 @@ export function Controls ({ session }: { session: PlaybackSessionSchema }) {
             <PlayerSettingsModal
                 availableSubtitles={session.availableSubtitles}
                 playbackId={session.playbackId}
+                canAccessStream={session.canAccessStream}
             />
         </>
     );

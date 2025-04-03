@@ -609,24 +609,27 @@ export class PlaylistsService {
                 {
                     predicate: ({ playlist }) => playlist.generator === Generator.FRAMES,
                     run: (playlistVideo) => this.playbackService.getPlaybackSession(
-                        playlistVideo.video,
-                        session,
-                        0,
-                        false,
-                        playlistVideo,
+                        {
+                            video: playlistVideo.video,
+                            cachedSession: session,
+                            percentage: 0,
+                            inform: false,
+                            playlistVideo,
+                        }
                     ),
                 },
                 {
                     predicate: ({ playlist }) => playlist.generator === Generator.USER,
                     run: (playlistVideo) => this.playbackService.getPlaybackSession(
-                        playlistVideo.video,
-                        session,
-                        playlistVideo.video
-                            .watched[0]?.percentage < COMPLETED_VIDEO_POSITION
-                            ? playlistVideo.video.watched[0]?.percentage ?? 0
-                            : 0,
-                        true,
-                        playlistVideo,
+                        {
+                            inform: true,
+                            playlistVideo,
+                            video: playlistVideo.video,
+                            cachedSession: session,
+                            percentage: playlistVideo.video
+                                .watched[0]?.percentage < COMPLETED_VIDEO_POSITION
+                                ? playlistVideo.video.watched[0]?.percentage ?? 0 : 0,
+                        }
                     ),
                 },
             ]);

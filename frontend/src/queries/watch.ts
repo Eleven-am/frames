@@ -75,10 +75,10 @@ export async function getSession (client: Api<never>, search: WatchSearch) {
 }
 
 export const watchQueries = createQueries('watch', {
-    thumbnails: (playbackId: string, reFetch) => ({
+    thumbnails: (playbackId: string, canAccessStream: boolean, reFetch) => ({
         initialData: [],
-        queryKey: [playbackId],
-        enabled: Boolean(playbackId),
+        queryKey: [playbackId, canAccessStream],
+        enabled: Boolean(playbackId) && canAccessStream,
         refetchIntervalInBackground: reFetch,
         refetchInterval: reFetch ? 1000 * 30 : false,
         queryFn: (api) => api.streamControllerGetThumbnails(playbackId),
@@ -88,10 +88,10 @@ export const watchQueries = createQueries('watch', {
         enabled: Boolean(playbackId),
         queryFn: (api) => api.playbackControllerGetUpNext(playbackId),
     }),
-    cues: (subtitleId) => ({
-        queryKey: [subtitleId],
-        enabled: Boolean(subtitleId),
-        queryFn: (api) => api.subtitlesControllerGetSubtitles(subtitleId),
+    cues: (subtitleId: string | undefined, canAccessStream: boolean) => ({
+        queryKey: [subtitleId, canAccessStream],
+        enabled: Boolean(subtitleId) && canAccessStream,
+        queryFn: (api) => api.subtitlesControllerGetSubtitles(subtitleId ?? ''),
     }),
     roomData: (roomId: string) => ({
         queryKey: [roomId],

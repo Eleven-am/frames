@@ -6,8 +6,8 @@ import { useSubtitles } from '@/hooks/useSubtitles';
 import { tw } from '@/utils/style';
 
 
-export function Subtitles ({ availableSubtitles }: { availableSubtitles: SubtitleSchema[] }) {
-    const { moveUp, subtitle } = useSubtitles(availableSubtitles);
+export function Subtitles ({ availableSubtitles, canAccessStream }: { availableSubtitles: SubtitleSchema[], canAccessStream: boolean }) {
+    const { moveUp, subtitle } = useSubtitles(availableSubtitles, canAccessStream);
 
     if (!subtitle) {
         return null;

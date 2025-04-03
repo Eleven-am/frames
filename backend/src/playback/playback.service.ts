@@ -1,14 +1,24 @@
-import * as process from 'node:process';
-
 import { accessibleBy } from '@casl/prisma';
 import { Action, AppAbilityType } from '@eleven-am/authorizer';
 import { createBadRequestError, sortBy, TaskEither } from '@eleven-am/fp';
 import { Injectable } from '@nestjs/common';
-import { CloudStorage, Episode, Media, MediaType, PlaylistVideo, Subtitle, User, Video, Watched } from '@prisma/client';
+import {
+    CloudStorage,
+    Episode,
+    Media,
+    MediaType,
+    PlaylistVideo,
+    Role,
+    Subtitle,
+    User,
+    Video,
+    Watched
+} from '@prisma/client';
 import { Queue } from 'bullmq';
 
 import { COMPLETED_VIDEO_POSITION, PLAYBACK_PREFIX_KEY } from './playback.constants';
 import {
+    GetPlaybackSessionParams,
     Playback,
     PlaybackData,
     PlaybackSession,
@@ -46,8 +56,9 @@ export class PlaybackService {
         private readonly recommendationsService: RecommendationsService,
     ) {}
 
-    getPlaybackSession (video: PlaybackVideo, cachedSession: CachedSession, percentage: number, inform: boolean = true, playlistVideo: PlaylistVideo | null = null) {
+    getPlaybackSession ({ video, cachedSession, playlistVideo = null, percentage, inform = true, isFrame = false }: GetPlaybackSessionParams) {
         const newPercentage = percentage >= COMPLETED_VIDEO_POSITION ? 0 : percentage;
+        const cannotAccessStream = cachedSession.user.role !== Role.GUEST || isFrame;
 
         const performPresenceCheck = (value: PlaybackData) => this.notificationService
             .getMetadata(cachedSession)
@@ -67,10 +78,11 @@ export class PlaybackService {
                         percentage: newPercentage,
                         playbackId: playbackData.id,
                         inform: playbackData.inform,
+                        canAccessStream: !cannotAccessStream,
                         autoPlay: cachedSession.user.autoplay,
                     }),
                 ))
-            .chain((session) => this.createStreamLink(session, video))
+            .chain((session) => this.createStreamLink(session, video, cannotAccessStream))
             .ioSync((session) => {
                 const metadata: MetadataSchema = {
                     name: session.name,
@@ -272,11 +284,13 @@ export class PlaybackService {
             )
             .nonNullable('Playback session not found')
             .chain((view) => this.getPlaybackSession(
-                view.video,
-                cachedSession,
-                view.video.watched[0]?.percentage ?? 0,
-                view.inform,
-                view.playlist,
+                {
+                    cachedSession,
+                    video: view.video,
+                    playlistVideo: view.playlist,
+                    percentage: view.video.watched[0]?.percentage ?? 0,
+                    inform: view.inform,
+                }
             ));
     }
 
@@ -299,10 +313,12 @@ export class PlaybackService {
             )
             .nonNullable('Playback session not found')
             .chain((video) => this.getPlaybackSession(
-                video,
-                cachedSession,
-                video.watched[0]?.percentage ?? 0,
-                cachedSession.user.inform,
+                {
+                    video,
+                    cachedSession,
+                    percentage: video.watched[0]?.percentage ?? 0,
+                    inform: cachedSession.user.inform,
+                }
             ));
     }
 
@@ -628,20 +644,31 @@ export class PlaybackService {
             );
     }
 
-    private createStreamLink (session: PlaybackSession, video: Video) {
-        if (process.env.NODE_ENV === 'demo') {
-            return TaskEither
-                .of({
-                    ...session,
-                    source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-                });
-        }
+    private createStreamLink (session: PlaybackSession, video: Video, authorised: boolean) {
+        const cannotAccessStream = TaskEither
+            .of({
+                ...session,
+                source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            });
 
-        return this.streamService.buildStreamUrl(session.playbackId, video)
+        const canAccessStream = this.streamService.buildStreamUrl(session.playbackId, video)
             .map((source): PlaybackSession => ({
                 ...session,
                 source,
             }));
+
+        return TaskEither
+            .of(authorised)
+            .matchTask([
+                {
+                    predicate: (value) => value,
+                    run: () => canAccessStream,
+                },
+                {
+                    predicate: (value) => !value,
+                    run: () => cannotAccessStream,
+                },
+            ]);
     }
 
     private sendToStreamQueue (video: Video) {

@@ -34,6 +34,14 @@ export class SessionService {
         private readonly languageService: LanguageService,
     ) {}
 
+    /**
+     * @desc Create a session
+     * @param agent - The user agent of the client
+     * @param ip - The ip address of the client
+     * @param res - The response object
+     * @param user - The user to create the session for
+     * @param isSecure - Whether the session is secure or not
+     */
     createSession (agent: Details, ip: string, res: Response, user: User, isSecure: boolean) {
         const validDate = user.role === Role.GUEST
             ? new Date(Date.now() + GUEST_VALIDITY)
@@ -56,7 +64,13 @@ export class SessionService {
             .ioSync((session) => this.writeHttpCookie(res, session.token, isSecure));
     }
 
-    removeSession (userId: string, sessionId: string, res?: Response) {
+    /**
+     * @desc Remove a session
+     * @param userId - The user id to remove the session for
+     * @param sessionId - The session id to remove
+     * @param res - The response object
+     */
+    removeSession (userId: string, sessionId: string, res: Response) {
         return TaskEither
             .tryCatch(
                 () => this.prisma.session.delete({
@@ -71,6 +85,11 @@ export class SessionService {
             .ioSync(() => this.clearHttpCookie(res));
     }
 
+    /**
+     * @desc Remove all sessions for a user
+     * @param userId - The user id to remove the sessions for
+     * @param sessionId - The session id to remove
+     */
     removeOtherSessions (userId: string, sessionId: string) {
         return this.getSessionCachedKeys(userId)
             .filterItems((key) => key !== `${SESSION_CACHE_PREFIX}:${userId}:${sessionId}`)
@@ -87,6 +106,10 @@ export class SessionService {
                 ));
     }
 
+    /**
+     * @desc Remove all sessions for a user
+     * @param userId - The user id to remove the sessions for
+     */
     removeUserSessions (userId: string) {
         return this.getSessionCachedKeys(userId)
             .chain((keys) => this.cacheStore.del(keys))
@@ -99,6 +122,10 @@ export class SessionService {
                 ));
     }
 
+    /**
+     * @desc Update the session
+     * @param user - The user to update the session for
+     */
     updateSession (user: User) {
         const cookie = (session: Session & { user: User }) => Either
             .tryCatch(() => this.languageService.getLanguage(session.user.defaultLang), 'Language not found')
@@ -125,14 +152,19 @@ export class SessionService {
             .nonNullable('Session not found');
     }
 
-    getSession (session: CachedSession) {
+    /**
+     * @desc Get the session
+     * @param session - The session to get
+     * @param res - The response object
+     */
+    getSession (session: CachedSession, res: Response) {
         const deleteGuestSession = (session: CachedSession) => TaskEither
             .of(session)
             .filter(
                 (session) => session.user.role === Role.GUEST,
                 () => createUnauthorizedError('Session not found'),
             )
-            .chain(() => this.removeSession(session.userId, session.id));
+            .chain(() => this.removeSession(session.userId, session.id, res))
 
         return TaskEither
             .of(session)
@@ -207,8 +239,8 @@ export class SessionService {
         });
     }
 
-    private clearHttpCookie (res?: Response) {
-        res?.clearCookie(AUTHORIZATION_COOKIE, {
+    private clearHttpCookie (res: Response) {
+        res.clearCookie(AUTHORIZATION_COOKIE, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',

@@ -406,9 +406,10 @@ export class AuthService {
      * @description Get the current user
      * @param token - The token
      * @param session - The session
+     * @param response - The response
      */
-    getCurrentUser (token: string, session: CachedSession) {
-        return this.sessionService.getSession(session)
+    getCurrentUser (token: string, session: CachedSession, response: Response) {
+        return this.sessionService.getSession(session, response)
             .map((user): FramesSession => ({
                 token,
                 user,

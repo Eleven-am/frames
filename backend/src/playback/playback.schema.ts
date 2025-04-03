@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MediaType, Video, View, Episode } from '@prisma/client';
+import {MediaType, Video, View, Episode, PlaylistVideo} from '@prisma/client';
 import { IsPositive, IsNumber } from 'class-validator';
 
 import { TmdbVideoDetails, TmdbVideoDetailsSchema } from '../media/media.contracts';
+import {CachedSession} from "../session/session.contracts";
 
 export type Playback = View & { video: Video };
 
@@ -32,6 +33,7 @@ export interface PlaybackSession extends PlaybackData {
     inform: boolean;
     autoPlay: boolean;
     percentage: number;
+    canAccessStream: boolean;
 }
 
 export interface UpNextDetails {
@@ -48,6 +50,15 @@ export interface UpNextDetails {
     playlistVideoId: string | null;
     videoId: string;
     mediaId: string;
+}
+
+export interface GetPlaybackSessionParams {
+    playlistVideo?: PlaylistVideo | null;
+    cachedSession: CachedSession;
+    video: PlaybackVideo;
+    percentage: number;
+    inform?: boolean;
+    isFrame?: boolean;
 }
 
 class SubtitleSchema {
@@ -235,6 +246,11 @@ export class PlaybackSessionSchema extends PlaybackDataSchema {
         description: 'The percentage of the playback',
     })
     percentage: number;
+
+    @ApiProperty({
+        description: 'Whether the user is allowed to access the underlying stream',
+    })
+    canAccessStream: boolean;
 }
 
 export class UpdatePlaybackInformSchema {
