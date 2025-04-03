@@ -10,17 +10,18 @@ export class DockerVersionService {
     private static readonly baseUrl = 'https://hub.docker.com/v2/repositories';
     private readonly imageName: string;
     private readonly possibleTags: string[];
-    private readonly prefixes: string[];
+    private readonly prefixesWithArch: string[];
 
     constructor (private readonly httpService: HttpService, configService: ConfigService) {
         this.imageName = configService.getOrThrow<string>(DOCKER_IMAGE_NAME);
         const timestamp = configService.getOrThrow<string>(DOCKER_IMAGE_TIMESTAMP);
         const arch = configService.getOrThrow<string>(DOCKER_IMAGE_ARCH);
-        const prefixes = configService.getOrThrow<string>(DOCKER_IMAGE_PREFIXES)
+        let prefixes = configService.getOrThrow<string>(DOCKER_IMAGE_PREFIXES)
             .split(' ').filter((p) => p.trim() !== '');
 
-        this.prefixes = prefixes.length ? prefixes : ['latest'];
-        this.possibleTags = this.prefixes.map((prefix) => `${prefix}-${timestamp}-${arch}`);
+        prefixes = prefixes.length ? prefixes : ['latest'];
+        this.prefixesWithArch = prefixes.map((prefix) => `${prefix}-${arch}`);
+        this.possibleTags = prefixes.map((prefix) => `${prefix}-${timestamp}-${arch}`);
     }
 
     /**
@@ -28,7 +29,7 @@ export class DockerVersionService {
      */
     isUpToDate () {
         const getCurrentTag = (tags: DockerTag[]) => {
-            const latestTag = tags.find((tag) => this.prefixes.includes(tag.name));
+            const latestTag = tags.find((tag) => this.prefixesWithArch.includes(tag.name));
             const currentTag= tags.find((tag) => this.possibleTags.includes(tag.name));
 
             return TaskEither

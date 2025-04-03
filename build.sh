@@ -142,6 +142,9 @@ for PREFIX in "${PREFIXES[@]}"; do
     docker manifest push "$IMAGE_NAME:$TIMESTAMP_TAG"
     check_status "Failed to push timestamp manifest for $PREFIX"
 
+    # Remove any existing manifests for the stable tag
+    docker manifest rm "$IMAGE_NAME:$STABLE_TAG" 2>/dev/null || true
+
     echo "Creating multi-architecture manifest for stable tag: $STABLE_TAG"
     docker manifest create --amend "$IMAGE_NAME:$STABLE_TAG" \
         "$IMAGE_NAME:$STABLE_TAG-x86" \
@@ -167,6 +170,9 @@ if [ "$USE_LATEST" = true ] && [ ${#PREFIXES[@]} -eq 0 -o "${PREFIXES[0]}" != ""
     docker push "$IMAGE_NAME:latest-x86"
     docker push "$IMAGE_NAME:latest-arm"
     check_status "Failed to push latest-tagged images"
+
+    # Remove any existing manifests for the latest tag
+    docker manifest rm "$IMAGE_NAME:latest" 2>/dev/null || true
 
     # Create multi-architecture manifest for latest tag
     echo "Creating multi-architecture manifest for latest tag"
