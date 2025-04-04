@@ -64,8 +64,25 @@ elif [ "$ADD_LATEST" = true ]; then
     PREFIXES+=("latest")
 fi
 
-# Remove duplicates from prefixes
-mapfile -t UNIQUE_PREFIXES < <(printf '%s\n' "${PREFIXES[@]}" | sort -u)
+# Remove duplicates from prefixes (macOS compatible version)
+UNIQUE_PREFIXES=()
+for prefix in "${PREFIXES[@]}"; do
+    # Check if this prefix is already in our unique array
+    is_duplicate=false
+    for unique in "${UNIQUE_PREFIXES[@]}"; do
+        if [[ "$prefix" == "$unique" ]]; then
+            is_duplicate=true
+            break
+        fi
+    done
+
+    # If it's not a duplicate, add it to our unique array
+    if [[ "$is_duplicate" == false ]]; then
+        UNIQUE_PREFIXES+=("$prefix")
+    fi
+done
+
+# Replace original array with unique values
 PREFIXES=("${UNIQUE_PREFIXES[@]}")
 
 # Get the current date and time in the format YYYY-MM-DD-HH-MM
