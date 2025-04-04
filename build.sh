@@ -15,14 +15,14 @@ usage() {
     echo "  -n, --name IMAGE_NAME    Name of the Docker image (e.g., 'elevenam/frames')"
     echo "  -p, --prefix PREFIXES    Optional comma-separated list of prefixes (e.g., 'dev,staging')"
     echo "                           For each prefix, tags will be PREFIX-{timestamp} and PREFIX"
-    echo "  -l, --latest             Also publish images with 'latest' tag"
+    echo "  -l, --latest             Also add 'latest' to the list of prefixes"
     exit 1
 }
 
 # Set default values
 IMAGE_NAME=""
 PREFIXES=()
-USE_LATEST=false
+ADD_LATEST=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -37,7 +37,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -l|--latest)
-            USE_LATEST=true
+            ADD_LATEST=true
             shift
             ;;
         -h|--help)
@@ -56,10 +56,34 @@ if [ -z "$IMAGE_NAME" ]; then
     usage
 fi
 
-# If no prefixes were provided, use empty prefix
+# If no prefixes were provided, default to "latest"
 if [ ${#PREFIXES[@]} -eq 0 ]; then
-    PREFIXES=("")
+    PREFIXES=("latest")
+elif [ "$ADD_LATEST" = true ]; then
+    # Add "latest" to prefixes if -l was specified
+    PREFIXES+=("latest")
 fi
+
+# Remove duplicates from prefixes (macOS compatible version)
+UNIQUE_PREFIXES=()
+for prefix in "${PREFIXES[@]}"; do
+    # Check if this prefix is already in our unique array
+    is_duplicate=false
+    for unique in "${UNIQUE_PREFIXES[@]}"; do
+        if [[ "$prefix" == "$unique" ]]; then
+            is_duplicate=true
+            break
+        fi
+    done
+
+    # If it's not a duplicate, add it to our unique array
+    if [[ "$is_duplicate" == false ]]; then
+        UNIQUE_PREFIXES+=("$prefix")
+    fi
+done
+
+# Replace original array with unique values
+PREFIXES=("${UNIQUE_PREFIXES[@]}")
 
 # Get the current date and time in the format YYYY-MM-DD-HH-MM
 TIMESTAMP=$(date +"%Y-%m-%d-%H-%M")
@@ -103,15 +127,8 @@ for PREFIX in "${PREFIXES[@]}"; do
     echo "Processing prefix: $PREFIX"
 
     # Define tags for this prefix
-    if [ -z "$PREFIX" ]; then
-        # No prefix case
-        TIMESTAMP_TAG="$TIMESTAMP"
-        STABLE_TAG="latest"
-    else
-        # With prefix
-        TIMESTAMP_TAG="$PREFIX-$TIMESTAMP"
-        STABLE_TAG="$PREFIX"
-    fi
+    TIMESTAMP_TAG="$PREFIX-$TIMESTAMP"
+    STABLE_TAG="$PREFIX"
 
     # Tag images for this prefix
     echo "Tagging x86 image for $PREFIX..."
@@ -155,36 +172,6 @@ for PREFIX in "${PREFIXES[@]}"; do
     check_status "Failed to push stable manifest for $PREFIX"
 done
 
-# Step 3: Handle the latest tag if requested (only if we have prefixes)
-if [ "$USE_LATEST" = true ] && [ ${#PREFIXES[@]} -eq 0 -o "${PREFIXES[0]}" != "" ]; then
-    echo "Processing 'latest' tag..."
-
-    # Tag base images with latest
-    echo "Tagging images with latest..."
-    docker tag "$BASE_X86_TAG" "$IMAGE_NAME:latest-x86"
-    docker tag "$BASE_ARM_TAG" "$IMAGE_NAME:latest-arm"
-    check_status "Failed to tag images with latest"
-
-    # Push latest-tagged images
-    echo "Pushing latest-tagged images..."
-    docker push "$IMAGE_NAME:latest-x86"
-    docker push "$IMAGE_NAME:latest-arm"
-    check_status "Failed to push latest-tagged images"
-
-    # Remove any existing manifests for the latest tag
-    docker manifest rm "$IMAGE_NAME:latest" 2>/dev/null || true
-
-    # Create multi-architecture manifest for latest tag
-    echo "Creating multi-architecture manifest for latest tag"
-    docker manifest create --amend "$IMAGE_NAME:latest" \
-        "$IMAGE_NAME:latest-x86" \
-        "$IMAGE_NAME:latest-arm"
-    check_status "Failed to create latest manifest"
-
-    docker manifest push "$IMAGE_NAME:latest"
-    check_status "Failed to push latest manifest"
-fi
-
 # Clean up temporary build tags
 echo "Cleaning up temporary build images..."
 docker rmi "$BASE_X86_TAG" "$BASE_ARM_TAG"
@@ -195,25 +182,10 @@ echo "Summary of tags created:"
 
 # Print summary of created tags
 for PREFIX in "${PREFIXES[@]}"; do
-    if [ -z "$PREFIX" ]; then
-        echo "- $IMAGE_NAME:$TIMESTAMP (multi-arch manifest)"
-        echo "  - $IMAGE_NAME:$TIMESTAMP-x86"
-        echo "  - $IMAGE_NAME:$TIMESTAMP-arm"
-        echo "- $IMAGE_NAME:latest (multi-arch manifest)"
-        echo "  - $IMAGE_NAME:latest-x86"
-        echo "  - $IMAGE_NAME:latest-arm"
-    else
-        echo "- $IMAGE_NAME:$PREFIX-$TIMESTAMP (multi-arch manifest)"
-        echo "  - $IMAGE_NAME:$PREFIX-$TIMESTAMP-x86"
-        echo "  - $IMAGE_NAME:$PREFIX-$TIMESTAMP-arm"
-        echo "- $IMAGE_NAME:$PREFIX (multi-arch manifest)"
-        echo "  - $IMAGE_NAME:$PREFIX-x86"
-        echo "  - $IMAGE_NAME:$PREFIX-arm"
-    fi
+    echo "- $IMAGE_NAME:$PREFIX-$TIMESTAMP (multi-arch manifest)"
+    echo "  - $IMAGE_NAME:$PREFIX-$TIMESTAMP-x86"
+    echo "  - $IMAGE_NAME:$PREFIX-$TIMESTAMP-arm"
+    echo "- $IMAGE_NAME:$PREFIX (multi-arch manifest)"
+    echo "  - $IMAGE_NAME:$PREFIX-x86"
+    echo "  - $IMAGE_NAME:$PREFIX-arm"
 done
-
-if [ "$USE_LATEST" = true ] && [ ${#PREFIXES[@]} -eq 0 -o "${PREFIXES[0]}" != "" ]; then
-    echo "- $IMAGE_NAME:latest (multi-arch manifest)"
-    echo "  - $IMAGE_NAME:latest-x86"
-    echo "  - $IMAGE_NAME:latest-arm"
-fi
