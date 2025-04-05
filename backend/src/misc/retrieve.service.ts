@@ -1,4 +1,4 @@
-import { TaskEither, createBadRequestError } from '@eleven-am/fp';
+import {TaskEither, createBadRequestError, Either} from '@eleven-am/fp';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
@@ -157,7 +157,7 @@ export class RetrieveService {
     }
 
     getTmdbApiKey () {
-        return this.getEnvValue(TMDB_API_KEY);
+        return this.getFromEnvOrDB(TMDB_API_KEY);
     }
 
     setFanArtApiKey (value: string) {
@@ -170,7 +170,7 @@ export class RetrieveService {
     }
 
     getFanArtApiKey () {
-        return this.getEnvValue(FAN_ART_API_KEY);
+        return this.getFromEnvOrDB(FAN_ART_API_KEY);
     }
 
     setOpenAiApiKey (value: string) {
@@ -183,7 +183,7 @@ export class RetrieveService {
     }
 
     getOpenAiApiKey () {
-        return this.getEnvValue(OPEN_AI_API_KEY);
+        return this.getFromEnvOrDB(OPEN_AI_API_KEY);
     }
 
     setAdminEmail (value: string) {
@@ -326,5 +326,14 @@ export class RetrieveService {
                 `Failed to set ${key}`,
             )
             .io(() => this.isConfigured());
+    }
+
+    private getFromEnvOrDB (key: string) {
+        const getFromEnv = Either
+            .tryCatch(() => this.configService.getOrThrow<string>(key), `Failed to retrieve ${key}`)
+            .toTaskEither();
+
+        return this.getEnvValue(key)
+            .orElse(() => getFromEnv);
     }
 }

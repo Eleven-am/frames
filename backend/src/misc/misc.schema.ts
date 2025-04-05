@@ -2,8 +2,8 @@ import { MediaEmbeds, Subtitle } from '@prisma/client';
 
 import { MediaPartialDetails } from '../media/media.contracts';
 
-export type MakeEmbeddable<PrismaTable, colum extends string> = PrismaTable & {
-    [key in colum]: number[];
+export type MakeEmbeddable<PrismaTable, column extends string> = PrismaTable & {
+    [key in column]: number[];
 };
 
 export type MediaEmbeddable = MakeEmbeddable<MediaEmbeds, 'vector'>;
@@ -16,13 +16,6 @@ export interface MediaMetadata
     directors: string[];
     voteAverage: number;
     tmdbId: number;
-}
-
-export interface MediaEmbedData extends Omit<MediaMetadata, 'actors'> {
-    actors: {
-        name: string;
-        character: string;
-    }[];
 }
 
 export type FramesSubtitle = Omit<

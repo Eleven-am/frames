@@ -83,19 +83,22 @@ export class RecommendationsService {
             .map((part) => part.id) ?? [];
 
         const recommendations = this.llmService.generateMediaRecommendations(mediaId, ability)
-            .map((recommendations) => recommendations.map(this.toSlimMedia));
+            .map((recommendations) => ({
+                media: recommendations.media.map(this.toSlimMedia),
+                recommended: recommendations.recommended,
+            }));
 
         const collections = this.findMediaByTmdbIds(MediaType.MOVIE, collectionIds, ability)
             .map((collection) => collection.map(this.toSlimMedia))
             .sameOrder(collectionIds, 'tmdbId');
 
-        return TaskEither
-            .fromBind({
-                recommendations,
-                collections,
-            })
-            .map(({ recommendations, collections }) => [...collections, ...recommendations])
-            .distinct('id');
+        return TaskEither.fromBind({
+          recommendations,
+          collections,
+        }).map(({ recommendations, collections }) => ({
+            media: dedupeBy([...collections, ...recommendations.media], 'id'),
+            recommended: recommendations.recommended,
+        }));
     }
 
     /**
@@ -120,7 +123,7 @@ export class RecommendationsService {
                 recommendations,
             })
             .map(({ watched, recommendations }) => {
-                const nonWatched = difference(recommendations, watched, 'id', 'mediaId');
+                const nonWatched = difference(recommendations.media, watched, 'id', 'mediaId');
 
                 if (nonWatched.length > 0) {
                     return nonWatched[0];
@@ -602,6 +605,7 @@ export class RecommendationsService {
         const getRecommendations = (media: RecItem) => this
             .llmService
             .generateMediaRecommendations(media.mediaId, ability, 5)
+            .map((recommendations) => recommendations.media)
             .mapItems((item) => ({
                 mediaId: item.id,
                 count: media.count,
@@ -932,7 +936,7 @@ export class RecommendationsService {
                         'Error getting recommended media',
                     ))
                 .nonNullable('Recommended media not found')
-                .chain((media) => this.llmService.generateMediaRecommendations(media.id, ability))
+                .chain((media) => this.llmService.generateMediaRecommendations(media.id, ability).map((recommendations) => recommendations.media))
                 .difference(recs.watched, 'id', 'mediaId'))
             .mapItems(this.toSlimMedia)
             .map(this.buildBasicHomeResponse('what to watch next', 'media-recommendations'));
