@@ -1359,17 +1359,19 @@ export class MediaService {
                     })
                     .map(
                         ({
-                            tmdbMedia,
+                            tmdbMedia: { recommendations, ...rest },
                             slimMedia,
                             companies,
-                        }): MediaResponse => ({
-                            ...tmdbMedia,
+                        }): MediaResponse & { recommended: boolean } => ({
+                            ...rest,
                             ...slimMedia,
                             companies,
                             seasons: [],
                             mediaStatus: null,
                             genres: media.genres,
-                            sections: [MediaSection.MORE_LIKE_THIS],
+                            recommended: recommendations.recommended,
+                            recommendations: recommendations.media,
+                            sections: [],
                         }),
                     );
             });
@@ -1470,19 +1472,26 @@ export class MediaService {
                             slimMedia,
                             companies,
                             recommendations,
-                        }): MediaResponse => ({
+                        }): MediaResponse & { recommended: boolean } => ({
                             ...tmdbMedia,
                             ...slimMedia,
                             companies,
-                            recommendations,
                             genres: media.genres,
-                            sections: [MediaSection.MORE_LIKE_THIS],
+                            recommended: recommendations.recommended,
+                            recommendations: recommendations.media,
+                            sections: [],
                         }),
                     );
             });
     }
 
-    private manageMediaSections (media: MediaResponse) {
+    private manageMediaSections ({ recommended, ...media }: MediaResponse & { recommended: boolean }): MediaResponse {
+        if (recommended) {
+            media.sections = [MediaSection.MORE_LIKE_THIS];
+        } else {
+            media.sections = [MediaSection.MOST_RELEVANT];
+        }
+
         if (media.seasons.length === 1 && media.seasons[0].season === 1) {
             media.sections = [MediaSection.EPISODES, ...media.sections];
         } else if (media.seasons.length >= 1) {

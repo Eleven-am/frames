@@ -140,6 +140,15 @@ Frames requires the following primary environment variables:
 - **Authentication**:
   - `JWT_SECRET`: Secret key for JWT token generation
 
+- **Optional Environment Variables**:
+  - `TMDB_API_KEY`: TMDB API key for fetching media information
+  - `FAN_ART_API_KEY`: FanArt API key for fetching media artwork
+  - `OPEN_AI_API_KEY`: OpenAI API key for generating embeddings
+
+**Note**
+If the optional environment variables are not set, the application will request them during the setup process.
+Unfortunately these API Keys are REQUIRED for the application to work properly. If you do not have them, you can create a free account on their respective websites.
+
 ### Kubernetes Deployment
 
 For production environments, you can deploy Frames using Kubernetes. A sample deployment file is included in the repository.

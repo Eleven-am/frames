@@ -159,7 +159,7 @@ export function MediaInfoDesktop ({ media, details }: MediaInfoDesktopProps) {
                 components={
                     [
                         {
-                            activeWhen: [MediaSection.MoreLikeThis],
+                            activeWhen: [MediaSection.MoreLikeThis, MediaSection.MostRelevant],
                             component: <ImageList type={ImageListType.Recommendations} data={media.recommendations} />,
                         },
                         {

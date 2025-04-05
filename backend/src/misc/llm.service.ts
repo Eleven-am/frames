@@ -1,15 +1,15 @@
 import { accessibleBy } from '@casl/prisma';
 import { AppAbilityType, Action } from '@eleven-am/authorizer';
-import { TaskEither, createInternalError } from '@eleven-am/fp';
+import { TaskEither } from '@eleven-am/fp';
 import { PrismaVectorStore } from '@langchain/community/vectorstores/prisma';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { MediaEmbeds, Prisma } from '@prisma/client';
+import {Media, MediaEmbeds, Prisma} from '@prisma/client';
 import { Document } from 'langchain/document';
 
 import { OPEN_AI_KEY_UPDATED_EVENT } from './misc.constants';
-import { MediaEmbeddable, MediaEmbedData, MediaMetadata, OpenAIKeyEvent } from './misc.schema';
+import { MediaEmbeddable, MediaMetadata, OpenAIKeyEvent } from './misc.schema';
 import { OPEN_AI_API_KEY_SYMBOL } from '../config/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScanResult } from '../scanner/scanner.contracts';
@@ -120,110 +120,77 @@ export class LLMService {
                     },
                 }),
                 'Error getting media from similar media ids',
-            ));
+            ))
+            .orElse(() => TaskEither.of([]))
     }
 
     generateMediaRecommendations (mediaId: string, ability: AppAbilityType, amount = 20) {
-        const closestTryCatch = (vector: number[]) => TaskEither.tryCatch(
-            () => this.prisma.similaritySearchVectorWithScore(vector, amount + 1),
-            'Error getting closest embeddings',
-        );
-
-        const getMediaMetadataFromEmbed = (embed: string, tmdbId: number) => {
-            const metadata = embed
-                .split('\n')
-                .map((line) => line.split('*'))
-                .filter((line) => line.length === 3)
-                .map(([_, key, value]) => [
-                    key.toLowerCase().trim(),
-                    value.trim(),
-                ]);
-
-            const metaData = Object.fromEntries(metadata);
-
-            const actors = metaData.actors
-                ?.split(',')
-                .map((actor: string) => actor.trim())
-                .map((actor: string) => {
-                    const [name, character] = actor.split(' as ');
-
-                    return {
-                        name,
-                        character,
-                    };
-                });
-
-            const directors = metaData.directors
-                ?.split(',')
-                .map((director: string) => director.trim());
-
-            const genres = metaData.genres
-                ?.split(',')
-                .map((genre: string) => genre.trim());
-
-            const releaseDate = new Date(metaData.releasedate);
-
-            const voteAverage = parseFloat(metaData.voteaverage);
-
-            const popularity = parseFloat(metaData.popularity);
-
-            const mediaMetadata: MediaEmbedData = {
-                name: metaData.name,
-                overview: metaData.overview,
-                trailer: metaData.trailer,
-                actors,
-                directors,
-                genres,
-                releaseDate,
-                voteAverage,
-                popularity,
-                tmdbId,
-            };
-
-            return mediaMetadata;
-        };
-
-        return this.getEmbeddings(mediaId)
-            .chain((mediaEmbed) => closestTryCatch(mediaEmbed.vector)
-                .map((data) => data.map(([vector, score]) => ({
-                    score,
-                    pageContent: vector.pageContent,
-                    embeddedId: vector.metadata.id,
-                    mediaId: vector.metadata.mediaId,
-                    metadata: getMediaMetadataFromEmbed(
-                        vector.metadata.metadata,
-                        mediaEmbed.media.tmdbId,
+       return this.getEmbeddings(mediaId).chain(({ vector }) =>
+          TaskEither.of(vector).matchTask<Media[]>([
+            {
+              predicate: (vector) => vector.length > 0,
+              run: (vector) =>
+                TaskEither.tryCatch(
+                  () =>
+                    this.prisma.similaritySearchVectorWithScore(
+                      vector,
+                      amount + 1,
                     ),
-                }))))
-            .chain((mappedData) => TaskEither
-                .of(mappedData)
-                .mapItems((data) => data.mediaId)
-                .filterItems((id) => id !== mediaId)
-                .chain((mediaIds) => TaskEither
-                    .tryCatch(
-                        () => this.db.media.findMany({
-                            where: {
-                                AND: [
-                                    {
-                                        id: {
-                                            'in': mediaIds,
-                                        },
-                                    },
-                                    {
-                                        ...accessibleBy(ability, Action.Read).Media,
-                                    },
-                                ],
-                            },
+                  'Error getting closest embeddings',
+                )
+                  .map((data) =>
+                    data.map(([vector, score]) => ({
+                      score,
+                      mediaId: vector.metadata.mediaId,
+                    })),
+                  )
+                  .chain((mappedData) =>
+                    TaskEither.tryCatch(
+                      () =>
+                        this.db.media.findMany({
+                          where: {
+                            AND: [
+                              {
+                                id: {
+                                  in: mappedData
+                                    .filter((data) => data.mediaId !== mediaId)
+                                    .map((data) => data.mediaId),
+                                },
+                              },
+                              accessibleBy(ability, Action.Read).Media,
+                            ],
+                          },
                         }),
-                        'Error getting media recommendations',
-                    ))
-                .intersect(mappedData, 'id', 'mediaId', [
-                    'score',
-                    'pageContent',
-                    'embeddedId',
-                    'metadata',
-                ]))
-            .sortBy('score', 'asc');
+                      'Error getting media recommendations',
+                    ).intersect(mappedData, 'id', 'mediaId', ['score']),
+                  )
+                  .sortBy('score', 'asc'),
+            },
+            {
+              predicate: () => true,
+              run: () =>
+                TaskEither.tryCatch(() =>
+                  this.db.media.random({
+                    length: amount,
+                    where: {
+                      AND: [
+                        {
+                          id: {
+                            not: mediaId,
+                          },
+                        },
+                        accessibleBy(ability, Action.Read).Media,
+                      ],
+                    },
+                  }),
+                ),
+            },
+          ])
+           .map((media) => ({
+               recommended: vector.length > 0,
+                media,
+           }))
+        );
     }
 
     @OnEvent(OPEN_AI_KEY_UPDATED_EVENT)
@@ -259,9 +226,5 @@ export class LLMService {
                     ...embed,
                     media,
                 })))
-            .filter(
-                (embed) => Boolean(embed.vector) && embed.vector.length > 0,
-                () => createInternalError('No embeddings found for media id'),
-            );
     }
 }
