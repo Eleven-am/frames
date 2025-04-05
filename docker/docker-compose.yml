@@ -1,0 +1,119 @@
+#https://github.com/Eleven-am/frames
+
+#Generate a random 32 byte JWT secret
+#echo $(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
+
+#Open your favorite internet browser and navigate to http://localhost:3000.
+
+#Use a reverse proxy like Zoraxy to expose this service securely
+#https://github.com/tobychui/zoraxy
+
+name: '${STACK_NAME:-stk-frames-001}'
+        
+networks:
+  EXTERNAL:
+    name: FRAMES-EXTERNAL
+    driver: bridge
+    internal: false
+    attachable: true
+
+  INTERNAL:
+    name: FRAMES-INTERNAL
+    driver: bridge
+    internal: true
+    attachable: true
+   
+services:
+  Database:
+    image: '${DATABASE_IMAGENAME:-pgvector/pgvector}:${DATABASE_IMAGEVERSION:-latest}'  
+    container_name: FRAMES-DB-001
+    hostname: FRAMES-DB-001
+    restart: unless-stopped
+    stop_signal: SIGTERM
+    stop_grace_period: 90s
+    user: '${UID:-0}:${GID:-0}'
+    logging:
+      driver: 'local'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 10s
+      interval: 15s
+      retries: 3
+      timeout: 5s
+    networks:
+      INTERNAL:
+    environment:
+      PGPORT: ${DATABASE_PORT:-5432}
+      POSTGRES_DB: '${DATABASE_NAME:-frames}'
+      POSTGRES_USER: '${DATABASE_USER:-frames}'
+      POSTGRES_PASSWORD: '${DATABASE_PASSWORD:-frames}'   
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - "/${STACK_BINDMOUNTROOT}/${STACK_NAME}/Database/Data:/var/lib/postgresql/data:rw"
+    labels:
+      com.centurylinklabs.watchtower.enable: ${DATABASE_ENABLEAUTOMATICUPDATES:-false}
+    
+  Cache:
+    image: '${CACHE_IMAGENAME:-valkey/valkey}:${CACHE_IMAGEVERSION:-latest}'  
+    container_name: FRAMES-CACHE-001
+    hostname: FRAMES-CACHE-001
+    restart: unless-stopped
+    stop_signal: SIGTERM
+    stop_grace_period: 90s
+    user: '${UID:-0}:${GID:-0}'
+    logging:
+      driver: 'local'
+    command: --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    networks:
+      INTERNAL:
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - "/${STACK_BINDMOUNTROOT}/${STACK_NAME}/Cache/Data:/data:rw"
+    depends_on:
+      Database:
+        condition: service_healthy
+    labels:
+      com.centurylinklabs.watchtower.enable: ${CACHE_ENABLEAUTOMATICUPDATES:-false}
+  
+  Application:
+    image: '${APPLICATION_IMAGENAME:-elevenam/frames}:${APPLICATION_IMAGEVERSION:-latest}'    
+    container_name: FRAMES-APP-001
+    hostname: FRAMES-APP-001
+    restart: unless-stopped
+    stop_signal: SIGTERM
+    stop_grace_period: 90s
+    user: '${UID:-0}:${GID:-0}'
+    logging:
+      driver: 'local'
+    environment:
+      DATABASE_URL: '${DATABASE_URL:-postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}}'
+      DIRECT_DATABASE_URL: '${DIRECT_DATABASE_URL:-postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}}'
+      REDIS_HOST: '${REDIS_HOST:-FRAMES-CACHE-001}'
+      REDIS_PORT: '${REDIS_PORT:-${CACHE_PORT}}'
+      REDIS_TTL: '${REDIS_TTL:-86400}'
+      REDIS_DB: '${REDIS_DB:-0}'
+      JWT_SECRET: '${JWT_SECRET:-KE5aFTh8EUw46g84UNynxgdWCPUOcLVo}'
+    networks:
+      INTERNAL:
+      EXTERNAL:
+    ports:
+      - "${SERVICE_BIND_ADDRESS_EXTERNAL:-0.0.0.0}:${APPLICATION_PORT_EXTERNAL:-3000}:3000/tcp"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - "/${STACK_BINDMOUNTROOT}/${STACK_NAME}/Application/Media:/media:rw"
+    depends_on:
+      Database:
+        condition: service_healthy
+      Cache:
+        condition: service_healthy
+    labels:
+      com.centurylinklabs.watchtower.enable: ${APPLICATION_ENABLEAUTOMATICUPDATES:-true}
