@@ -39,6 +39,30 @@ export class DockerVersionService {
                 })
         }
 
+        const stopCondition = ({ current }: { current: DockerTag[], page: number }) => current.length !== 0;
+
+        const getNextPage = (url: string) => ({ total, page }: { total: DockerTag[], page: number }) => this.httpService
+            .getSafe(`${url}?page=${page + 1}`, dockerResultsSchema)
+            .map(({ results }) => results)
+            .mapItems((tag) => ({
+                ...tag,
+                last_updated: new Date(tag.last_updated),
+            }))
+            .map((current) => ({
+                current,
+                total: [...total, ...current],
+                page: page + 1,
+            }))
+
+        const whileLoop = (url: string) => TaskEither
+            .of({
+                current: [] as DockerTag[],
+                total: [] as DockerTag[],
+                page: 0,
+            })
+            .while(stopCondition, getNextPage(url))
+            .map(({ total }) => total)
+
         return Either
             .of(this.imageName)
             .match([
@@ -53,13 +77,7 @@ export class DockerVersionService {
             ])
             .map(([repository, name]) => `${DockerVersionService.baseUrl}/${repository}/${name}/tags`)
             .toTaskEither()
-            .chain((url) => this.httpService.getSafe(url, dockerResultsSchema))
-            .map(({ results }) => results)
-            .filterItems((tag) => tag.name !== 'latest')
-            .mapItems((tag) => ({
-                ...tag,
-                last_updated: new Date(tag.last_updated),
-            }))
+            .chain(whileLoop)
             .sortBy('last_updated', 'desc')
             .chain(getCurrentTag)
             .map(({ currentTag, latestTag }): VersionInfo => ({

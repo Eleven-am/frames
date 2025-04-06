@@ -329,11 +329,9 @@ export class RetrieveService {
     }
 
     private getFromEnvOrDB (key: string) {
-        const getFromEnv = Either
+        return Either
             .tryCatch(() => this.configService.getOrThrow<string>(key), `Failed to retrieve ${key}`)
-            .toTaskEither();
-
-        return this.getEnvValue(key)
-            .orElse(() => getFromEnv);
+            .toTaskEither()
+            .orElse(() => this.getEnvValue(key));
     }
 }
