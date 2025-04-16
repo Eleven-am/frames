@@ -84,7 +84,7 @@ export function useThumbnails (playbackId: string, canAccessStream: boolean) {
     const { data: thumbnails } = useQuery(watchQueries.thumbnails(playbackId, canAccessStream, enableFetch));
 
     useEffect(() => {
-        if (thumbnails?.find((thumbnail) => thumbnail.percentage > 0.9)) {
+        if (thumbnails?.find((thumbnail) => thumbnail.percentage === 1)) {
             setEnableFetch(false);
         }
     }, [thumbnails]);
