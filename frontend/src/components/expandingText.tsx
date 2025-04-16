@@ -24,6 +24,7 @@ export function ExpandingText ({
     className,
     hideButton = false,
 }: ExpandingTextProps) {
+    lines = lines + 1; // Add one line to the lines count to account for the last line being cut off
     const [expanded, setExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(true);
 

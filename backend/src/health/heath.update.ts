@@ -39,7 +39,7 @@ export class DockerVersionService {
                 })
         }
 
-        const stopCondition = ({ current }: { current: DockerTag[], page: number }) => current.length !== 0;
+        const stopCondition = ({ current }: { current: DockerTag[] }) => current.length !== 0;
 
         const getNextPage = (url: string) => ({ total, page }: { total: DockerTag[], page: number }) => this.httpService
             .getSafe(`${url}?page=${page + 1}`, dockerResultsSchema)
