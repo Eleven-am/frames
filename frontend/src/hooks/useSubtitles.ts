@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Notifier } from '@eleven-am/notifier';
 import { useQuery } from '@tanstack/react-query';
 
 import { SubtitleSchema, NodeCueSchema } from '@/api/data-contracts';
 import { useProgressAndVolume } from '@/providers/watched/playerPageStates';
 import { usePlayerUI, usePlayerUIActions } from '@/providers/watched/playerUI';
 import { watchQueries } from '@/queries/watch';
-import { IStorage, storage } from '@/utils/storage';
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 
 const SUBTITLE_STORAGE_KEY = 'subtitles';
@@ -18,34 +17,8 @@ export interface SubtitleData {
     srcLang: string;
 }
 
-class SubtitleProvider extends Notifier<{ language: string }> {
-    readonly #storage: IStorage<string>;
-
-    constructor () {
-        const internalStorage = storage(SUBTITLE_STORAGE_KEY, 'None');
-
-        super({
-            language: internalStorage.get(),
-        });
-
-        this.#storage = internalStorage;
-    }
-
-    setLanguage (language: string) {
-        this.#storage.set(language);
-        this.updateState({
-            language,
-        });
-    }
-}
-
-const subtitleProvider = new SubtitleProvider();
-const useSubtitleState = subtitleProvider.createStateHook();
-const useSubtitleActions = subtitleProvider.createActionsHook();
-
 export function useFetchSubtitles (availableSubtitles: SubtitleSchema[], canAccessStream: boolean) {
-    const { setLanguage } = useSubtitleActions();
-    const language = useSubtitleState((state) => state.language);
+    const [language, setLanguage] = useLocalStorage(SUBTITLE_STORAGE_KEY, 'None');
     const subtitleId = useMemo(() => availableSubtitles.find((sub) => sub.language === language)?.subtitleId, [availableSubtitles, language]);
     const { data } = useQuery(watchQueries.cues(subtitleId, canAccessStream));
 
