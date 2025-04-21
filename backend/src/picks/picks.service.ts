@@ -153,7 +153,7 @@ export class PicksService {
             .tryCatch(
                 () => this.prisma.pickCategory.findFirst({
                     take: 1,
-                    skip: args.index,
+                    skip: args.index -1,
                     where: {
                         active: true,
                         type: args.type,
