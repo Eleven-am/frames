@@ -149,10 +149,6 @@ Frames requires the following primary environment variables:
 If the optional environment variables are not set, the application will request them during the setup process.
 Unfortunately these API Keys are REQUIRED for the application to work properly. If you do not have them, you can create a free account on their respective websites.
 
-### Kubernetes Deployment
-
-For production environments, you can deploy Frames using Kubernetes. A sample deployment file is included in the repository.
-
 ## User Interface
 
 ### Home Page and Media Discovery
