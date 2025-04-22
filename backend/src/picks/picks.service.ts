@@ -152,9 +152,14 @@ export class PicksService {
         return TaskEither
             .tryCatch(
                 () => this.prisma.pickCategory.findFirst({
+                    take: 1,
+                    skip: args.index -1,
                     where: {
-                        displayOrder: args.index - 1,
+                        active: true,
                         type: args.type,
+                    },
+                    orderBy: {
+                        displayOrder: 'asc',
                     },
                     include: {
                         picks: {

@@ -188,7 +188,7 @@ export class LLMService {
           ])
            .map((media) => ({
                recommended: vector.length > 0,
-                media,
+               media,
            }))
         );
     }

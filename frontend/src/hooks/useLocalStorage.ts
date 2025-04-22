@@ -2,7 +2,7 @@ import { useRef, useState, SetStateAction, Dispatch, useCallback } from 'react';
 
 import { storage } from '@/utils/storage';
 
-export function useLocalStorage <Data> (key: string, defaultValue: Data): [Data, Dispatch<SetStateAction<Data>>] {
+export function useLocalStorage <Data> (key: string, defaultValue: Data) {
     const storageRef = useRef(storage(key, defaultValue));
     const [state, setState] = useState(storageRef.current.get());
 
@@ -20,5 +20,5 @@ export function useLocalStorage <Data> (key: string, defaultValue: Data): [Data,
         }
     }, []);
 
-    return [state, handleSetState];
+    return [state, handleSetState] as const;
 }

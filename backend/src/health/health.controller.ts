@@ -49,7 +49,11 @@ export class HealthController {
     @HealthCheck()
     criticalCheck () {
         return this.health.check([
-            () => this.http.pingCheck('Tmdb API', 'https://api.themoviedb.org/3', { timeout: 300 }),
+            () => this.http.pingCheck(
+                'Tmdb API',
+                'https://api.themoviedb.org/3',
+                { timeout: 300 }
+            ),
             () => this.http.responseCheck(
                 'FanArt API',
                 'https://webservice.fanart.tv/v3',
@@ -62,7 +66,11 @@ export class HealthController {
                 (response) => response.status === 421,
                 { timeout: 300 },
             ),
-            () => this.http.pingCheck('Ben Dodson', 'https://itunesartwork.bendodson.com/url.php', { timeout: 300 }),
+            () => this.http.pingCheck(
+                'Ben Dodson',
+                'https://itunesartwork.bendodson.com/url.php',
+                { timeout: 300 }
+            ),
         ]);
     }
 
