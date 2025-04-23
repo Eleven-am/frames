@@ -31,7 +31,7 @@ export function ExpandingText ({
         setExpanded((prevState) => !prevState);
     }, []);
 
-    const paragraphRef = useCallback((node: HTMLParagraphElement | null) => {
+    const paragraphRef = useCallback((expanded: boolean) => (node: HTMLParagraphElement | null) => {
         if (node) {
             if (text.length === 0) {
                 setCanExpand(false);
@@ -44,9 +44,7 @@ export function ExpandingText ({
             const lineHeight = parseInt(lineHeightString, 10);
             const innerLines = paragraphHeight / lineHeight;
 
-            if (innerLines > lines) {
-                setCanExpand(true);
-            } else {
+            if ((innerLines !== 0) && ((innerLines < lines) || (expanded && innerLines === lines))) {
                 setCanExpand(false);
             }
         }
@@ -61,12 +59,12 @@ export function ExpandingText ({
                 {
                     expanded
                         ? (
-                            <p className={expandedClassName} ref={paragraphRef}>
+                            <p className={expandedClassName} ref={paragraphRef(true)}>
                                 {text}
                             </p>
                         )
                         : (
-                            <p className={collapsedClassName} ref={paragraphRef}>
+                            <p className={collapsedClassName} ref={paragraphRef(false)}>
                                 {text}
                             </p>
                         )
