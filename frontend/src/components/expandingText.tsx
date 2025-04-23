@@ -24,7 +24,6 @@ export function ExpandingText ({
     className,
     hideButton = false,
 }: ExpandingTextProps) {
-    lines = lines + 1; // Add one line to the lines count to account for the last line being cut off
     const [expanded, setExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(true);
 
@@ -32,7 +31,7 @@ export function ExpandingText ({
         setExpanded((prevState) => !prevState);
     }, []);
 
-    const paragraphRef = useCallback((expanded: boolean) => (node: HTMLParagraphElement | null) => {
+    const paragraphRef = useCallback((node: HTMLParagraphElement | null) => {
         if (node) {
             if (text.length === 0) {
                 setCanExpand(false);
@@ -45,7 +44,9 @@ export function ExpandingText ({
             const lineHeight = parseInt(lineHeightString, 10);
             const innerLines = paragraphHeight / lineHeight;
 
-            if ((innerLines !== 0) && ((innerLines < lines) || (expanded && innerLines === lines))) {
+            if (innerLines > lines) {
+                setCanExpand(true);
+            } else {
                 setCanExpand(false);
             }
         }
@@ -60,12 +61,12 @@ export function ExpandingText ({
                 {
                     expanded
                         ? (
-                            <p className={expandedClassName} ref={paragraphRef(true)}>
+                            <p className={expandedClassName} ref={paragraphRef}>
                                 {text}
                             </p>
                         )
                         : (
-                            <p className={collapsedClassName} ref={paragraphRef(false)}>
+                            <p className={collapsedClassName} ref={paragraphRef}>
                                 {text}
                             </p>
                         )
