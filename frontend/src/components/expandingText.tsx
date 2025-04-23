@@ -19,10 +19,10 @@ interface ExpandingTextProps {
 export function ExpandingText ({
     text,
     lines,
-    expandedClassName,
-    collapsedClassName,
     className,
     hideButton = false,
+    expandedClassName,
+    collapsedClassName,
 }: ExpandingTextProps) {
     const [expanded, setExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(true);
