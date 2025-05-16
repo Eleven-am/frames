@@ -26,10 +26,7 @@ export function ExpandingText ({
 }: ExpandingTextProps) {
     const [expanded, setExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(true);
-
-    const toggleExpanded = useCallback(() => {
-        setExpanded((prevState) => !prevState);
-    }, []);
+    const toggleExpanded = useCallback(() => setExpanded((prevState) => !prevState), []);
 
     const paragraphRef = useCallback((expanded: boolean) => (node: HTMLParagraphElement | null) => {
         if (node) {

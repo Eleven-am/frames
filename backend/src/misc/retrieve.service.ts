@@ -49,18 +49,15 @@ export class RetrieveService {
     }
 
     get tmdbApiKey () {
-        return this.getTmdbApiKey()
-            .orElse(() => TaskEither.of(''));
+        return this.getTmdbApiKey();
     }
 
     get fanArtApiKey () {
-        return this.getFanArtApiKey()
-            .orElse(() => TaskEither.of(''));
+        return this.getFanArtApiKey();
     }
 
     get openAiApiKey () {
-        return this.getOpenAiApiKey()
-            .orElse(() => TaskEither.of(''));
+        return this.getOpenAiApiKey();
     }
 
     get adminEmail () {

@@ -1,4 +1,9 @@
-import { AuthorizationModule, AuthorizationHttpGuard } from '@eleven-am/authorizer';
+import {
+  AuthorizationModule,
+  AuthorizationHttpGuard,
+  RedirectFilter,
+  AuthenticationInterceptor,
+} from '@eleven-am/authorizer';
 import { PondSocketModule } from '@eleven-am/pondsocket-nest';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
@@ -19,9 +24,7 @@ import { HealthModule } from './health/health.module';
 import { LanguageModule } from './language/language.module';
 import { ListsModule } from './lists/lists.module';
 import { MediaModule } from './media/media.module';
-import { FramesInterceptor } from './misc/frames.interceptor';
 import { MiscModule } from './misc/misc.module';
-import { RedirectFilter } from './misc/redirect.filter';
 import { NotificationModule } from './notifications/notification.module';
 import { OauthModule } from './oauth/oauth.module';
 import { PicksModule } from './picks/picks.module';
@@ -65,7 +68,7 @@ import { AppApiRoutes } from './utils/app.apiRoutes';
         PicksModule,
         PlaybackModule,
         PlaylistsModule,
-        PondSocketModule.forRootAsync(socketOptions),
+        PondSocketModule.forRoot(socketOptions),
         PrismaModule,
         RatingModule,
         RoomsModule,
@@ -92,7 +95,7 @@ import { AppApiRoutes } from './utils/app.apiRoutes';
         },
         {
             provide: APP_INTERCEPTOR,
-            useClass: FramesInterceptor,
+            useClass: AuthenticationInterceptor,
         },
         {
             provide: APP_FILTER,

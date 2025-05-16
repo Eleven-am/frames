@@ -204,11 +204,11 @@ export class LLMService {
 
     private getEmbeddings (mediaId: string) {
         const query = Prisma.sql`
-        SELECT "id", "mediaId", "metadata", CAST("vector" AS float4[]) AS "vector"
-        FROM "MediaEmbeds"
-        WHERE "mediaId" = ${mediaId}
-        LIMIT 1
-    `;
+            SELECT "id", "mediaId", "metadata", CAST("vector" AS float4[]) AS "vector"
+            FROM "MediaEmbeds"
+            WHERE "mediaId" = ${mediaId}
+            LIMIT 1
+        `;
 
         return TaskEither
             .tryCatch(
@@ -217,14 +217,15 @@ export class LLMService {
             )
             .map((items) => items[0])
             .nonNullable('No embeddings found for media id')
-            .chain((embed) => TaskEither.tryCatch(
-                () => this.db.media.findUnique({ where: { id: embed.mediaId } }),
+            .chain((embed) => TaskEither
+                .tryCatch(
+                    () => this.db.media.findUnique({ where: { id: embed.mediaId } }),
                 'Error getting media embeddings',
-            )
+                )
                 .nonNullable('No media found for media id')
                 .map((media) => ({
                     ...embed,
                     media,
-                })))
+                })));
     }
 }

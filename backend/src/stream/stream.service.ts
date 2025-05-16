@@ -274,7 +274,6 @@ export class StreamService {
             const start = index * this.defaultSegmentLength;
             const end = start + this.defaultSegmentLength;
 
-
             return {
                 start,
                 end,
@@ -383,7 +382,7 @@ export class StreamService {
                 'Failed to save thumbnail',
             );
 
-        const saveThumbnail = (task: TaskEither<string>) => TaskEither
+        const getThumbnail = (task: TaskEither<string>) => TaskEither
             .tryCatch(
                 () => this.prismaService.artwork.findFirst({
                     where: {
@@ -398,7 +397,7 @@ export class StreamService {
         return this.createThumbnail(file, time.timeInSec)
             .chain(this.writeableToBase64)
             .map((base64) => `data:image/jpeg;base64,${base64}`)
-            .mapValue(saveThumbnail);
+            .mapValue(getThumbnail);
     }
 
     private extractKeyframes (file: FramesFile) {
