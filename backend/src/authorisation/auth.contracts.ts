@@ -21,8 +21,6 @@ import {
     Subtitle,
 } from '@prisma/client';
 
-import { StreamItem } from '../stream/stream.schema';
-
 declare module '@eleven-am/authorizer' {
     interface SubjectTypes {
         User: ModelUser;
@@ -43,7 +41,6 @@ declare module '@eleven-am/authorizer' {
         Download: Download;
         CloudStorage: CloudStorage;
         Oauth: OauthClient;
-        Stream: StreamItem;
         Config: Config;
         Subtitle: Subtitle;
     }

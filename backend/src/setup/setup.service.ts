@@ -47,7 +47,6 @@ export class SetupService {
         private readonly languageService: LanguageService,
         private readonly storageService: StorageService,
         private readonly prismaService: PrismaService,
-        private readonly eventEmitter: EventEmitter2,
         private readonly cacheStore: CacheService,
         private readonly httpService: HttpService,
         private readonly pubSubService: PubSubService,

@@ -1,7 +1,7 @@
-import { AsyncMetadata, Authenticator } from '@eleven-am/authorizer';
+import { Authenticator, AuthorizationMetadata } from '@eleven-am/authorizer';
 import { SessionService } from '../session/session.service';
 
-export const authorizationOptions: AsyncMetadata = {
+export const authorizationOptions: AuthorizationMetadata = {
     inject: [SessionService],
     useFactory: (sessionService: SessionService): Authenticator => ({
         allowNoRulesAccess: (context) => sessionService.allowNoRulesAccess(context),

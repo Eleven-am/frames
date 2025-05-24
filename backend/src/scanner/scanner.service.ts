@@ -762,9 +762,6 @@ export class ScannerService implements OnModuleInit {
                         where: { id: video.id },
                         data: {
                             location: movie.file.path,
-                            artworks: {
-                                deleteMany: {},
-                            },
                         },
                     }),
                     'Failed to create video',

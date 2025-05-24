@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {MediaType, Video, View, Episode, PlaylistVideo} from '@prisma/client';
+import {MediaType, Video, View, Episode, PlaylistVideo, CloudStorage} from '@prisma/client';
 import { IsPositive, IsNumber } from 'class-validator';
 
 import { TmdbVideoDetails, TmdbVideoDetailsSchema } from '../media/media.contracts';
 import {CachedSession} from "../session/session.contracts";
 
-export type Playback = View & { video: Video };
+export type Playback = View & { video: Video & { cloudStorage: CloudStorage } };
 
 export type PlaybackVideo = Video & { episode: Episode | null };
 

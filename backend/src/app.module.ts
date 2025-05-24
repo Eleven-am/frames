@@ -65,7 +65,7 @@ import { AppApiRoutes } from './utils/app.apiRoutes';
         PicksModule,
         PlaybackModule,
         PlaylistsModule,
-        PondSocketModule.forRootAsync(socketOptions),
+        PondSocketModule.forRoot(socketOptions),
         PrismaModule,
         RatingModule,
         RoomsModule,

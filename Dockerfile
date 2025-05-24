@@ -1,4 +1,6 @@
-FROM node:21-alpine3.19 AS finstall
+FROM mwader/static-ffmpeg:7.1 AS ffmpeg
+
+FROM node:22.16-alpine AS finstall
 
 # Install only necessary build dependencies
 RUN apk add --no-cache make gcc g++ python3
@@ -18,7 +20,7 @@ FROM finstall AS fbuild
 COPY frontend .
 RUN npm run build
 
-FROM node:21-alpine3.19 AS binstall
+FROM node:22.16-alpine AS binstall
 
 WORKDIR /usr/src/app
 
@@ -34,7 +36,7 @@ FROM binstall AS bbuild
 COPY backend .
 RUN npm run build
 
-FROM node:21-alpine3.19 AS final
+FROM node:22.16-alpine AS final
 
 # Pass the arguments through to the image as environment variables
 ARG IMAGE_NAME
@@ -50,8 +52,12 @@ ENV DOCKER_IMAGE_ARCH=$IMAGE_ARCH
 # Set the environment variable for production
 ENV NODE_ENV=production
 
-# Install only necessary runtime dependencies
-RUN apk add --no-cache bash ffmpeg
+# Copy FFmpeg 7.1 binaries from static build
+COPY --from=ffmpeg /ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg /ffprobe /usr/local/bin/ffprobe
+
+# Install only bash (FFmpeg now copied from above)
+RUN apk add --no-cache bash
 
 RUN addgroup --system --gid 1001 nestgroup && \
     adduser --system --uid 1001 nestuser --ingroup nestgroup

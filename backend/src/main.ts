@@ -9,6 +9,8 @@ import { json, urlencoded } from 'express';
 
 import { AppModule } from './app.module';
 
+Error.stackTraceLimit = 100;
+
 async function bootstrap () {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
@@ -42,15 +44,23 @@ async function bootstrap () {
     );
 
     SwaggerModule.setup('/swagger', app, document);
-
+    
+    app.enableCors({
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+        credentials: true,
+    });
+    
     if (process.env.NODE_ENV === 'development') {
-        app.enableCors({
+        /*app.enableCors({
             origin: '*',
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
             preflightContinue: false,
             optionsSuccessStatus: 204,
             credentials: true,
-        });
+        });*/
     } else {
         app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
     }

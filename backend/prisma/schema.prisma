@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
+  previewFeatures = ["fullTextSearchPostgres", "postgresqlExtensions"]
 }
 
 datasource db {
@@ -284,15 +284,6 @@ model Video {
   media          Media           @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   views          View[]
   watched        Watched[]
-  artworks       Artwork[]
-}
-
-model Artwork {
-  id         String @id @default(cuid())
-  url        String
-  percentage Float
-  videoId    String
-  video      Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
 }
 
 model Subtitle {

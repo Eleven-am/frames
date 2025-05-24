@@ -15,7 +15,8 @@ export class FramesInterceptor implements NestInterceptor {
 
     private project (value: any) {
         if (value instanceof TaskEither) {
-            return from(mapTaskEither(value, this.logger));
+			const newValue = value.ioErrorSync(console.error);
+            return from(mapTaskEither(newValue, this.logger));
         }
 
         return of(value);

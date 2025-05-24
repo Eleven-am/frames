@@ -14,6 +14,7 @@ interface AuthBaseEmailProps {
 }
 
 export function AuthBaseEmail ({ username, previewText, buttonText, buttonHref, infoText, deviceName, inviteFromIp, endpoint }: AuthBaseEmailProps) {
+    // @ts-ignore
     return (
         <Html>
             <Head/>
@@ -21,8 +22,6 @@ export function AuthBaseEmail ({ username, previewText, buttonText, buttonHref, 
                 {previewText}
             </Preview>
             <Tailwind
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error
                 config={{
                     theme: {
                         extend: {
