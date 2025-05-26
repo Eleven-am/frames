@@ -33,7 +33,7 @@ export interface PlaybackSession extends PlaybackData {
     autoPlay: boolean;
     percentage: number;
     canAccessStream: boolean;
-	directPlaySupported: boolean;
+	canDirectPlay: boolean;
 }
 
 export interface UpNextDetails {
@@ -256,7 +256,7 @@ export class PlaybackSessionSchema extends PlaybackDataSchema {
 		description: 'Whether the video is supported for direct play',
 		type: Boolean,
 	})
-	directPlaySupported: boolean;
+	canDirectPlay: boolean;
 }
 
 export class UpdatePlaybackInformSchema {

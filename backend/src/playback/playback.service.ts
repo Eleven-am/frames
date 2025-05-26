@@ -71,7 +71,7 @@ export class PlaybackService {
 		
 	    const session = this.buildVideoSession(cachedSession.language, video)
 		    .chain((session) => this.savePlaybackSession(cachedSession.user, video, playlistVideo, inform)
-		        .map((playbackData): Omit<PlaybackSession, 'directPlaySupported'> => ({
+		        .map((playbackData): Omit<PlaybackSession, 'canDirectPlay'> => ({
 			        ...session,
 			        canAccessStream,
 			        percentage: newPercentage,
@@ -88,7 +88,7 @@ export class PlaybackService {
 		    //.chain(performPresenceCheck)
 		    .map(({ session, isDirectPlaySupported }): PlaybackSession => ({
 			    ...session,
-			    directPlaySupported: isDirectPlaySupported,
+			    canDirectPlay: isDirectPlaySupported,
 		    }))
 		    .ioSync((session) => {
 			    const metadata: MetadataSchema = {

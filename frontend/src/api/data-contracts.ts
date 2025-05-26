@@ -717,7 +717,7 @@ export interface PlaybackSessionSchema {
   /** Whether the user is allowed to access the underlying stream */
   canAccessStream: boolean;
   /** Whether the video is supported for direct play */
-  directPlaySupported: boolean;
+  canDirectPlay: boolean;
 }
 
 export interface CreateGroupArgs {

@@ -1250,7 +1250,7 @@ export class MediaService {
                         return null;
                     }
 
-                    const newPhotoBackdrop = tmdbEpisode.still_path ? `https://image.tmdb.org/t/p/w500${tmdbEpisode.still_path}` : backdrop;
+                    const newPhotoBackdrop = tmdbEpisode.still_path ? `https://image.tmdb.org/t/p/w500${tmdbEpisode.still_path}` : `/api/playback/${episode.videoId}/0/240p/30`;
 
                     return {
                         id: episode.id,

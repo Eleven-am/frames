@@ -72,7 +72,7 @@ export class PlaybackAuthorizer implements WillAuthorize {
         const request = context.getRequest<{ playback: Playback, video: Video }>();
         const playbackId = request.params.playbackId;
         const videoId = request.params.videoId;
-
+		
         const [leastPermission] = sortActions(playbackRules.map((rule) => rule.action));
 
         if (playbackId === undefined && videoId === undefined) {

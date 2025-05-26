@@ -38,7 +38,8 @@ export function WatchPageComponent ({ session, isGroupWatch, isFrame }: WatchPag
                     mediaName={session.name}
                 >
                     <VideoPlayer
-                        source={session.source}
+                        playbackId={session.playbackId}
+                        canDirectPlay={session.canDirectPlay}
                         percentage={session.percentage}
                         backdrop={session.backdrop}
                         name={session.name}
@@ -59,7 +60,8 @@ export function WatchPageComponent ({ session, isGroupWatch, isFrame }: WatchPag
                 mediaName={session.name}
             >
                 <VideoPlayer
-                    source={session.source}
+                    playbackId={session.playbackId}
+                    canDirectPlay={session.canDirectPlay}
                     percentage={session.percentage}
                     backdrop={session.backdrop}
                     name={session.name}

@@ -6,7 +6,8 @@ interface VideoPlayerProps {
     percentage: number;
     name: string;
     backdrop: string;
-    source: string;
+    playbackId: string;
+    canDirectPlay: boolean;
 }
 
 interface PosterImageProps {
@@ -34,14 +35,14 @@ function PosterImage ({ mediaName, mediaBackdrop }: PosterImageProps) {
     );
 }
 
-export function VideoPlayer ({ percentage, name, backdrop, source }: VideoPlayerProps) {
+export function VideoPlayer ({ percentage, name, backdrop, playbackId, canDirectPlay }: VideoPlayerProps) {
     const { setVideo } = useVideoManagerActions();
 
     return (
         <>
             <video
                 preload={'metadata'}
-                ref={setVideo(source, percentage)}
+                ref={setVideo(playbackId, canDirectPlay, percentage)}
                 className={'relative w-full h-full object-contain object-center bg-black'}
             />
             <PosterImage mediaName={name} mediaBackdrop={backdrop} />

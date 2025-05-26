@@ -1,7 +1,6 @@
-import { EventNotifier, getSnapshot } from '@eleven-am/notifier';
+import { EventNotifier } from '@eleven-am/notifier';
 import Hls from 'hls.js';
 
-import { userStore } from '@/providers/userProvider';
 import { clamp } from '@/utils/helpers';
 
 
@@ -50,17 +49,17 @@ class VideoManager extends EventNotifier<VideoState, VideoEvent> {
         this.#hls = null;
     }
 
-    public setVideo (source: string, percentage: number) {
+    public setVideo (playbackId: string, canDirectPlay: boolean, percentage: number) {
         return (video: HTMLVideoElement | null) => {
             if (!video) {
                 this.cleanUp();
             }
 
-            if (!video || video === this.#video || !source) {
+            if (!video || video === this.#video || !playbackId) {
                 return;
             }
 
-            this.#hookUpHLSPlayer(video, source);
+            this.#hookUpHLSPlayer(video, playbackId, canDirectPlay, percentage > 0);
             this.#video = video;
 
             this.updateState({
@@ -276,31 +275,60 @@ class VideoManager extends EventNotifier<VideoState, VideoEvent> {
         return this.#video.readyState < this.#video.HAVE_FUTURE_DATA || this.#video.seeking;
     }
 
-    #hookUpHLSPlayer (video: HTMLVideoElement, source: string) {
-        const token = getSnapshot(userStore).token;
+    #hookUpHLSPlayer (video: HTMLVideoElement, playbackId: string, canDirectPlay: boolean, autoPLay: boolean) {
+        if (canDirectPlay) {
+            video.src = `/api/stream/${playbackId}`;
 
-        if (token) {
-            source += `?token=${token}`;
-        }
-
-        if (video.canPlayType('application/vnd.apple.mpegurl') || !source.endsWith('.m3u8')) {
-            video.src = source;
-        } else if (Hls.isSupported()) {
             this.#hls?.destroy();
-            const hls = new Hls({
-                autoStartLoad: true,
-                startPosition: -1,
-                fragLoadingTimeOut: 20000,
-                fragLoadingRetryDelay: 2000,
-                debug: true,
-            });
+            this.#hls = null;
+        } else {
+            const hlsUrl = `/api/stream/${playbackId}/master.m3u8`;
 
-            this.#hls = hls;
-            hls.loadSource(source);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.ERROR, (err) => {
-                console.log(err);
-            });
+            if (Hls.isSupported()) {
+                video.autoplay = autoPLay;
+                video.preload = autoPLay ? 'auto' : 'metadata';
+
+                this.#hls?.destroy();
+                this.#hls = new Hls({
+                    debug: false,
+                    enableWorker: true,
+
+                    maxBufferLength: 20,
+                    backBufferLength: 5,
+                    maxMaxBufferLength: 180,
+                    maxBufferSize: 40 * 1000 * 1000,
+
+                    maxBufferHole: 0.1,
+                    nudgeOffset: 0.02,
+                    nudgeMaxRetry: 8,
+                    maxFragLookUpTolerance: 0.05,
+
+                    highBufferWatchdogPeriod: 0.5,
+
+                    fragLoadingTimeOut: 15000,
+                    fragLoadingMaxRetry: 4,
+                    fragLoadingRetryDelay: 200,
+
+                    manifestLoadingTimeOut: 8000,
+                    manifestLoadingMaxRetry: 3,
+
+                    autoStartLoad: true,
+                    startPosition: -1,
+                    capLevelToPlayerSize: false,
+
+                    startFragPrefetch: true,
+                    testBandwidth: true,
+                    abrEwmaFastLive: 3,
+                    abrEwmaSlowLive: 9,
+                });
+
+                this.#hls.loadSource(hlsUrl);
+                this.#hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = hlsUrl;
+            } else {
+                video.src = `/api/stream/${playbackId}`;
+            }
         }
     }
 }
