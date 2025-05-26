@@ -2,7 +2,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { motion, useMotionValue } from 'framer-motion';
 
-import { ArtworkSchema } from '@/api/data-contracts';
 import { LazyImage } from '@/components/lazyImage';
 import { HoverEvent, Slider, SliderEvent } from '@/components/slider';
 import { useTimer } from '@/hooks/useIntervals';
@@ -13,7 +12,7 @@ import { toDuration } from '@/utils/helpers';
 
 
 interface SliderPointerProps {
-    thumbnails: ArtworkSchema[];
+    thumbnails: any[];
     percentage: number;
     duration: number;
 }
@@ -72,7 +71,7 @@ function SliderPointer ({ thumbnails, percentage, duration }: SliderPointerProps
     );
 }
 
-export function ProgressBar ({ thumbnails }: { thumbnails: ArtworkSchema[] }) {
+export function ProgressBar ({ thumbnails }: { thumbnails: any[] }) {
     const displayControls = usePlayerUI((state) => state.displayControls || state.playbackBlocked);
     const tooltipRef = useRef<HTMLDivElement | null>(null);
     const [showTooltip, setShowTooltip] = useState(false);

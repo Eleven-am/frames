@@ -1,4 +1,3 @@
-import { ArtworkSchema } from '@/api/data-contracts';
 import { CentreControls } from '@/components/watch/centreControls';
 import { LeftControls } from '@/components/watch/leftControls';
 import { ProgressBar } from '@/components/watch/progressBar';
@@ -6,7 +5,7 @@ import { RightControls } from '@/components/watch/rightControls';
 import { usePlayerUI } from '@/providers/watched/playerUI';
 
 interface LowerControlsProps {
-    thumbnails: ArtworkSchema[];
+    thumbnails: any[];
     episodeName: string | null;
     playbackId: string;
     mediaId: string;
