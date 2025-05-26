@@ -265,6 +265,28 @@ Admin accounts can:
 ![Media Details Showing Edit dialog with Image tab](art/33.png)
 ![Media Details Showing Edit dialog with Permission tab](art/34.png)
 
+## Transcoding (Alpha Feature)
+
+**⚠️ Alpha Feature Notice:** Transcoding is currently in alpha development and only available for local media files. I'm actively working towards a stable release. This experimental feature automatically converts your media files to different formats and quality levels, optimizing playback across various devices and network conditions for improved streaming performance.
+
+To enable transcoding, use the `transcode` Docker tag and provide the `HLS_CACHE_DIRECTORY` environment variable with a mounted volume for cache storage:
+
+```bash
+docker run -p 3000:3000 \
+  -v /path/to/your/media:/media \
+  -v /path/to/transcoding/cache:/transcoding \
+  -e DATABASE_URL="postgres://username:password@host:5432/frames" \
+  -e DIRECT_DATABASE_URL="postgres://username:password@host:5432/frames" \
+  -e REDIS_HOST="redis-host" \
+  -e REDIS_PORT="6379" \
+  -e REDIS_TTL="86400" \
+  -e REDIS_DB="0" \
+  -e JWT_SECRET="your-secure-jwt-secret" \
+  -e HLS_CACHE_DIRECTORY="/transcoding" \
+  elevenam/frames:transcode
+```
+
+**Note:** GroupWatch across multiple servers does not currently work in the transcoding branch.
 
 ## Coming Soon
 

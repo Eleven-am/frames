@@ -8,7 +8,7 @@ import { PlayerStateIndicator } from '@/components/watch/playerStateIndicator';
 import { Subtitles } from '@/components/watch/subtitles';
 import { TopUI } from '@/components/watch/topUI';
 import { useEventListener } from '@/hooks/useEventListener';
-import { useFetchSubtitles, useThumbnails } from '@/hooks/useSubtitles';
+import { useFetchSubtitles } from '@/hooks/useSubtitles';
 import { useCountdown, useProgressAndVolume } from '@/providers/watched/playerPageStates';
 import { usePlayerUI, usePlayerUIActions } from '@/providers/watched/playerUI';
 import { videoBridge } from '@/providers/watched/videoBridge';
@@ -86,7 +86,7 @@ export function Listener ({ playbackId }: { playbackId: string }) {
 export function Controls ({ session }: { session: PlaybackSessionSchema }) {
     useFetchSubtitles(session.availableSubtitles, session.canAccessStream);
     const { showControls } = usePlayerUIActions();
-    const thumbnails = useThumbnails(session.playbackId, session.canAccessStream);
+    // const thumbnails = useThumbnails(session.playbackId, session.canAccessStream);
     const shrunk = useCountdown((state) => Boolean(state));
     const handleMouseMove = useCallback(() => showControls(), [showControls]);
     const displayControls = usePlayerUI((state) => state.displayControls || state.playbackBlocked);
@@ -134,7 +134,7 @@ export function Controls ({ session }: { session: PlaybackSessionSchema }) {
                     playbackId={session.playbackId}
                     videoId={session.videoId}
                     mediaId={session.mediaId}
-                    thumbnails={thumbnails}
+                    thumbnails={[]}
                     name={session.name}
                 />
             </div>

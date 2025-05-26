@@ -79,6 +79,7 @@ export function useSubtitles (availableSubtitles: SubtitleSchema[], canAccessStr
     }), [paused, subtitle, subtitleId, displayControls, setLanguage, language]);
 }
 
+/*
 export function useThumbnails (playbackId: string, canAccessStream: boolean) {
     const [enableFetch, setEnableFetch] = useState(true);
     const { data: thumbnails } = useQuery(watchQueries.thumbnails(playbackId, canAccessStream, enableFetch));
@@ -91,4 +92,5 @@ export function useThumbnails (playbackId: string, canAccessStream: boolean) {
 
     return thumbnails;
 }
+*/
 

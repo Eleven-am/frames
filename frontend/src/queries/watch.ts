@@ -1,10 +1,11 @@
+import { getSnapshot } from '@eleven-am/notifier';
+import { notFound } from '@tanstack/react-router';
+import { z } from 'zod';
+
 import { Api } from '@/api/Api';
 import { notify } from '@/components/toast';
 import { userStore } from '@/providers/userProvider';
 import { createQueries, createMutations } from '@/queries/base';
-import { getSnapshot } from '@eleven-am/notifier';
-import { notFound } from '@tanstack/react-router';
-import { z } from 'zod';
 
 interface UpdateOffsetOptions {
     offset: number;
@@ -75,14 +76,15 @@ export async function getSession (client: Api<never>, search: WatchSearch) {
 }
 
 export const watchQueries = createQueries('watch', {
-    thumbnails: (playbackId: string, canAccessStream: boolean, reFetch) => ({
+
+    /* thumbnails: (playbackId: string, canAccessStream: boolean, reFetch) => ({
         initialData: [],
         queryKey: [playbackId, canAccessStream],
         enabled: Boolean(playbackId) && canAccessStream,
         refetchIntervalInBackground: reFetch,
         refetchInterval: reFetch ? 1000 * 30 : false,
         queryFn: (api) => api.streamControllerGetThumbnails(playbackId),
-    }),
+    }),*/
     upNext: (playbackId: string) => ({
         queryKey: [playbackId],
         enabled: Boolean(playbackId),
@@ -136,6 +138,6 @@ export const watchMutations = createMutations({
         mutationFn: (api, percentage: number) => api.framesControllerCreateFrame(playbackId, {
             percentage,
             cypher,
-        })
+        }),
     }),
 });
