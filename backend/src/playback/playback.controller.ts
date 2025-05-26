@@ -1,6 +1,6 @@
 import { CanPerform, Action, AppAbilityType, CurrentAbility } from '@eleven-am/authorizer';
-import { Body, Controller, Delete, Get, Patch, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {Body, Controller, Delete, Get, Header, Param, Patch, Post} from '@nestjs/common';
+import {ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiProduces, ApiTags} from '@nestjs/swagger';
 import { Video } from '@prisma/client';
 
 import { ApiPlaybackId, CurrentPlayback, CurrentVideo } from './playback.decorators';
@@ -15,12 +15,18 @@ import { PlaybackService } from './playback.service';
 import { CurrentSession } from '../authorisation/auth.decorators';
 import { CachedSession } from '../session/session.contracts';
 import { ApiOkFramesResponse, ApiParamId } from '../utils/utils.decorators';
+import {ApiStreamIndex, ApiVideoStreamQuality} from "../stream/stream.decorators";
+import {ScreenShotOptions} from "../stream/stream.contracts";
+import {HLSService} from "../stream/hls.service";
 
 
 @Controller('playback')
 @ApiTags('Playback')
 export class PlaybackController {
-    constructor (private readonly playbackService: PlaybackService) {}
+    constructor (
+	    private readonly hlsService: HLSService,
+		private readonly playbackService: PlaybackService
+    ) {}
 
     @Get(':playbackId')
     @CanPerform({
@@ -117,15 +123,15 @@ export class PlaybackController {
     })
     @ApiParamId('video', 'whose watch history to add')
     @ApiOperation({
-        summary: 'Add a video from the watch history',
-        description: 'Add a video from the watch history of the current user',
+        summary: 'Add a video to the watch history',
+        description: 'Add a video to the watch history of the current user',
     })
     @ApiOkFramesResponse('The video has been added to the watch history')
     addVideo (@CurrentSession.HTTP() { user }: CachedSession, @CurrentVideo() video: Video) {
         return this.playbackService.addWatchHistory(user, video);
     }
 
-    @Post('play-video/:videoId')
+    @Post('play/:videoId')
     @ApiParamId('video', 'whose playback to start')
     @CanPerform({
         action: Action.Create,
@@ -142,4 +148,34 @@ export class PlaybackController {
     startPlayback (@CurrentSession.HTTP() session: CachedSession, @CurrentVideo() video: Video) {
         return this.playbackService.playFromVideo(session, video);
     }
+	
+	@Get(":videoId/:streamIndex/:quality/:timestamp")
+	@ApiPlaybackId("to generate the thumbnail for")
+	@ApiStreamIndex()
+	@CanPerform({
+		action: Action.Read,
+		resource: "View",
+	})
+	@ApiOperation({
+		summary: "Generates a thumbnail for the video",
+		description: "Generates a thumbnail for the video",
+	})
+	@ApiOkResponse({
+		description: "The thumbnail has been generated",
+		schema: {
+			type: "string",
+			format: "binary",
+		},
+	})
+	@ApiParam({
+		name: "timestamp",
+		description: "The timestamp of the thumbnail in seconds",
+		type: "number",
+	})
+	@ApiVideoStreamQuality()
+	@ApiProduces("image/jpeg")
+	@Header('Cache-Control', 'public, max-age=604800')
+	generateThumbnail(@CurrentVideo() video: Video, @Param() params: ScreenShotOptions) {
+		return this.hlsService.generateThumbnail(video, params);
+	}
 }

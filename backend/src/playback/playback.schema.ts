@@ -23,7 +23,6 @@ export interface PlaybackData extends Omit<TmdbVideoDetails, 'imdbId'> {
     availableSubtitles: SubtitleData[];
     mediaType: MediaType;
     mediaId: string;
-    source: string;
     episodeId: string | null;
     videoId: string;
 }
@@ -34,6 +33,7 @@ export interface PlaybackSession extends PlaybackData {
     autoPlay: boolean;
     percentage: number;
     canAccessStream: boolean;
+	directPlaySupported: boolean;
 }
 
 export interface UpNextDetails {
@@ -251,6 +251,12 @@ export class PlaybackSessionSchema extends PlaybackDataSchema {
         description: 'Whether the user is allowed to access the underlying stream',
     })
     canAccessStream: boolean;
+	
+	@ApiProperty({
+		description: 'Whether the video is supported for direct play',
+		type: Boolean,
+	})
+	directPlaySupported: boolean;
 }
 
 export class UpdatePlaybackInformSchema {

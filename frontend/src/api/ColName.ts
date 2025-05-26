@@ -12,7 +12,9 @@
 
 import { HttpClient, RequestParams } from "./http-client";
 
-export class ColName<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class ColName<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -20,7 +22,10 @@ export class ColName<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @name RenderControllerGetCollectionByName
    * @request GET:/col={name}
    */
-  renderControllerGetCollectionByName = (name: string, params: RequestParams = {}) =>
+  renderControllerGetCollectionByName = (
+    name: string,
+    params: RequestParams = {},
+  ) =>
     this.request<void, any>({
       path: `/col=${name}`,
       method: "GET",

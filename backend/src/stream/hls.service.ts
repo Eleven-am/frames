@@ -25,15 +25,17 @@ import {
 	TaskEither,
 } from "@eleven-am/fp";
 import { NodeCueData, SubtitleInfo } from "../subtitles/subtitles.contracts";
-import { CloudDrive } from "@prisma/client";
+import {CloudDrive, Video} from "@prisma/client";
 import { Readable } from "stream";
 import { LanguageService } from "../language/language.service";
+import {PrismaService} from "../prisma/prisma.service";
 
 @Injectable()
 export class HLSService extends HLSController implements OnModuleInit {
 	constructor(
 		cacheStore: CacheService,
 		configService: ConfigService,
+		private readonly prisma: PrismaService,
 		private readonly languageService: LanguageService,
 	) {
 		super({
@@ -270,11 +272,11 @@ export class HLSService extends HLSController implements OnModuleInit {
 	
 	/**
 	 * Retrieves the thumbnail for the given playback
-	 * @param playback The playback object containing video information
+	 * @param video The Video object containing video information
 	 * @param options The options for generating the thumbnail
 	 */
-	public generateThumbnail(playback: Playback, options: ScreenShotOptions) {
-		return this.getFilePath(playback)
+	public generateThumbnail(video: Video, options: ScreenShotOptions) {
+		return this.getFilePathFromVideo(video)
 			.fromPromise((filePath) =>
 				this.generateScreenshot(
 					filePath,
@@ -315,6 +317,27 @@ export class HLSService extends HLSController implements OnModuleInit {
 				() => createBadRequestError("Playback video is not local"),
 			)
 			.map((playback) => playback.video.location);
+	}
+	
+	/**
+	 * Retrieves the absolute path of the media file from the Video object
+	 * @param video The Video object containing cloud storage information
+	 * @private
+	 */
+	private getFilePathFromVideo(video: Video) {
+		return TaskEither
+			.tryCatch(
+				() => this.prisma.cloudStorage.findUnique({
+					where: { id: video.cloudStorageId },
+				}),
+				'Failed to get cloud storage',
+			)
+			.nonNullable('No cloud storage found')
+			.filter(
+				(cloudStorage) => cloudStorage.drive === CloudDrive.LOCAL,
+				() => createBadRequestError("Cannot transcode remote files"),
+			)
+			.map(() => video.location);
 	}
 	
 	/**

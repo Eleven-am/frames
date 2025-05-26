@@ -1,6 +1,6 @@
 import { TaskEither, Either, createUnauthorizedError } from '@eleven-am/fp';
 import { AuthorizationContext } from "@eleven-am/authorizer";
-import { Injectable } from '@nestjs/common';
+import {ExecutionContext, Injectable} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role, Session, User } from '@prisma/client';
 import { Response } from 'express';
@@ -195,8 +195,7 @@ export class SessionService {
             context.getSocketContext().connectionContext?.cookies[AUTHORIZATION_COOKIE] ??
             context.getSocketContext().user?.assigns.token ?? null;
 
-		const sessionToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsYW5ndWFnZSI6Ik5vbmUiLCJicm93c2VySWQiOiI4YjhhZjM5NC1lNGJkLTRlMGYtOTZiYy1iMzY4ZTc2ZDE3YmMiLCJzZXNzaW9uSWQiOiJjbWIyOTNhenEwMDAwN3o1dHB2NjV3Z3FkIiwidXNlcklkIjoiY21henR0YmozMDAwMjY0NXR4OXIwbWpxOCIsInZhbGlkIjoiMjAyNS0wNS0zMVQxMzoxMzozOC45MThaIiwiaWF0IjoxNzQ4MDkyNDE4LCJleHAiOjE3NDg2OTcyMTh9.JQNe0ChRcYO-z7EaHuJohScL3d4zJN3NtVYG_cjbcbY';
-        // const sessionToken = token?.replace('Bearer', '').trim() || null;
+		const sessionToken = token?.replace('Bearer', '').trim() || null;
 
         return TaskEither
             .fromNullable(sessionToken)
@@ -205,6 +204,18 @@ export class SessionService {
             .ioSync((session) => context.addData(SESSION_CONTEXT_KEY, session))
             .map((session) => session.user);
     }
+	
+	retrieveUserFromExecutionContext (context: ExecutionContext) {
+		const request = context.switchToHttp().getRequest();
+		const sessionToken: string | null = request.cookies[AUTHORIZATION_COOKIE] ??
+			request.query.token ??
+			request.headers.authorization ?? null;
+
+		return TaskEither
+			.fromNullable(sessionToken)
+			.chain((token) => this.retrieveSession(token))
+			.map((session) => session.user);
+	}
 
     allowNoRulesAccess (context: AuthorizationContext) {
         return TaskEither

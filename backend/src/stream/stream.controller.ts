@@ -1,5 +1,5 @@
 import { Action, CanPerform } from "@eleven-am/authorizer";
-import { Controller, Get, Header, Headers, Param, Res } from "@nestjs/common";
+import {Controller, Get, Header, Headers, Param, Res, UseGuards} from "@nestjs/common";
 import {
 	ApiOkResponse,
 	ApiOperation,
@@ -33,9 +33,11 @@ import {
 } from "./stream.decorators";
 import { SubtitleInfoSchema } from "../subtitles/subtitles.contracts";
 import { HLSService } from "./hls.service";
+import {StreamGuard} from "./stream.guard";
 
 @Controller("stream")
 @ApiTags("Stream")
+@UseGuards(StreamGuard)
 export class StreamController {
 	constructor(
 		private readonly hlsService: HLSService,
@@ -94,7 +96,7 @@ export class StreamController {
 		return this.hlsService.getMasterRendition(playback, session);
 	}
 	
-	@Get(":playbackId/subtitle")
+	@Get(":playbackId/subtitles")
 	@ApiPlaybackId("to be retrieved")
 	@CanPerform({
 		action: Action.Read,
@@ -112,7 +114,7 @@ export class StreamController {
 		return this.hlsService.retrieveConvertibleSubtitles(playback);
 	}
 	
-	@Get(":playbackId/subtitle/:streamIndex.vtt")
+	@Get(":playbackId/subtitles/:streamIndex.vtt")
 	@ApiPlaybackId("to be retrieved")
 	@ApiStreamIndex()
 	@CanPerform({
@@ -254,34 +256,5 @@ export class StreamController {
 			session,
 			params,
 		);
-	}
-	
-	@Get(":playbackId/thumbnail/:streamIndex/:quality/:timestamp")
-	@ApiPlaybackId("to generate the thumbnail for")
-	@ApiStreamIndex()
-	@CanPerform({
-		action: Action.Read,
-		resource: "View",
-	})
-	@ApiOperation({
-		summary: "Generates a thumbnail for the video",
-		description: "Generates a thumbnail for the video",
-	})
-	@ApiOkResponse({
-		description: "The thumbnail has been generated",
-		schema: {
-			type: "string",
-			format: "binary",
-		},
-	})
-	@ApiParam({
-		name: "timestamp",
-		description: "The timestamp of the thumbnail in seconds",
-		type: "number",
-	})
-	@ApiVideoStreamQuality()
-	@ApiProduces("image/jpeg")
-	generateThumbnail(@CurrentPlayback() playback: Playback, @Param() params: ScreenShotOptions) {
-		return this.hlsService.generateThumbnail(playback, params);
 	}
 }

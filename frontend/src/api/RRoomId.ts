@@ -12,7 +12,9 @@
 
 import { HttpClient, RequestParams } from "./http-client";
 
-export class RRoomId<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class RRoomId<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *

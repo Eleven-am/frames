@@ -28,39 +28,26 @@ export class StreamService {
         private readonly prisma: PrismaService,
         private readonly storageService: StorageService,
     ) {}
-    
-    /**
-     * Builds the stream URL for the given playback ID and video
-     * @param playbackId The ID of the playback
-     * @param video The video object
-     */
-    public buildStreamUrl(playbackId: string, video: Video) {
-        const isCompatible = TaskEither.of(video).matchTask([
-            {
-                predicate: (video) =>
-                    ["mp4", "m4v"].some((ext) => video.location.endsWith(ext)),
-                run: () => TaskEither.of(`/api/stream/${playbackId}`),
-            },
-            {
-                predicate: () => true,
-                run: () => TaskEither.of(`/api/stream/${playbackId}/master.m3u8`),
-            },
-        ]);
-        
-        return this.checkLocalStorage(video)
-            .orElse(() => TaskEither.of(false))
-            .matchTask([
-                {
-                    predicate: (isLocal) => isLocal,
-                    run: () => isCompatible,
-                },
-                {
-                    predicate: (isLocal) => !isLocal,
-                    run: () => TaskEither.of(`/stream/${playbackId}`),
-                },
-            ]);
-    }
-    
+
+	/**
+	 * Checks if the video is supported for direct play
+	 * @param video The video object
+	 */
+	public isDirectPlaySupported(video: Video) {
+		return this.checkLocalStorage(video)
+			.orElse(() => TaskEither.of(false))
+			.matchTask([
+				{
+					predicate: (isLocal) => isLocal,
+					run: () => TaskEither.of(["mp4", "m4v"].some((ext) => video.location.endsWith(ext))),
+				},
+				{
+					predicate: (isLocal) => !isLocal,
+					run: () => TaskEither.of(false),
+				},
+			]);
+	}
+	
     /**
      * Streams the video data for the given playback
      * @param playback The playback object containing video information

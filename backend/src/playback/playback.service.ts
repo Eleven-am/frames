@@ -68,38 +68,45 @@ export class PlaybackService {
                 () => createBadRequestError('User already watching'),
             )
             .map(() => value);
-
-        return this.buildVideoSession(cachedSession.language, video)
-            // .chain(performPresenceCheck)
-            .chain((session) => this.savePlaybackSession(cachedSession.user, video, playlistVideo, inform)
-                .map(
-                    (playbackData): PlaybackSession => ({
-                        ...session,
-                        canAccessStream,
-                        percentage: newPercentage,
-                        playbackId: playbackData.id,
-                        inform: playbackData.inform,
-                        autoPlay: cachedSession.user.autoplay,
-                    }),
-                ))
-            .chain((session) => this.createStreamLink(session, video, canAccessStream))
-            .ioSync((session) => {
-                const metadata: MetadataSchema = {
-                    name: session.name,
-                    overview: session.overview,
-                    poster: session.poster,
-                    action: PresenceAction.WATCHING,
-                    logo: session.logo,
-                    backdrop: session.backdrop,
-                    backdropBlur: session.backdropBlur,
-                    playbackId: session.playbackId,
-                    mediaId: session.mediaId,
-                };
-
-                const status = `Watching ${session.name}`;
-
-                this.notificationService.updatePresence(cachedSession, metadata, status);
-            });
+		
+	    const session = this.buildVideoSession(cachedSession.language, video)
+		    .chain((session) => this.savePlaybackSession(cachedSession.user, video, playlistVideo, inform)
+		        .map((playbackData): Omit<PlaybackSession, 'directPlaySupported'> => ({
+			        ...session,
+			        canAccessStream,
+			        percentage: newPercentage,
+			        playbackId: playbackData.id,
+			        inform: playbackData.inform,
+			        autoPlay: cachedSession.user.autoplay,
+		        })))
+	    
+	    return TaskEither
+		    .fromBind({
+			    session: session,
+			    isDirectPlaySupported: this.streamService.isDirectPlaySupported(video),
+		    })
+		    //.chain(performPresenceCheck)
+		    .map(({ session, isDirectPlaySupported }): PlaybackSession => ({
+			    ...session,
+			    directPlaySupported: isDirectPlaySupported,
+		    }))
+		    .ioSync((session) => {
+			    const metadata: MetadataSchema = {
+				    name: session.name,
+				    overview: session.overview,
+				    poster: session.poster,
+				    action: PresenceAction.WATCHING,
+				    logo: session.logo,
+				    backdrop: session.backdrop,
+				    backdropBlur: session.backdropBlur,
+				    playbackId: session.playbackId,
+				    mediaId: session.mediaId,
+			    };
+			    
+			    const status = `Watching ${session.name}`;
+			    
+			    this.notificationService.updatePresence(cachedSession, metadata, status);
+		    });
     }
 
     saveInformation (user: User, playback: Playback, percentage: number) {
@@ -598,7 +605,6 @@ export class PlaybackService {
             })))
             .map(
                 ({ realVideo, tmdbDetails, subtitles: { subs, link } }): PlaybackData => ({
-                    source: link,
                     mediaId: realVideo.mediaId,
                     name: tmdbDetails.name,
                     episodeName: tmdbDetails.episodeName,
@@ -641,34 +647,7 @@ export class PlaybackService {
                 'Error saving playback session',
             );
     }
-
-    private createStreamLink (session: PlaybackSession, video: Video, authorised: boolean) {
-        const cannotAccessStream = TaskEither
-            .of({
-                ...session,
-                source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-            });
-
-        const canAccessStream = this.streamService.buildStreamUrl(session.playbackId, video)
-            .map((source): PlaybackSession => ({
-                ...session,
-                source,
-            }));
-
-        return TaskEither
-            .of(authorised)
-            .matchTask([
-                {
-                    predicate: (value) => value,
-                    run: () => canAccessStream,
-                },
-                {
-                    predicate: (value) => !value,
-                    run: () => cannotAccessStream,
-                },
-            ]);
-    }
-
+	
     private sendToStreamQueue (video: Video) {
         return TaskEither
             .tryCatch(

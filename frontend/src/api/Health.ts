@@ -13,7 +13,9 @@
 import { VersionInfoSchema } from "./data-contracts";
 import { HttpClient, RequestParams } from "./http-client";
 
-export class Health<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Health<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *

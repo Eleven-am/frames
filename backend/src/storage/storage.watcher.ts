@@ -52,7 +52,7 @@ export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
             }))
             .mapItems((locations) => locations.showLocations.concat(locations.movieLocations))
             .map((folders) => folders.flat())
-            .map((folders) => this.setWatcher(folders))
+            //.map((folders) => this.setWatcher(folders))
             .map(() => ({
                 message: 'Storage watcher started',
             }))

@@ -12,7 +12,9 @@
 
 import { HttpClient, RequestParams } from "./http-client";
 
-export class PlPlaylistId<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class PlPlaylistId<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -20,7 +22,10 @@ export class PlPlaylistId<SecurityDataType = unknown> extends HttpClient<Securit
    * @name RenderControllerGetPlaylistById
    * @request GET:/pl={playlistId}
    */
-  renderControllerGetPlaylistById = (playlistId: string, params: RequestParams = {}) =>
+  renderControllerGetPlaylistById = (
+    playlistId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<void, any>({
       path: `/pl=${playlistId}`,
       method: "GET",

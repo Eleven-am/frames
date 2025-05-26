@@ -12,7 +12,9 @@
 
 import { HttpClient, RequestParams } from "./http-client";
 
-export class CName<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class CName<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -20,7 +22,10 @@ export class CName<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
    * @name RenderControllerGetCompanyByName
    * @request GET:/c={name}
    */
-  renderControllerGetCompanyByName = (name: string, params: RequestParams = {}) =>
+  renderControllerGetCompanyByName = (
+    name: string,
+    params: RequestParams = {},
+  ) =>
     this.request<void, any>({
       path: `/c=${name}`,
       method: "GET",
