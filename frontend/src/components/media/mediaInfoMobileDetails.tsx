@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 
+import { dedupeBy } from '@eleven-am/fp';
+
 import { MediaResponseSchema, MediaSection, VideoSeen } from '@/api/data-contracts';
 import { ImageListType, ImageList } from '@/components/imageList';
 import { SeasonDetails } from '@/components/media/seasonDetails';
 import { VerticalMediaInformation, Collection } from '@/components/verticalMediaInformation';
 import { LinkType } from '@/hooks/useMediaLink';
-import { dedupeBy } from '@/utils/arrayFunctions';
 
 export function SectionedHorizontalDetails ({ media }: { media: MediaResponseSchema }) {
     const mapped = useMemo(() => ([

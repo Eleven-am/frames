@@ -1,3 +1,5 @@
+import { dedupeBy } from '@eleven-am/fp';
+
 import { MediaResponseSchema, MediaSection, UserMediaDetailsResponseSchema } from '@/api/data-contracts';
 import { AddToList,
     AddToPlaylist,
@@ -18,7 +20,6 @@ import { Metadata } from '@/components/metadata';
 import { TabsHolder } from '@/components/tabs';
 import { VerticalMediaInformation } from '@/components/verticalMediaInformation';
 import { LinkType, useMediaLink } from '@/hooks/useMediaLink';
-import { dedupeBy } from '@/utils/arrayFunctions';
 import { tw } from '@/utils/style';
 
 interface MediaInfoDesktopProps {

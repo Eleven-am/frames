@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 
+import { dedupeBy } from '@eleven-am/fp';
+
 import { MediaResponseSchema, UserMediaDetailsResponseSchema } from '@/api/data-contracts';
 import { AddToList,
     AddToPlaylist,
@@ -14,7 +16,6 @@ import { ImageList, ImageListType } from '@/components/imageList';
 import { LazyImage } from '@/components/lazyImage';
 import { BackgroundImageMobile } from '@/components/media/mediaInfoBackground';
 import { MobileDetails } from '@/components/media/mediaInfoMobileDetails';
-import { dedupeBy } from '@/utils/arrayFunctions';
 
 interface MediaInfoMobileProps {
     media: MediaResponseSchema;

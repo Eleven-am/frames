@@ -1,5 +1,6 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { dedupeBy } from '@eleven-am/fp';
 import { useRouter } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { FaPlay } from 'react-icons/fa';
@@ -22,7 +23,6 @@ import { PresenceInterface } from '@/providers/realtimeNotifier';
 import { useUser } from '@/providers/userProvider';
 import { useBuffering } from '@/providers/watched/playerPageStates';
 import { videoBridge } from '@/providers/watched/videoBridge';
-import { dedupeBy } from '@/utils/arrayFunctions';
 import { createStyles } from '@/utils/colour';
 import { tw } from '@/utils/style';
 

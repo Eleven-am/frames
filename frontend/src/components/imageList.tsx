@@ -1,3 +1,4 @@
+import { dedupeBy } from '@eleven-am/fp';
 import { formatDistanceToNow } from 'date-fns';
 
 import { SlimMediaSchema,
@@ -13,7 +14,6 @@ import { Recommendation,
     EpisodeComponent,
     ContinueWatching } from '@/components/listItem';
 import { UseFlatListOptions } from '@/hooks/useFlatList';
-import { dedupeBy } from '@/utils/arrayFunctions';
 
 
 export enum ImageListType {

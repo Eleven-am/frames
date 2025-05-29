@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 
+import { sortBy, dedupeBy } from '@eleven-am/fp';
+
 import { FrontImagesSchema, FrontImageSchema } from '@/api/data-contracts';
 import { BaseButton } from '@/components/button';
 import { BaseInput } from '@/components/input';
 import { LazyImage } from '@/components/lazyImage';
 import { TabsHolder } from '@/components/tabs';
-import { sortBy, dedupeBy } from '@/utils/arrayFunctions';
 import { tw } from '@/utils/style';
 
 interface EditImagesProps {

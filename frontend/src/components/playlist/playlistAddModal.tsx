@@ -1,3 +1,10 @@
+import { useCallback, useMemo, useState } from 'react';
+
+import { dedupeBy, sortBy } from '@eleven-am/fp';
+import { useInfiniteScroll } from '@eleven-am/xquery';
+import { FiSearch } from 'react-icons/fi';
+import { IoAddOutline, IoCloseOutline } from 'react-icons/io5';
+
 import { SearchedMediaSchema, SearchedVideoSchema } from '@/api/data-contracts';
 import { PrimaryButton, RoundedButton } from '@/components/button';
 import { BaseInput } from '@/components/input';
@@ -7,13 +14,7 @@ import { Modal } from '@/components/modal';
 import { Dropdown } from '@/components/select';
 import { usePlaylistContext } from '@/contexts/playlist';
 import { playlistInfiniteQueries } from '@/queries/playlist';
-import { dedupeBy, sortBy } from '@/utils/arrayFunctions';
 import { createStyles } from '@/utils/colour';
-import { useInfiniteScroll } from '@eleven-am/xquery';
-import { useCallback, useMemo, useState } from 'react';
-
-import { FiSearch } from 'react-icons/fi';
-import { IoAddOutline, IoCloseOutline } from 'react-icons/io5';
 
 
 export function PlaylistAddModal () {

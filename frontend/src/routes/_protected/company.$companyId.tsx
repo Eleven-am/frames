@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { dedupeBy } from '@eleven-am/fp';
 import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 
@@ -11,7 +12,6 @@ import { ErrorClient } from '@/components/errorClient';
 import { Loading } from '@/components/loading-set/Loading';
 import { Metadata } from '@/components/metadata';
 import { miscQueries } from '@/queries/misc';
-import { dedupeBy } from '@/utils/arrayFunctions';
 
 
 const routeApi = getRouteApi('/_protected/company/$companyId');

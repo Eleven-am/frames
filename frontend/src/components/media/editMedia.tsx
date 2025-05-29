@@ -1,3 +1,12 @@
+import { ChangeEvent, createContext, useCallback, useContext, useMemo, useState } from 'react';
+
+import { sortBy } from '@eleven-am/fp';
+import { useAutoSaveAction } from '@eleven-am/xquery';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useRouter } from '@tanstack/react-router';
+import { HiOutlineDocumentSearch } from 'react-icons/hi';
+import { HiOutlineTrash } from 'react-icons/hi2';
+
 import { EpisodeFileSchema, FrontImagesSchema, GetMediaSchema, MediaType } from '@/api/data-contracts';
 import { RoundedButton } from '@/components/button';
 import { EditImages } from '@/components/editImages';
@@ -13,14 +22,6 @@ import { useDialogActions } from '@/providers/dialogStore';
 import { mediaActions, mediaQueries } from '@/queries/media';
 import { libraryMutations } from '@/queries/settings/libraries';
 import { createStyles } from '@/utils/colour';
-
-import { sortBy } from '@eleven-am/fp';
-import { useAutoSaveAction } from '@eleven-am/xquery';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useRouter } from '@tanstack/react-router';
-import { ChangeEvent, createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { HiOutlineDocumentSearch } from 'react-icons/hi';
-import { HiOutlineTrash } from 'react-icons/hi2';
 
 
 enum EditMediaTabs {
