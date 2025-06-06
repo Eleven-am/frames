@@ -1,5 +1,6 @@
-import { SlimMediaSchema } from '@/api/data-contracts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { SlimMediaSchema } from '@/api/data-contracts';
 
 type IntervalCallback = () => void;
 
@@ -207,39 +208,42 @@ export const useLoop = <DataType>(array: DataType[], delay: number, initialDirec
 };
 
 export const useCounter = ({
-   initialValue = 0,
-   targetValue,
-   step = 1,
-   duration = 2,
-   onComplete,
-   autoStart = true,
+    initialValue = 0,
+    targetValue,
+    step = 1,
+    duration = 2,
+    onComplete,
+    autoStart = true,
 }: UseCounterOptions) => {
     const [count, setCount] = useState(initialValue);
     const [isRunning, setIsRunning] = useState(false);
 
-    const direction = useMemo(() =>
-            targetValue > initialValue ? 'up' : 'down'
+    const direction = useMemo(() => targetValue > initialValue ? 'up' : 'down'
         , [targetValue, initialValue]);
 
     const absStep = Math.abs(step);
 
     const calculateDelay = useCallback(() => {
         const totalSteps = Math.abs((targetValue - initialValue) / absStep);
+
+
         return duration / totalSteps;
     }, [duration, targetValue, initialValue, absStep]);
 
     const increment = useCallback(() => {
-        setCount(prev => {
+        setCount((prev) => {
             const next = direction === 'up'
                 ? prev + absStep
                 : prev - absStep;
 
             if (direction === 'up' && next >= targetValue) {
                 onComplete?.();
+
                 return targetValue;
             }
             if (direction === 'down' && next <= targetValue) {
                 onComplete?.();
+
                 return targetValue;
             }
 
@@ -250,7 +254,7 @@ export const useCounter = ({
     const { clear, restart, isPaused } = useInterval(
         increment,
         isRunning ? calculateDelay() : null,
-        true
+        true,
     );
 
     const start = useCallback(() => {
@@ -272,6 +276,7 @@ export const useCounter = ({
     const setTo = useCallback((value: number) => {
         const boundedValue = Math.min(Math.max(value, Math.min(initialValue, targetValue)),
             Math.max(initialValue, targetValue));
+
         setCount(boundedValue);
     }, [initialValue, targetValue]);
 
@@ -289,7 +294,7 @@ export const useCounter = ({
         reset,
         setTo,
         isPaused,
-        direction
+        direction,
     };
 };
 
@@ -299,7 +304,7 @@ export interface UseBannerOptions extends UseCounterOptions {
     initialDirection?: Direction;
 }
 
-export function useBanner({ items, initialDirection =  Direction.forward, ...options}: UseBannerOptions): ReturnType<typeof useCounter> & UseCarousel<SlimMediaSchema> {
+export function useBanner ({ items, initialDirection = Direction.forward, ...options }: UseBannerOptions): ReturnType<typeof useCounter> & UseCarousel<SlimMediaSchema> {
     const counter = useCounter(options);
     const loop = useLoop(items, options.duration, initialDirection);
 
@@ -337,5 +342,5 @@ export function useBanner({ items, initialDirection =  Direction.forward, ...opt
         jumpTo,
         carousel,
         isPaused,
-    }
+    };
 }

@@ -1,8 +1,9 @@
+import { ComponentType, useCallback, CSSProperties, useMemo } from 'react';
+
 import { DragEndEvent, closestCenter, DndContext, DraggableAttributes } from '@dnd-kit/core';
-import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
+import { type SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { arrayMove, verticalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ComponentType, useCallback, CSSProperties, useMemo } from 'react';
 
 type IdObject = { id: string };
 
@@ -47,9 +48,8 @@ function DragNDropWrapper<T extends IdObject> ({ item, Component, isLasItem }: D
             listeners={listeners}
             setNodeRef={setNodeRef}
         />
-    )
+    );
 }
-
 
 export function DragNDropProvider<T extends IdObject> ({ className, elements, Component, onDrop }: DragNDropProps<T>) {
     const onDragEnd = useCallback((event: DragEndEvent) => {
@@ -81,5 +81,5 @@ export function DragNDropProvider<T extends IdObject> ({ className, elements, Co
                 </SortableContext>
             </ul>
         </DndContext>
-    )
+    );
 }
