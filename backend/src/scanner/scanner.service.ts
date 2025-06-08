@@ -3,12 +3,6 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { CloudStorage, Folder, Media, MediaType, Video, User } from '@prisma/client';
 import { Queue } from 'bullmq';
-import { LLMService } from '../misc/llm.service';
-import { OpenSubtitlesService } from '../misc/openSubtitles.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { FramesFile } from '../storage/storage.schema';
-import { StorageService } from '../storage/storage.service';
-import { PageResponse } from '../utils/utils.contracts';
 
 import { ScanQueue, STORAGE_ADDED_EVENT, EPISODES_CHANGED_EVENT } from './scanner.constants';
 import {
@@ -28,6 +22,12 @@ import {
     CreateFromTmdbIdArgs,
 } from './scanner.contracts';
 import { ScannerIdentifier } from './scanner.identifier';
+import { LLMService } from '../misc/llm.service';
+import { OpenSubtitlesService } from '../misc/openSubtitles.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { FramesFile } from '../storage/storage.schema';
+import { StorageService } from '../storage/storage.service';
+import { PageResponse } from '../utils/utils.contracts';
 
 
 @Injectable()
@@ -42,7 +42,7 @@ export class ScannerService implements OnModuleInit {
     ) {}
 
     onModuleInit () {
-       return this.requestServerScan().toPromise();
+        return this.requestServerScan().toPromise();
     }
 
     requestServerScan () {
@@ -54,7 +54,7 @@ export class ScannerService implements OnModuleInit {
             .chainItems((storage) => this.requestLibraryScan(storage))
             .map(() => ({
                 message: 'Server will be scanned',
-            }))
+            }));
     }
 
     requestLibraryScan (library: CloudStorage) {

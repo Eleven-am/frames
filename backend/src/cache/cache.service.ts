@@ -19,11 +19,11 @@ export class CacheService {
     }
 
     /**
-   * Delete a key from the cache, this can be a string or an array of strings and the key might be a pattern
-   * @param key - The key to delete
-   * @returns Promise<number> - Number of keys deleted
-   * @throws Error if deletion fails
-   */
+	 * Delete a key from the cache, this can be a string or an array of strings and the key might be a pattern
+	 * @param key - The key to delete
+	 * @returns TaskEither<number> - Number of keys deleted
+	 * @throws Error if deletion fails
+	 */
     del (key: string | string[]): TaskEither<number> {
         return TaskEither
             .of(key)
@@ -55,12 +55,12 @@ export class CacheService {
     }
 
     /**
-   * Get a value from the cache
-   * @param key - The key to get
-   * @param schema - The schema to validate the data against
-   * @returns Promise<DataType | null> - The value from cache or null if not found
-   * @throws Error if retrieval fails or validation fails
-   */
+	 * Get a value from the cache
+	 * @param key - The key to get
+	 * @param schema - The schema to validate the data against
+	 * @returns TaskEither<DataType> - The value from cache or null if not found
+	 * @throws Error if retrieval fails or validation fails
+	 */
     get<DataType> (key: string, schema?: ZodType<DataType>): TaskEither<DataType> {
         return TaskEither
             .tryCatch(() => this.redis.get(key))
@@ -79,13 +79,13 @@ export class CacheService {
     }
 
     /**
-   * Set a value in the cache
-   * @param key - The key to set
-   * @param value - The value to set
-   * @param ttl - The time to live in seconds
-   * @returns Promise<'OK' | null> - Redis response
-   * @throws Error if setting fails
-   */
+	 * Set a value in the cache
+	 * @param key - The key to set
+	 * @param value - The value to set
+	 * @param ttl - The time to live in seconds
+	 * @returns TaskEither<'OK'> - Redis response
+	 * @throws Error if setting fails
+	 */
     set (key: string, value: any, ttl?: number): TaskEither<'OK'> {
         return Either
             .tryCatch(() => JSON.stringify(value), 'Failed to serialize cache data')
@@ -101,5 +101,18 @@ export class CacheService {
                     run: (serializedValue) => this.redis.set(key, serializedValue),
                 },
             ]);
+    }
+
+    /**
+	 * Check if a key exists in the cache
+	 * @param key - The key to check
+	 * @returns TaskEither<boolean> - True if the key exists, false otherwise
+	 * @throws Error if checking fails
+	 */
+    has (key: string): TaskEither<boolean> {
+        return TaskEither
+            .tryCatch(() => this.redis.exists(key))
+            .map((exists) => exists === 1)
+            .orElse(() => TaskEither.of(false));
     }
 }

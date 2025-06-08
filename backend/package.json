@@ -21,9 +21,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@eleven-am/authorizer": "^0.0.95",
-    "@eleven-am/nestjs-storage": "^0.0.17",
+    "@eleven-am/authorizer": "^0.0.108",
+    "@eleven-am/nestjs-storage": "^0.0.22",
     "@eleven-am/tmdbapi": "^1.0.44",
+    "@eleven-am/transcoder": "^0.0.37",
     "@keyv/redis": "^4.4.0",
     "@langchain/community": "^0.3.45",
     "@langchain/openai": "^0.5.12",

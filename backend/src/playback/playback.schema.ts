@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {MediaType, Video, View, Episode, PlaylistVideo} from '@prisma/client';
+import { MediaType, Video, View, Episode, PlaylistVideo, CloudStorage } from '@prisma/client';
 import { IsPositive, IsNumber } from 'class-validator';
 
 import { TmdbVideoDetails, TmdbVideoDetailsSchema } from '../media/media.contracts';
-import {CachedSession} from "../session/session.contracts";
+import { CachedSession } from '../session/session.contracts';
 
-export type Playback = View & { video: Video };
+export type Playback = View & { video: Video & { cloudStorage: CloudStorage } };
 
 export type PlaybackVideo = Video & { episode: Episode | null };
 
@@ -23,7 +23,6 @@ export interface PlaybackData extends Omit<TmdbVideoDetails, 'imdbId'> {
     availableSubtitles: SubtitleData[];
     mediaType: MediaType;
     mediaId: string;
-    source: string;
     episodeId: string | null;
     videoId: string;
 }
@@ -34,6 +33,7 @@ export interface PlaybackSession extends PlaybackData {
     autoPlay: boolean;
     percentage: number;
     canAccessStream: boolean;
+    canDirectPlay: boolean;
 }
 
 export interface UpNextDetails {
@@ -251,6 +251,12 @@ export class PlaybackSessionSchema extends PlaybackDataSchema {
         description: 'Whether the user is allowed to access the underlying stream',
     })
     canAccessStream: boolean;
+
+    @ApiProperty({
+        description: 'Whether the video is supported for direct play',
+        type: Boolean,
+    })
+    canDirectPlay: boolean;
 }
 
 export class UpdatePlaybackInformSchema {

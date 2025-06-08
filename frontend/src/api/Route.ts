@@ -12,7 +12,9 @@
 
 import { HttpClient, RequestParams } from "./http-client";
 
-export class Route<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Route<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *

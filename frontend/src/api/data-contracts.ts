@@ -10,6 +10,122 @@
  * ---------------------------------------------------------------
  */
 
+/** The type of history to search for */
+export enum HistoryType {
+  Watched = "Watched",
+  AddedToWatchlist = "Added_to_watchlist",
+  RatedPositive = "Rated_positive",
+  RatedNegative = "Rated_negative",
+}
+
+/** The action of the user */
+export enum PresenceAction {
+  BROWSING = "BROWSING",
+  WATCHING = "WATCHING",
+  AWAY = "AWAY",
+}
+
+/** The provider of the oauth client */
+export enum OauthProvider {
+  DROPBOX = "DROPBOX",
+  DRIVE = "DRIVE",
+}
+
+/** The type of storage */
+export enum CloudDrive {
+  GDRIVE = "GDRIVE",
+  DROPBOX = "DROPBOX",
+  S3 = "S3",
+  LOCAL = "LOCAL",
+}
+
+/** The id of the media */
+export enum RatedStatus {
+  POSITIVE = "POSITIVE",
+  NEGATIVE = "NEGATIVE",
+  NONE = "NONE",
+}
+
+export enum AudioQuality {
+  Aac = "aac",
+  Original = "original",
+}
+
+export enum VideoQuality {
+  Value240P = "240p",
+  Value360P = "360p",
+  Value480P = "480p",
+  Value720P = "720p",
+  Value1080P = "1080p",
+  Value1440P = "1440p",
+  Value4K = "4k",
+  Value8K = "8k",
+  Original = "original",
+}
+
+/** The type of pick, changes the way it is displayed */
+export enum PickType {
+  EDITOR = "EDITOR",
+  BASIC = "BASIC",
+}
+
+/** The sections of the media item */
+export enum MediaSection {
+  MoreLikeThis = "More Like This",
+  Extras = "Extras",
+  Details = "Details",
+  MostRelevant = "Most Relevant",
+  Episodes = "Episodes",
+  Seasons = "Seasons",
+}
+
+/** The type of company */
+export enum CompanyType {
+  PRODUCTION = "PRODUCTION",
+  DISTRIBUTION = "DISTRIBUTION",
+}
+
+/** The type of response, used for display */
+export enum HomeResponseTypes {
+  BASIC = "BASIC",
+  EDITOR = "EDITOR",
+  CLASSIC = "CLASSIC",
+  CONTINUE_WATCHING = "CONTINUE_WATCHING",
+}
+
+/** The type of media item */
+export enum MediaType {
+  MOVIE = "MOVIE",
+  SHOW = "SHOW",
+}
+
+/** The user verification */
+export enum UserVerification {
+  Required = "required",
+  Preferred = "preferred",
+  Discouraged = "discouraged",
+}
+
+/** The transports of the public key */
+export enum Transport {
+  Ble = "ble",
+  Cable = "cable",
+  Hybrid = "hybrid",
+  Internal = "internal",
+  Nfc = "nfc",
+  SmartCard = "smart-card",
+  Usb = "usb",
+}
+
+/** The role of the user */
+export enum Role {
+  USER = "USER",
+  ADMIN = "ADMIN",
+  GUEST = "GUEST",
+  OAUTH = "OAUTH",
+  SYSTEM = "SYSTEM",
+}
+
 export interface AuthKeyItemSchema {
   /** The use case of the auth key */
   case: AuthKeyItemSchemaCaseEnum;
@@ -172,15 +288,6 @@ export interface ResetPasswordParams {
   password: string;
 }
 
-/** The role of the user */
-export enum Role {
-  USER = "USER",
-  ADMIN = "ADMIN",
-  GUEST = "GUEST",
-  OAUTH = "OAUTH",
-  SYSTEM = "SYSTEM",
-}
-
 export interface ClientUserSchema {
   /** The role of the user */
   role: Role;
@@ -232,17 +339,6 @@ export interface PublicKeyCredentialParametersSchema {
   type: string;
   /** The algorithm of the public key */
   alg: number;
-}
-
-/** The transports of the public key */
-export enum Transport {
-  Ble = "ble",
-  Cable = "cable",
-  Hybrid = "hybrid",
-  Internal = "internal",
-  Nfc = "nfc",
-  SmartCard = "smart-card",
-  Usb = "usb",
 }
 
 export interface PublicKeyCredentialDescriptorJSONSchema {
@@ -298,13 +394,6 @@ export interface PublicKeyCredentialCreationOptionsJSONSchema {
 }
 
 export type RegistrationResponseValidator = object;
-
-/** The user verification */
-export enum UserVerification {
-  Required = "required",
-  Preferred = "preferred",
-  Discouraged = "discouraged",
-}
 
 export interface PublicKeyCredentialRequestOptionsJSONSchema {
   /** The challenge */
@@ -447,12 +536,6 @@ export interface UpdateOauthClientArgs {
   scopes: string[];
   /** The oauth client id */
   id: string;
-}
-
-/** The type of media item */
-export enum MediaType {
-  MOVIE = "MOVIE",
-  SHOW = "SHOW",
 }
 
 export interface DownloadItemSchema {
@@ -633,6 +716,8 @@ export interface PlaybackSessionSchema {
   percentage: number;
   /** Whether the user is allowed to access the underlying stream */
   canAccessStream: boolean;
+  /** Whether the video is supported for direct play */
+  canDirectPlay: boolean;
 }
 
 export interface CreateGroupArgs {
@@ -657,14 +742,6 @@ export interface VersionInfoSchema {
    * @format date-time
    */
   checkedAt: string;
-}
-
-/** The type of response, used for display */
-export enum HomeResponseTypes {
-  BASIC = "BASIC",
-  EDITOR = "EDITOR",
-  CLASSIC = "CLASSIC",
-  CONTINUE_WATCHING = "CONTINUE_WATCHING",
 }
 
 export interface SlimMediaSchema {
@@ -976,12 +1053,6 @@ export interface FilterMediaArgs {
   decade: number;
 }
 
-/** The type of company */
-export enum CompanyType {
-  PRODUCTION = "PRODUCTION",
-  DISTRIBUTION = "DISTRIBUTION",
-}
-
 export interface NetworkResponseSchema {
   /** The id of the company */
   id: string;
@@ -1161,16 +1232,6 @@ export interface CompanyResponseSchema {
   type: CompanyType;
 }
 
-/** The sections of the media item */
-export enum MediaSection {
-  MoreLikeThis = "More Like This",
-  Extras = "Extras",
-  Details = "Details",
-  MostRelevant = "Most Relevant",
-  Episodes = "Episodes",
-  Seasons = "Seasons",
-}
-
 export interface EpisodeResponseSchema {
   /** The id of the episode */
   id: string;
@@ -1277,12 +1338,6 @@ export interface MediaResponseSchema {
   seasons: SeasonResponseSchema[];
   /** The status of the media item */
   mediaStatus: string | null;
-}
-
-/** The type of pick, changes the way it is displayed */
-export enum PickType {
-  EDITOR = "EDITOR",
-  BASIC = "BASIC",
 }
 
 export interface PickMediaArgs {
@@ -1422,17 +1477,37 @@ export interface ArtworkSchema {
   percentage: number;
 }
 
-export enum Quality {
-  Value1080P = "1080p",
-  Value720P = "720p",
-  Value480P = "480p",
+export interface HLSSubtitleInfoSchema {
+  /** Index of the subtitle track */
+  index: number;
+  /** Language of the subtitle track */
+  language: string;
+  /** URL of the subtitle track */
+  url: string;
 }
 
-/** The id of the media */
-export enum RatedStatus {
-  POSITIVE = "POSITIVE",
-  NEGATIVE = "NEGATIVE",
-  NONE = "NONE",
+export interface NodeCueSchema {
+  /** The start of the cue */
+  start: number;
+  /** The end of the cue */
+  end: number;
+  /** The text of the cue */
+  text: string;
+}
+
+export interface SubtitleInfoSchema {
+  /** The id of the subtitle */
+  id: string;
+  /** The offset of the subtitle */
+  offset: number;
+  /** The cues of the subtitle */
+  nodes: NodeCueSchema[];
+  /** The URL of the subtitle */
+  subtitleUrl: string;
+  /** The label of the subtitle */
+  label: string;
+  /** The source language of the subtitle */
+  srcLang: string;
 }
 
 export interface RatingResponseSchema {
@@ -1471,14 +1546,6 @@ export interface RoomResponseSchema {
   isLeader: boolean;
   /** The playback ID */
   playbackId: string;
-}
-
-/** The type of storage */
-export enum CloudDrive {
-  GDRIVE = "GDRIVE",
-  DROPBOX = "DROPBOX",
-  S3 = "S3",
-  LOCAL = "LOCAL",
 }
 
 export interface StorageDetailSchema {
@@ -1730,12 +1797,6 @@ export interface AdminAccountParams {
   username: string;
 }
 
-/** The provider of the oauth client */
-export enum OauthProvider {
-  DROPBOX = "DROPBOX",
-  DRIVE = "DRIVE",
-}
-
 export interface OauthClientParams {
   /** The name of the Cloud service */
   name: string;
@@ -1892,30 +1953,6 @@ export interface DeleteFileArgs {
   storageId: string;
 }
 
-export interface NodeCueSchema {
-  /** The start of the cue */
-  start: number;
-  /** The end of the cue */
-  end: number;
-  /** The text of the cue */
-  text: string;
-}
-
-export interface SubtitleInfoSchema {
-  /** The id of the subtitle */
-  id: string;
-  /** The offset of the subtitle */
-  offset: number;
-  /** The cues of the subtitle */
-  nodes: NodeCueSchema[];
-  /** The URL of the subtitle */
-  subtitleUrl: string;
-  /** The label of the subtitle */
-  label: string;
-  /** The source language of the subtitle */
-  srcLang: string;
-}
-
 export interface UpdateOffsetSchema {
   /** The new offset to set for the subtitle */
   offset: number;
@@ -2004,13 +2041,6 @@ export interface HomeResponseContinueWatchingSchema {
   results: ContinueWatchingItemSchema[];
 }
 
-/** The action of the user */
-export enum PresenceAction {
-  BROWSING = "BROWSING",
-  WATCHING = "WATCHING",
-  AWAY = "AWAY",
-}
-
 export interface MetadataSchema {
   /** The name of the media */
   name: string;
@@ -2079,14 +2109,6 @@ export interface PageResponseSlimFrontUserSchema {
   identifier: string;
   /** The items to display */
   results: SlimFrontUserSchema[];
-}
-
-/** The type of history to search for */
-export enum HistoryType {
-  Watched = "Watched",
-  AddedToWatchlist = "Added_to_watchlist",
-  RatedPositive = "Rated_positive",
-  RatedNegative = "Rated_negative",
 }
 
 export interface GetActivityArgs {

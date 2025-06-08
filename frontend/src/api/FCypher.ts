@@ -12,7 +12,9 @@
 
 import { HttpClient, RequestParams } from "./http-client";
 
-export class FCypher<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class FCypher<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * No description
    *
@@ -20,7 +22,10 @@ export class FCypher<SecurityDataType = unknown> extends HttpClient<SecurityData
    * @name RenderControllerGetFrameByCypher
    * @request GET:/f={cypher}
    */
-  renderControllerGetFrameByCypher = (cypher: string, params: RequestParams = {}) =>
+  renderControllerGetFrameByCypher = (
+    cypher: string,
+    params: RequestParams = {},
+  ) =>
     this.request<void, any>({
       path: `/f=${cypher}`,
       method: "GET",

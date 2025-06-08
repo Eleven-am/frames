@@ -1,8 +1,8 @@
 import {
-  AuthorizationModule,
-  AuthorizationHttpGuard,
-  RedirectFilter,
-  AuthenticationInterceptor,
+    AuthorizationModule,
+    AuthorizationHttpGuard,
+    RedirectFilter,
+    AuthenticationInterceptor,
 } from '@eleven-am/authorizer';
 import { PondSocketModule } from '@eleven-am/pondsocket-nest';
 import { BullModule } from '@nestjs/bullmq';
@@ -68,7 +68,7 @@ import { AppApiRoutes } from './utils/app.apiRoutes';
         PicksModule,
         PlaybackModule,
         PlaylistsModule,
-        PondSocketModule.forRoot(socketOptions),
+        PondSocketModule.forRootAsync(socketOptions),
         PrismaModule,
         RatingModule,
         RoomsModule,

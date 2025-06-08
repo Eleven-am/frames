@@ -14,6 +14,7 @@ import {
   ActivateWebAuthnParams,
   AdminAccountParams,
   ArtworkSchema,
+  AudioQuality,
   AuthenticationResponseValidator,
   AuthKeyEntitySchema,
   BulkItemsArgs,
@@ -44,6 +45,7 @@ import {
   GetActivityArgs,
   GetMediaSchema,
   GetPaginatedPicksArgs,
+  HLSSubtitleInfoSchema,
   HomeResponseContinueWatchingSchema,
   HomeResponseSlimMediaSchema,
   HttpExceptionSchema,
@@ -85,7 +87,6 @@ import {
   PromoteUsersArgs,
   PublicKeyCredentialCreationOptionsJSONSchema,
   PublicKeyCredentialRequestOptionsJSONSchema,
-  Quality,
   RatingResponseSchema,
   ReadFolderSchema,
   RegisterParams,
@@ -116,10 +117,13 @@ import {
   UpNextDetailsSchema,
   UserMediaDetailsResponseSchema,
   UsernameParams,
+  VideoQuality,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
 
-export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
+export class Api<
+  SecurityDataType = unknown,
+> extends HttpClient<SecurityDataType> {
   /**
    * @description Get all auth keys for the current user
    *
@@ -171,7 +175,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Get an auth key by key
    * @request GET:/api/authKeys/{authKey}
    */
-  authKeyControllerFindByAuthKey = (authKey: string, params: RequestParams = {}) =>
+  authKeyControllerFindByAuthKey = (
+    authKey: string,
+    params: RequestParams = {},
+  ) =>
     this.request<AuthKeyEntitySchema, any>({
       path: `/api/authKeys/${authKey}`,
       method: "GET",
@@ -235,7 +242,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Checks if a username is available
    * @request GET:/api/auth/is-username-available/{username}
    */
-  authControllerIsUsernameAvailable = (username: string, params: RequestParams = {}) =>
+  authControllerIsUsernameAvailable = (
+    username: string,
+    params: RequestParams = {},
+  ) =>
     this.request<boolean, any>({
       path: `/api/auth/is-username-available/${username}`,
       method: "GET",
@@ -250,7 +260,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Checks if an email is available
    * @request GET:/api/auth/is-email-available/{email}
    */
-  authControllerIsEmailAvailable = (email: string, params: RequestParams = {}) =>
+  authControllerIsEmailAvailable = (
+    email: string,
+    params: RequestParams = {},
+  ) =>
     this.request<boolean, HttpExceptionSchema>({
       path: `/api/auth/is-email-available/${email}`,
       method: "GET",
@@ -265,7 +278,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Checks if an email has a passkey configured
    * @request GET:/api/auth/is-passkey-configured/{email}
    */
-  authControllerIsPasskeyConfigured = (email: string, params: RequestParams = {}) =>
+  authControllerIsPasskeyConfigured = (
+    email: string,
+    params: RequestParams = {},
+  ) =>
     this.request<boolean, HttpExceptionSchema>({
       path: `/api/auth/is-passkey-configured/${email}`,
       method: "GET",
@@ -280,7 +296,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Sends a password reset email
    * @request PATCH:/api/auth/reset-password
    */
-  authControllerResetPassword = (data: ResetPasswordByEmailParams, params: RequestParams = {}) =>
+  authControllerResetPassword = (
+    data: ResetPasswordByEmailParams,
+    params: RequestParams = {},
+  ) =>
     this.request<EmailResponseSchema, HttpExceptionSchema>({
       path: `/api/auth/reset-password`,
       method: "PATCH",
@@ -297,7 +316,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Resends a verification email
    * @request PATCH:/api/auth/resend-verification-email
    */
-  authControllerResendVerificationEmail = (data: ResetPasswordByEmailParams, params: RequestParams = {}) =>
+  authControllerResendVerificationEmail = (
+    data: ResetPasswordByEmailParams,
+    params: RequestParams = {},
+  ) =>
     this.request<EmailResponseSchema, HttpExceptionSchema>({
       path: `/api/auth/resend-verification-email`,
       method: "PATCH",
@@ -314,7 +336,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Confirms a password reset
    * @request POST:/api/auth/reset-password-confirm
    */
-  authControllerResetPasswordConfirm = (data: ResetPasswordParams, params: RequestParams = {}) =>
+  authControllerResetPasswordConfirm = (
+    data: ResetPasswordParams,
+    params: RequestParams = {},
+  ) =>
     this.request<SessionSchema, HttpExceptionSchema>({
       path: `/api/auth/reset-password-confirm`,
       method: "POST",
@@ -361,7 +386,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Enables webauthn
    * @request PATCH:/api/auth/webauthn/enabled
    */
-  authControllerEnableWebAuthn = (data: ActivateWebAuthnParams, params: RequestParams = {}) =>
+  authControllerEnableWebAuthn = (
+    data: ActivateWebAuthnParams,
+    params: RequestParams = {},
+  ) =>
     this.request<boolean, HttpExceptionSchema>({
       path: `/api/auth/webauthn/enabled`,
       method: "PATCH",
@@ -388,7 +416,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
     },
     params: RequestParams = {},
   ) =>
-    this.request<PublicKeyCredentialCreationOptionsJSONSchema, HttpExceptionSchema>({
+    this.request<
+      PublicKeyCredentialCreationOptionsJSONSchema,
+      HttpExceptionSchema
+    >({
       path: `/api/auth/webauthn/register`,
       method: "GET",
       query: query,
@@ -444,7 +475,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Registers a user
    * @request POST:/api/auth/webauthn/create-first-passkey
    */
-  authControllerCreateFirstPassKey = (data: RegistrationResponseValidator, params: RequestParams = {}) =>
+  authControllerCreateFirstPassKey = (
+    data: RegistrationResponseValidator,
+    params: RequestParams = {},
+  ) =>
     this.request<SessionSchema | EmailResponseSchema, HttpExceptionSchema>({
       path: `/api/auth/webauthn/create-first-passkey`,
       method: "POST",
@@ -471,7 +505,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
     },
     params: RequestParams = {},
   ) =>
-    this.request<PublicKeyCredentialRequestOptionsJSONSchema, HttpExceptionSchema>({
+    this.request<
+      PublicKeyCredentialRequestOptionsJSONSchema,
+      HttpExceptionSchema
+    >({
       path: `/api/auth/webauthn/login`,
       method: "GET",
       query: query,
@@ -486,7 +523,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Logs in a user
    * @request POST:/api/auth/webauthn/login
    */
-  authControllerLoginWebAuthnConfirm = (data: AuthenticationResponseValidator, params: RequestParams = {}) =>
+  authControllerLoginWebAuthnConfirm = (
+    data: AuthenticationResponseValidator,
+    params: RequestParams = {},
+  ) =>
     this.request<SessionSchema | EmailResponseSchema, HttpExceptionSchema>({
       path: `/api/auth/webauthn/login`,
       method: "POST",
@@ -576,7 +616,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Validate an oauth account
    * @request POST:/api/auth/validate-oauth-account
    */
-  authControllerValidateOauthAccount = (data: OauthAuthKeyBody, params: RequestParams = {}) =>
+  authControllerValidateOauthAccount = (
+    data: OauthAuthKeyBody,
+    params: RequestParams = {},
+  ) =>
     this.request<SessionSchema, HttpExceptionSchema>({
       path: `/api/auth/validate-oauth-account`,
       method: "POST",
@@ -594,7 +637,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/oauth
    * @secure
    */
-  oauthControllerCreateOauth = (data: CreateOauthClientArgs, params: RequestParams = {}) =>
+  oauthControllerCreateOauth = (
+    data: CreateOauthClientArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<OauthClientSchema, HttpExceptionSchema>({
       path: `/api/oauth`,
       method: "POST",
@@ -654,7 +700,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/oauth/{oauthId}
    * @secure
    */
-  oauthControllerUpdateOauth = (oauthId: string, data: UpdateOauthClientArgs, params: RequestParams = {}) =>
+  oauthControllerUpdateOauth = (
+    oauthId: string,
+    data: UpdateOauthClientArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<OauthClientSchema, HttpExceptionSchema>({
       path: `/api/oauth/${oauthId}`,
       method: "PATCH",
@@ -707,7 +757,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/downloads/{downloadId}
    * @secure
    */
-  downloadsControllerDownload = (downloadId: string, params: RequestParams = {}) =>
+  downloadsControllerDownload = (
+    downloadId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<File, HttpExceptionSchema>({
       path: `/api/downloads/${downloadId}`,
       method: "GET",
@@ -723,7 +776,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/downloads/{playbackId}/{authKey}
    * @secure
    */
-  downloadsControllerCreate = (authKey: string, playbackId: string, params: RequestParams = {}) =>
+  downloadsControllerCreate = (
+    authKey: string,
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<DownloadsSchema, HttpExceptionSchema>({
       path: `/api/downloads/${playbackId}/${authKey}`,
       method: "POST",
@@ -740,7 +797,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/frames/{playbackId}
    * @secure
    */
-  framesControllerCreateFrame = (playbackId: string, data: CreateFrameArgs, params: RequestParams = {}) =>
+  framesControllerCreateFrame = (
+    playbackId: string,
+    data: CreateFrameArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FrameCreateSchema, HttpExceptionSchema>({
       path: `/api/frames/${playbackId}`,
       method: "POST",
@@ -817,7 +878,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @name GroupsControllerCreate
    * @request POST:/api/groups
    */
-  groupsControllerCreate = (data: CreateGroupArgs, params: RequestParams = {}) =>
+  groupsControllerCreate = (
+    data: CreateGroupArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<void, any>({
       path: `/api/groups`,
       method: "POST",
@@ -935,7 +999,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/lists/remove/{mediaId}
    * @secure
    */
-  listsControllerRemoveFromList = (mediaId: string, params: RequestParams = {}) =>
+  listsControllerRemoveFromList = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<IsInListResponseSchema, HttpExceptionSchema>({
       path: `/api/lists/remove/${mediaId}`,
       method: "DELETE",
@@ -969,7 +1036,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/playlists
    * @secure
    */
-  playlistsControllerCreatePlaylist = (data: CreatePlaylistArgs, params: RequestParams = {}) =>
+  playlistsControllerCreatePlaylist = (
+    data: CreatePlaylistArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaylistDetailsSchema, HttpExceptionSchema>({
       path: `/api/playlists`,
       method: "POST",
@@ -1062,7 +1132,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/playlists/{playlistId}
    * @secure
    */
-  playlistsControllerUpdatePlaylist = (playlistId: string, data: UpdatePlaylistArgs, params: RequestParams = {}) =>
+  playlistsControllerUpdatePlaylist = (
+    playlistId: string,
+    data: UpdatePlaylistArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaylistDetailsSchema, HttpExceptionSchema>({
       path: `/api/playlists/${playlistId}`,
       method: "PATCH",
@@ -1081,7 +1155,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playlists/{playlistId}
    * @secure
    */
-  playlistsControllerGetPlaylist = (playlistId: string, params: RequestParams = {}) =>
+  playlistsControllerGetPlaylist = (
+    playlistId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaylistDetailsSchema, HttpExceptionSchema>({
       path: `/api/playlists/${playlistId}`,
       method: "GET",
@@ -1098,7 +1175,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/playlists/{playlistId}
    * @secure
    */
-  playlistsControllerDeletePlaylist = (playlistId: string, params: RequestParams = {}) =>
+  playlistsControllerDeletePlaylist = (
+    playlistId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/playlists/${playlistId}`,
       method: "DELETE",
@@ -1140,7 +1220,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/playlists/media/{playlistId}/{mediaId}
    * @secure
    */
-  playlistsControllerAddMediaToPlaylist = (playlistId: string, mediaId: string, params: RequestParams = {}) =>
+  playlistsControllerAddMediaToPlaylist = (
+    playlistId: string,
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaylistDetailsSchema, HttpExceptionSchema>({
       path: `/api/playlists/media/${playlistId}/${mediaId}`,
       method: "PATCH",
@@ -1157,7 +1241,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/playlists/media/{playlistId}/{mediaId}
    * @secure
    */
-  playlistsControllerRemoveMediaFromPlaylist = (playlistId: string, mediaId: string, params: RequestParams = {}) =>
+  playlistsControllerRemoveMediaFromPlaylist = (
+    playlistId: string,
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaylistDetailsSchema, HttpExceptionSchema>({
       path: `/api/playlists/media/${playlistId}/${mediaId}`,
       method: "DELETE",
@@ -1174,7 +1262,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/playlists/share/{playlistId}
    * @secure
    */
-  playlistsControllerSharePlaylist = (playlistId: string, data: SharePlaylistArgs, params: RequestParams = {}) =>
+  playlistsControllerSharePlaylist = (
+    playlistId: string,
+    data: SharePlaylistArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/playlists/share/${playlistId}`,
       method: "PATCH",
@@ -1193,7 +1285,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/playlists/share/{playlistId}
    * @secure
    */
-  playlistsControllerUnSharePlaylist = (playlistId: string, data: SharePlaylistArgs, params: RequestParams = {}) =>
+  playlistsControllerUnSharePlaylist = (
+    playlistId: string,
+    data: SharePlaylistArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/playlists/share/${playlistId}`,
       method: "DELETE",
@@ -1212,7 +1308,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playlists/play/{playlistId}
    * @secure
    */
-  playlistsControllerPlayPlaylist = (playlistId: string, params: RequestParams = {}) =>
+  playlistsControllerPlayPlaylist = (
+    playlistId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/playlists/play/${playlistId}`,
       method: "GET",
@@ -1229,7 +1328,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playlists/play-video/{playlistVideoId}
    * @secure
    */
-  playlistsControllerPlayPlaylistVideo = (playlistVideoId: string, params: RequestParams = {}) =>
+  playlistsControllerPlayPlaylistVideo = (
+    playlistVideoId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/playlists/play-video/${playlistVideoId}`,
       method: "GET",
@@ -1246,7 +1348,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playlists/shuffle/media/{mediaId}
    * @secure
    */
-  playlistsControllerShuffleMedia = (mediaId: string, params: RequestParams = {}) =>
+  playlistsControllerShuffleMedia = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/playlists/shuffle/media/${mediaId}`,
       method: "GET",
@@ -1263,7 +1368,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playlists/shuffle/playlist/{playlistId}
    * @secure
    */
-  playlistsControllerShufflePlaylist = (playlistId: string, params: RequestParams = {}) =>
+  playlistsControllerShufflePlaylist = (
+    playlistId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/playlists/shuffle/playlist/${playlistId}`,
       method: "GET",
@@ -1280,7 +1388,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playlists/shuffle/company/{companyId}
    * @secure
    */
-  playlistsControllerShuffleCompany = (companyId: string, params: RequestParams = {}) =>
+  playlistsControllerShuffleCompany = (
+    companyId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/playlists/shuffle/company/${companyId}`,
       method: "GET",
@@ -1297,7 +1408,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playlists/shuffle/person/{personId}
    * @secure
    */
-  playlistsControllerShufflePerson = (personId: string, params: RequestParams = {}) =>
+  playlistsControllerShufflePerson = (
+    personId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/playlists/shuffle/person/${personId}`,
       method: "GET",
@@ -1476,7 +1590,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/media/genres
    * @secure
    */
-  mediaControllerFilterGenres = (data: FilterGenreArgs, params: RequestParams = {}) =>
+  mediaControllerFilterGenres = (
+    data: FilterGenreArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<string[], HttpExceptionSchema>({
       path: `/api/media/genres`,
       method: "POST",
@@ -1495,7 +1612,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/media/filter
    * @secure
    */
-  mediaControllerFilterMedia = (data: FilterMediaArgs, params: RequestParams = {}) =>
+  mediaControllerFilterMedia = (
+    data: FilterMediaArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<PageResponseSlimMediaSchema, HttpExceptionSchema>({
       path: `/api/media/filter`,
       method: "POST",
@@ -1531,7 +1651,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/media/company/{companyId}
    * @secure
    */
-  mediaControllerGetCompanyById = (companyId: string, params: RequestParams = {}) =>
+  mediaControllerGetCompanyById = (
+    companyId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<NetworkResponseSchema, HttpExceptionSchema>({
       path: `/api/media/company/${companyId}`,
       method: "GET",
@@ -1548,7 +1671,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/media/person/{personId}
    * @secure
    */
-  mediaControllerGetPersonById = (personId: string, params: RequestParams = {}) =>
+  mediaControllerGetPersonById = (
+    personId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PersonResponseSchema, HttpExceptionSchema>({
       path: `/api/media/person/${personId}`,
       method: "GET",
@@ -1565,7 +1691,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/media/collection/{collectionId}
    * @secure
    */
-  mediaControllerGetCollectionById = (collectionId: string, params: RequestParams = {}) =>
+  mediaControllerGetCollectionById = (
+    collectionId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<CollectionPageResponseSchema, HttpExceptionSchema>({
       path: `/api/media/collection/${collectionId}`,
       method: "GET",
@@ -1668,7 +1797,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/media/trending/{type}
    * @secure
    */
-  mediaControllerGetTrendingMediaByType = (type: MediaType, params: RequestParams = {}) =>
+  mediaControllerGetTrendingMediaByType = (
+    type: MediaType,
+    params: RequestParams = {},
+  ) =>
     this.request<SlimMediaSchema[], HttpExceptionSchema>({
       path: `/api/media/trending/${type}`,
       method: "GET",
@@ -1717,7 +1849,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/media/play/{mediaId}
    * @secure
    */
-  mediaControllerPlayMediaById = (mediaId: string, params: RequestParams = {}) =>
+  mediaControllerPlayMediaById = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/media/play/${mediaId}`,
       method: "GET",
@@ -1759,7 +1894,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/picks
    * @secure
    */
-  picksControllerCreatePickCategory = (data: CreatePicksArgs, params: RequestParams = {}) =>
+  picksControllerCreatePickCategory = (
+    data: CreatePicksArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<PickResponseSchema, HttpExceptionSchema>({
       path: `/api/picks`,
       method: "POST",
@@ -1777,7 +1915,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Get all picks
    * @request PATCH:/api/picks
    */
-  picksControllerGetPicks = (data: GetPaginatedPicksArgs, params: RequestParams = {}) =>
+  picksControllerGetPicks = (
+    data: GetPaginatedPicksArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<PageResponsePickSchema, any>({
       path: `/api/picks`,
       method: "PATCH",
@@ -1795,7 +1936,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/picks
    * @secure
    */
-  picksControllerDeletePicks = (data: DeletePicksArgs, params: RequestParams = {}) =>
+  picksControllerDeletePicks = (
+    data: DeletePicksArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/picks`,
       method: "DELETE",
@@ -1874,7 +2018,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/picks/{categoryId}
    * @secure
    */
-  picksControllerUpdatePickCategory = (categoryId: string, data: UpdatePicksArgs, params: RequestParams = {}) =>
+  picksControllerUpdatePickCategory = (
+    categoryId: string,
+    data: UpdatePicksArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<PickResponseSchema, HttpExceptionSchema>({
       path: `/api/picks/${categoryId}`,
       method: "PATCH",
@@ -1893,7 +2041,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/picks/{categoryId}
    * @secure
    */
-  picksControllerGetPickCategory = (categoryId: string, params: RequestParams = {}) =>
+  picksControllerGetPickCategory = (
+    categoryId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PickResponseSchema, HttpExceptionSchema>({
       path: `/api/picks/${categoryId}`,
       method: "GET",
@@ -1910,7 +2061,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/picks/trending/{mediaId}
    * @secure
    */
-  picksControllerAddMediaToTrendingPicks = (mediaId: string, params: RequestParams = {}) =>
+  picksControllerAddMediaToTrendingPicks = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PickResponseSchema, HttpExceptionSchema>({
       path: `/api/picks/trending/${mediaId}`,
       method: "PATCH",
@@ -1927,7 +2081,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/playback/{playbackId}
    * @secure
    */
-  playbackControllerGetUpNext = (playbackId: string, params: RequestParams = {}) =>
+  playbackControllerGetUpNext = (
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<UpNextDetailsSchema, HttpExceptionSchema>({
       path: `/api/playback/${playbackId}`,
       method: "GET",
@@ -1944,7 +2101,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/playback/{playbackId}
    * @secure
    */
-  playbackControllerSaveInformation = (playbackId: string, data: ProgressPlaybackParams, params: RequestParams = {}) =>
+  playbackControllerSaveInformation = (
+    playbackId: string,
+    data: ProgressPlaybackParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/playback/${playbackId}`,
       method: "PATCH",
@@ -1963,7 +2124,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/playback/{playbackId}
    * @secure
    */
-  playbackControllerCreateNewSession = (playbackId: string, params: RequestParams = {}) =>
+  playbackControllerCreateNewSession = (
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
       path: `/api/playback/${playbackId}`,
       method: "POST",
@@ -1980,7 +2144,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/playback/inform/{playbackId}
    * @secure
    */
-  playbackControllerUpdateInform = (playbackId: string, data: UpdatePlaybackInformSchema, params: RequestParams = {}) =>
+  playbackControllerUpdateInform = (
+    playbackId: string,
+    data: UpdatePlaybackInformSchema,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/playback/inform/${playbackId}`,
       method: "PATCH",
@@ -1999,7 +2167,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/playback/{videoId}
    * @secure
    */
-  playbackControllerDeleteVideo = (videoId: string, params: RequestParams = {}) =>
+  playbackControllerDeleteVideo = (
+    videoId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/playback/${videoId}`,
       method: "DELETE",
@@ -2008,11 +2179,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
       ...params,
     });
   /**
-   * @description Add a video from the watch history of the current user
+   * @description Add a video to the watch history of the current user
    *
    * @tags Playback
    * @name PlaybackControllerAddVideo
-   * @summary Add a video from the watch history
+   * @summary Add a video to the watch history
    * @request POST:/api/playback/{videoId}
    * @secure
    */
@@ -2030,80 +2201,42 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @tags Playback
    * @name PlaybackControllerStartPlayback
    * @summary Start a video playback
-   * @request POST:/api/playback/play-video/{videoId}
+   * @request POST:/api/playback/play/{videoId}
    * @secure
    */
-  playbackControllerStartPlayback = (videoId: string, params: RequestParams = {}) =>
+  playbackControllerStartPlayback = (
+    videoId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<PlaybackSessionSchema, HttpExceptionSchema>({
-      path: `/api/playback/play-video/${videoId}`,
+      path: `/api/playback/play/${videoId}`,
       method: "POST",
       secure: true,
       format: "json",
       ...params,
     });
   /**
-   * @description Get a list of thumbnails for the requested stream
+   * @description Generates a thumbnail for the video
    *
-   * @tags Stream
-   * @name StreamControllerGetThumbnails
-   * @summary Get a list of thumbnails
-   * @request GET:/api/stream/thumbnail/{playbackId}
+   * @tags Playback
+   * @name PlaybackControllerGenerateThumbnail
+   * @summary Generates a thumbnail for the video
+   * @request GET:/api/playback/{videoId}/{streamIndex}/{quality}/{timestamp}
    * @secure
    */
-  streamControllerGetThumbnails = (playbackId: string, params: RequestParams = {}) =>
-    this.request<ArtworkSchema[], HttpExceptionSchema>({
-      path: `/api/stream/thumbnail/${playbackId}`,
-      method: "GET",
-      secure: true,
-      format: "json",
-      ...params,
-    });
-  /**
-   * @description Creates the multi variant playlist for the video
-   *
-   * @tags Stream
-   * @name StreamControllerGetMultiVariantPlaylist
-   * @summary Creates the multi variant playlist
-   * @request GET:/api/stream/{playbackId}/playlist.m3u8
-   * @secure
-   */
-  streamControllerGetMultiVariantPlaylist = (playbackId: string, params: RequestParams = {}) =>
+  playbackControllerGenerateThumbnail = (
+    quality: VideoQuality,
+    timestamp: number,
+    streamIndex: number,
+    playbackId: string,
+    videoId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<File, HttpExceptionSchema>({
-      path: `/api/stream/${playbackId}/playlist.m3u8`,
+      path: `/api/playback/${videoId}/${streamIndex}/${quality}/${timestamp}`,
       method: "GET",
       secure: true,
-      ...params,
-    });
-  /**
-   * @description Creates the single quality playlist for the video
-   *
-   * @tags Stream
-   * @name StreamControllerGetSingleVariantPlaylist
-   * @summary Creates the single quality playlist
-   * @request GET:/api/stream/{streamId}/{quality}/playlist.m3u8
-   * @secure
-   */
-  streamControllerGetSingleVariantPlaylist = (streamId: string, quality: Quality, params: RequestParams = {}) =>
-    this.request<File, HttpExceptionSchema>({
-      path: `/api/stream/${streamId}/${quality}/playlist.m3u8`,
-      method: "GET",
-      secure: true,
-      ...params,
-    });
-  /**
-   * @description Stream a single segment of the video
-   *
-   * @tags Stream
-   * @name StreamControllerGetSegment
-   * @summary Stream a single segment
-   * @request GET:/api/stream/{streamId}/{quality}/{segment}
-   * @secure
-   */
-  streamControllerGetSegment = (segment: string, streamId: string, quality: Quality, params: RequestParams = {}) =>
-    this.request<File, HttpExceptionSchema>({
-      path: `/api/stream/${streamId}/${quality}/${segment}`,
-      method: "GET",
-      secure: true,
+      format: "blob",
       ...params,
     });
   /**
@@ -2115,9 +2248,178 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/stream/{playbackId}
    * @secure
    */
-  streamControllerStreamVideo = (playbackId: string, params: RequestParams = {}) =>
+  streamControllerStreamVideo = (
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<File, HttpExceptionSchema>({
       path: `/api/stream/${playbackId}`,
+      method: "GET",
+      secure: true,
+      ...params,
+    });
+  /**
+   * @description Get a list of thumbnails for the requested stream
+   *
+   * @tags Stream
+   * @name StreamControllerGetThumbnails
+   * @summary Get a list of thumbnails
+   * @request GET:/api/stream/thumbnail/{playbackId}
+   * @secure
+   */
+  streamControllerGetThumbnails = (
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<ArtworkSchema[], HttpExceptionSchema>({
+      path: `/api/stream/thumbnail/${playbackId}`,
+      method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Creates the multi variant playlist for the video
+   *
+   * @tags Stream
+   * @name StreamControllerGetMasterPlaylist
+   * @summary Creates the multi variant playlist
+   * @request GET:/api/stream/{playbackId}/master.m3u8
+   * @secure
+   */
+  streamControllerGetMasterPlaylist = (
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, HttpExceptionSchema>({
+      path: `/api/stream/${playbackId}/master.m3u8`,
+      method: "GET",
+      secure: true,
+      ...params,
+    });
+  /**
+   * @description Retrieve all subtitles from the video
+   *
+   * @tags Stream
+   * @name StreamControllerGetSubtitles
+   * @summary Retrieve a subtitle
+   * @request GET:/api/stream/{playbackId}/subtitles
+   * @secure
+   */
+  streamControllerGetSubtitles = (
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<HLSSubtitleInfoSchema[], HttpExceptionSchema>({
+      path: `/api/stream/${playbackId}/subtitles`,
+      method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Retrieve a cue of subtitles from the video
+   *
+   * @tags Stream
+   * @name StreamControllerGetSubtitle
+   * @summary Retrieve a subtitle
+   * @request GET:/api/stream/{playbackId}/subtitles/{streamIndex}.vtt
+   * @secure
+   */
+  streamControllerGetSubtitle = (
+    streamIndex: number,
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<SubtitleInfoSchema, HttpExceptionSchema>({
+      path: `/api/stream/${playbackId}/subtitles/${streamIndex}.vtt`,
+      method: "GET",
+      secure: true,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description Creates the single video quality playlist for the video
+   *
+   * @tags Stream
+   * @name StreamControllerGetVideoRendition
+   * @summary Creates the single video quality playlist
+   * @request GET:/api/stream/{playbackId}/video/{streamIndex}/{quality}/playlist.m3u8
+   * @secure
+   */
+  streamControllerGetVideoRendition = (
+    quality: VideoQuality,
+    streamIndex: number,
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, HttpExceptionSchema>({
+      path: `/api/stream/${playbackId}/video/${streamIndex}/${quality}/playlist.m3u8`,
+      method: "GET",
+      secure: true,
+      ...params,
+    });
+  /**
+   * @description Creates the single audio quality playlist for the video
+   *
+   * @tags Stream
+   * @name StreamControllerGetAudioRendition
+   * @summary Creates the single audio quality playlist
+   * @request GET:/api/stream/{playbackId}/audio/{streamIndex}/{quality}/playlist.m3u8
+   * @secure
+   */
+  streamControllerGetAudioRendition = (
+    quality: AudioQuality,
+    streamIndex: number,
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, HttpExceptionSchema>({
+      path: `/api/stream/${playbackId}/audio/${streamIndex}/${quality}/playlist.m3u8`,
+      method: "GET",
+      secure: true,
+      ...params,
+    });
+  /**
+   * @description Stream a single segment of the video
+   *
+   * @tags Stream
+   * @name StreamControllerGetVideoSegment
+   * @summary Stream a single segment
+   * @request GET:/api/stream/{playbackId}/video/{streamIndex}/{quality}/segment-{segment}.ts
+   * @secure
+   */
+  streamControllerGetVideoSegment = (
+    quality: VideoQuality,
+    streamIndex: number,
+    playbackId: string,
+    segment: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, HttpExceptionSchema>({
+      path: `/api/stream/${playbackId}/video/${streamIndex}/${quality}/segment-${segment}.ts`,
+      method: "GET",
+      secure: true,
+      ...params,
+    });
+  /**
+   * @description Stream a single segment of the video
+   *
+   * @tags Stream
+   * @name StreamControllerGetAudioSegment
+   * @summary Stream a single segment
+   * @request GET:/api/stream/{playbackId}/audio/{streamIndex}/{quality}/segment-{segment}.ts
+   * @secure
+   */
+  streamControllerGetAudioSegment = (
+    quality: AudioQuality,
+    streamIndex: number,
+    playbackId: string,
+    segment: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<File, HttpExceptionSchema>({
+      path: `/api/stream/${playbackId}/audio/${streamIndex}/${quality}/segment-${segment}.ts`,
       method: "GET",
       secure: true,
       ...params,
@@ -2182,7 +2484,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PUT:/api/rating/positive/{mediaId}
    * @secure
    */
-  ratingControllerRatePositive = (mediaId: string, params: RequestParams = {}) =>
+  ratingControllerRatePositive = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<RatingResponseSchema, HttpExceptionSchema>({
       path: `/api/rating/positive/${mediaId}`,
       method: "PUT",
@@ -2199,7 +2504,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PUT:/api/rating/negative/{mediaId}
    * @secure
    */
-  ratingControllerRateNegative = (mediaId: string, params: RequestParams = {}) =>
+  ratingControllerRateNegative = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<RatingResponseSchema, HttpExceptionSchema>({
       path: `/api/rating/negative/${mediaId}`,
       method: "PUT",
@@ -2216,7 +2524,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/rooms/media/{mediaId}
    * @secure
    */
-  roomsControllerCreateRoomForMedia = (mediaId: string, params: RequestParams = {}) =>
+  roomsControllerCreateRoomForMedia = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<RoomResponseSchema, HttpExceptionSchema>({
       path: `/api/rooms/media/${mediaId}`,
       method: "POST",
@@ -2233,7 +2544,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/rooms/playback/{playbackId}
    * @secure
    */
-  roomsControllerCreateRoomForPlayback = (playbackId: string, params: RequestParams = {}) =>
+  roomsControllerCreateRoomForPlayback = (
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<RoomResponseSchema, HttpExceptionSchema>({
       path: `/api/rooms/playback/${playbackId}`,
       method: "POST",
@@ -2250,7 +2564,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/rooms/{roomId}/{playbackId}
    * @secure
    */
-  roomsControllerUpdateRoom = (roomId: string, playbackId: string, params: RequestParams = {}) =>
+  roomsControllerUpdateRoom = (
+    roomId: string,
+    playbackId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/rooms/${roomId}/${playbackId}`,
       method: "PATCH",
@@ -2346,7 +2664,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/scan/storage/{storageId}
    * @secure
    */
-  scannerControllerScanStorage = (storageId: string, params: RequestParams = {}) =>
+  scannerControllerScanStorage = (
+    storageId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/scan/storage/${storageId}`,
       method: "GET",
@@ -2363,7 +2684,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/scan/shows/{storageId}
    * @secure
    */
-  scannerControllerScanShows = (storageId: string, params: RequestParams = {}) =>
+  scannerControllerScanShows = (
+    storageId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/scan/shows/${storageId}`,
       method: "GET",
@@ -2380,7 +2704,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/scan/movies/{storageId}
    * @secure
    */
-  scannerControllerScanMovies = (storageId: string, params: RequestParams = {}) =>
+  scannerControllerScanMovies = (
+    storageId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/scan/movies/${storageId}`,
       method: "GET",
@@ -2397,7 +2724,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/scan/show/{mediaId}
    * @secure
    */
-  scannerControllerScanEpisodesInShow = (mediaId: string, params: RequestParams = {}) =>
+  scannerControllerScanEpisodesInShow = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/scan/show/${mediaId}`,
       method: "GET",
@@ -2414,7 +2744,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/scan/media/{mediaId}
    * @secure
    */
-  scannerControllerGetMediaForEdit = (mediaId: string, params: RequestParams = {}) =>
+  scannerControllerGetMediaForEdit = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<GetMediaSchema, HttpExceptionSchema>({
       path: `/api/scan/media/${mediaId}`,
       method: "GET",
@@ -2431,7 +2764,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/scan/media/{mediaId}
    * @secure
    */
-  scannerControllerUpdateMedia = (mediaId: string, data: EditMediaSchema, params: RequestParams = {}) =>
+  scannerControllerUpdateMedia = (
+    mediaId: string,
+    data: EditMediaSchema,
+    params: RequestParams = {},
+  ) =>
     this.request<GetMediaSchema, HttpExceptionSchema>({
       path: `/api/scan/media/${mediaId}`,
       method: "PATCH",
@@ -2450,7 +2787,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/scan/media/{mediaId}
    * @secure
    */
-  scannerControllerDeleteMedia = (mediaId: string, params: RequestParams = {}) =>
+  scannerControllerDeleteMedia = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/scan/media/${mediaId}`,
       method: "DELETE",
@@ -2467,7 +2807,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/scan/episodes/{mediaId}
    * @secure
    */
-  scannerControllerGetMediaEpisodes = (mediaId: string, params: RequestParams = {}) =>
+  scannerControllerGetMediaEpisodes = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<EpisodeFileSchema[], HttpExceptionSchema>({
       path: `/api/scan/episodes/${mediaId}`,
       method: "GET",
@@ -2536,7 +2879,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/scan/tmdbId/{storageId}
    * @secure
    */
-  scannerControllerCreateFromTmdbId = (storageId: string, data: CreateFromTmdbIdArgs, params: RequestParams = {}) =>
+  scannerControllerCreateFromTmdbId = (
+    storageId: string,
+    data: CreateFromTmdbIdArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/scan/tmdbId/${storageId}`,
       method: "POST",
@@ -2555,7 +2902,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/scan/media/{storageId}
    * @secure
    */
-  scannerControllerCreateMedia = (storageId: string, data: CreateMediaArgs, params: RequestParams = {}) =>
+  scannerControllerCreateMedia = (
+    storageId: string,
+    data: CreateMediaArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/scan/media/${storageId}`,
       method: "POST",
@@ -2650,7 +3001,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new TMDB configuration
    * @request POST:/api/setup/tmdb
    */
-  setupControllerCreateTmdbConfig = (data: TmdbApiKeyParams, params: RequestParams = {}) =>
+  setupControllerCreateTmdbConfig = (
+    data: TmdbApiKeyParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/tmdb`,
       method: "POST",
@@ -2667,7 +3021,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new FanArtTv configuration
    * @request POST:/api/setup/fanart
    */
-  setupControllerCreateFanArtTvConfig = (data: FanArtTvApiKeyParams, params: RequestParams = {}) =>
+  setupControllerCreateFanArtTvConfig = (
+    data: FanArtTvApiKeyParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/fanart`,
       method: "POST",
@@ -2684,7 +3041,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new OpenAI configuration
    * @request POST:/api/setup/openAI
    */
-  setupControllerCreateOpenAiConfig = (data: OpenAiApiKeyParams, params: RequestParams = {}) =>
+  setupControllerCreateOpenAiConfig = (
+    data: OpenAiApiKeyParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/openAI`,
       method: "POST",
@@ -2701,7 +3061,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new OpenSubtitles configuration
    * @request POST:/api/setup/subtitles
    */
-  setupControllerCreateOpenSubtitlesConfig = (data: OpenSubtitlesParams, params: RequestParams = {}) =>
+  setupControllerCreateOpenSubtitlesConfig = (
+    data: OpenSubtitlesParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/subtitles`,
       method: "POST",
@@ -2718,7 +3081,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new Mail configuration
    * @request POST:/api/setup/mail
    */
-  setupControllerCreateMailConfig = (data: MailServerParams, params: RequestParams = {}) =>
+  setupControllerCreateMailConfig = (
+    data: MailServerParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/mail`,
       method: "POST",
@@ -2735,7 +3101,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new Admin configuration
    * @request POST:/api/setup/admin
    */
-  setupControllerCreateAdminConfig = (data: AdminAccountParams, params: RequestParams = {}) =>
+  setupControllerCreateAdminConfig = (
+    data: AdminAccountParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/admin`,
       method: "POST",
@@ -2767,7 +3136,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new Oauth configuration
    * @request POST:/api/setup/oauth
    */
-  setupControllerCreateOauthConfig = (data: OauthClientParams, params: RequestParams = {}) =>
+  setupControllerCreateOauthConfig = (
+    data: OauthClientParams,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/oauth`,
       method: "POST",
@@ -2869,7 +3241,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Creates a new S3 configuration
    * @request POST:/api/setup/s3
    */
-  setupControllerCreateS3Storage = (data: S3Params, params: RequestParams = {}) =>
+  setupControllerCreateS3Storage = (
+    data: S3Params,
+    params: RequestParams = {},
+  ) =>
     this.request<SlimStorageSchema, any>({
       path: `/api/setup/s3`,
       method: "POST",
@@ -2886,7 +3261,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @summary Update the storage
    * @request PATCH:/api/setup/storage
    */
-  setupControllerUpdateStorage = (data: UpdateSetupStorageArgs, params: RequestParams = {}) =>
+  setupControllerUpdateStorage = (
+    data: UpdateSetupStorageArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, any>({
       path: `/api/setup/storage`,
       method: "PATCH",
@@ -2904,7 +3282,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request POST:/api/storage
    * @secure
    */
-  storageControllerCreate = (data: CreateStorageArgs, params: RequestParams = {}) =>
+  storageControllerCreate = (
+    data: CreateStorageArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<SafeStorageSchema, HttpExceptionSchema>({
       path: `/api/storage`,
       method: "POST",
@@ -2949,7 +3330,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/storage/{storageId}
    * @secure
    */
-  storageControllerUpdate = (storageId: string, data: UpdateStorageArgs, params: RequestParams = {}) =>
+  storageControllerUpdate = (
+    storageId: string,
+    data: UpdateStorageArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<SafeStorageSchema, HttpExceptionSchema>({
       path: `/api/storage/${storageId}`,
       method: "PATCH",
@@ -2985,7 +3370,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/storage/file/{storageId}
    * @secure
    */
-  storageControllerRemoveFile = (storageId: string, data: DeleteFileArgs, params: RequestParams = {}) =>
+  storageControllerRemoveFile = (
+    storageId: string,
+    data: DeleteFileArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<boolean, HttpExceptionSchema>({
       path: `/api/storage/file/${storageId}`,
       method: "DELETE",
@@ -3004,7 +3393,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/subtitle/{subtitleId}
    * @secure
    */
-  subtitlesControllerGetSubtitles = (subtitleId: string, params: RequestParams = {}) =>
+  subtitlesControllerGetSubtitles = (
+    subtitleId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<SubtitleInfoSchema, HttpExceptionSchema>({
       path: `/api/subtitle/${subtitleId}`,
       method: "GET",
@@ -3021,7 +3413,11 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/subtitle/{subtitleId}
    * @secure
    */
-  subtitlesControllerUpdateOffset = (subtitleId: string, data: UpdateOffsetSchema, params: RequestParams = {}) =>
+  subtitlesControllerUpdateOffset = (
+    subtitleId: string,
+    data: UpdateOffsetSchema,
+    params: RequestParams = {},
+  ) =>
     this.request<SubtitleInfoSchema, HttpExceptionSchema>({
       path: `/api/subtitle/${subtitleId}`,
       method: "PATCH",
@@ -3040,7 +3436,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request GET:/api/users/media/{mediaId}
    * @secure
    */
-  usersControllerGetMediaDetails = (mediaId: string, params: RequestParams = {}) =>
+  usersControllerGetMediaDetails = (
+    mediaId: string,
+    params: RequestParams = {},
+  ) =>
     this.request<UserMediaDetailsResponseSchema, HttpExceptionSchema>({
       path: `/api/users/media/${mediaId}`,
       method: "GET",
@@ -3057,7 +3456,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/language/{language}
    * @secure
    */
-  usersControllerUpdateLanguage = (language: string, params: RequestParams = {}) =>
+  usersControllerUpdateLanguage = (
+    language: string,
+    params: RequestParams = {},
+  ) =>
     this.request<SessionSchema, HttpExceptionSchema>({
       path: `/api/users/language/${language}`,
       method: "PATCH",
@@ -3074,7 +3476,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/data
    * @secure
    */
-  usersControllerUpdateUserData = (data: UpdateUserArgs, params: RequestParams = {}) =>
+  usersControllerUpdateUserData = (
+    data: UpdateUserArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<SessionSchema, HttpExceptionSchema>({
       path: `/api/users/data`,
       method: "PATCH",
@@ -3093,7 +3498,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/username
    * @secure
    */
-  usersControllerUpdateUsername = (data: UsernameParams, params: RequestParams = {}) =>
+  usersControllerUpdateUsername = (
+    data: UsernameParams,
+    params: RequestParams = {},
+  ) =>
     this.request<SessionSchema, HttpExceptionSchema>({
       path: `/api/users/username`,
       method: "PATCH",
@@ -3189,7 +3597,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/users/users
    * @secure
    */
-  usersControllerDeleteUsers = (data: BulkUsersArgs, params: RequestParams = {}) =>
+  usersControllerDeleteUsers = (
+    data: BulkUsersArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/users/users`,
       method: "DELETE",
@@ -3208,7 +3619,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/activity
    * @secure
    */
-  usersControllerGetActivity = (data: GetActivityArgs, params: RequestParams = {}) =>
+  usersControllerGetActivity = (
+    data: GetActivityArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<PageResponseHistorySchema, HttpExceptionSchema>({
       path: `/api/users/activity`,
       method: "PATCH",
@@ -3227,7 +3641,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/promote
    * @secure
    */
-  usersControllerPromoteUsers = (data: PromoteUsersArgs, params: RequestParams = {}) =>
+  usersControllerPromoteUsers = (
+    data: PromoteUsersArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/users/promote`,
       method: "PATCH",
@@ -3246,7 +3663,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/revoke
    * @secure
    */
-  usersControllerRevokeUsersAccess = (data: BulkUsersArgs, params: RequestParams = {}) =>
+  usersControllerRevokeUsersAccess = (
+    data: BulkUsersArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/users/revoke`,
       method: "PATCH",
@@ -3265,7 +3685,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/confirm
    * @secure
    */
-  usersControllerConfirmUsers = (data: BulkUsersArgs, params: RequestParams = {}) =>
+  usersControllerConfirmUsers = (
+    data: BulkUsersArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/users/confirm`,
       method: "PATCH",
@@ -3284,7 +3707,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request PATCH:/api/users/grant-access
    * @secure
    */
-  usersControllerGrantUsersAccess = (data: BulkUsersArgs, params: RequestParams = {}) =>
+  usersControllerGrantUsersAccess = (
+    data: BulkUsersArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/users/grant-access`,
       method: "PATCH",
@@ -3303,7 +3729,10 @@ export class Api<SecurityDataType = unknown> extends HttpClient<SecurityDataType
    * @request DELETE:/api/users/items
    * @secure
    */
-  usersControllerDeleteItems = (data: BulkItemsArgs, params: RequestParams = {}) =>
+  usersControllerDeleteItems = (
+    data: BulkItemsArgs,
+    params: RequestParams = {},
+  ) =>
     this.request<FramesGenericResponseSchema, HttpExceptionSchema>({
       path: `/api/users/items`,
       method: "DELETE",

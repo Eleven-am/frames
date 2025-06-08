@@ -108,7 +108,7 @@ export class PlaybackAuthorizer implements WillAuthorize {
                             accessibleBy(ability, leastPermission).View,
                         ],
                     },
-                    include: { video: true },
+                    include: { video: { include: { cloudStorage: true } } },
                 }),
                 'Failed to retrieve playback',
             )

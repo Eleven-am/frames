@@ -12,7 +12,7 @@ import {
     Subtitle,
     User,
     Video,
-    Watched
+    Watched,
 } from '@prisma/client';
 import { Queue } from 'bullmq';
 
@@ -69,20 +69,27 @@ export class PlaybackService {
             )
             .map(() => value);
 
-        return this.buildVideoSession(cachedSession.language, video)
-            // .chain(performPresenceCheck)
+        const session = this.buildVideoSession(cachedSession.language, video)
             .chain((session) => this.savePlaybackSession(cachedSession.user, video, playlistVideo, inform)
-                .map(
-                    (playbackData): PlaybackSession => ({
-                        ...session,
-                        canAccessStream,
-                        percentage: newPercentage,
-                        playbackId: playbackData.id,
-                        inform: playbackData.inform,
-                        autoPlay: cachedSession.user.autoplay,
-                    }),
-                ))
-            .chain((session) => this.createStreamLink(session, video, canAccessStream))
+                .map((playbackData): Omit<PlaybackSession, 'canDirectPlay'> => ({
+                    ...session,
+                    canAccessStream,
+                    percentage: newPercentage,
+                    playbackId: playbackData.id,
+                    inform: playbackData.inform,
+                    autoPlay: cachedSession.user.autoplay,
+                })));
+
+        return TaskEither
+            .fromBind({
+                session,
+                isDirectPlaySupported: this.streamService.isDirectPlaySupported(video),
+            })
+        // .chain(performPresenceCheck)
+            .map(({ session, isDirectPlaySupported }): PlaybackSession => ({
+                ...session,
+                canDirectPlay: isDirectPlaySupported,
+            }))
             .ioSync((session) => {
                 const metadata: MetadataSchema = {
                     name: session.name,
@@ -290,7 +297,7 @@ export class PlaybackService {
                     playlistVideo: view.playlist,
                     percentage: view.video.watched[0]?.percentage ?? 0,
                     inform: view.inform,
-                }
+                },
             ));
     }
 
@@ -318,7 +325,7 @@ export class PlaybackService {
                     cachedSession,
                     percentage: video.watched[0]?.percentage ?? 0,
                     inform: cachedSession.user.inform,
-                }
+                },
             ));
     }
 
@@ -455,7 +462,6 @@ export class PlaybackService {
                         media: true,
                         episode: true,
                         subtitles: true,
-                        artworks: true,
                     },
                 }),
                 'Error getting video from database',
@@ -529,7 +535,6 @@ export class PlaybackService {
                         media: true,
                         episode: true,
                         subtitles: true,
-                        artworks: true,
                         cloudStorage: true,
                     },
                 }),
@@ -600,7 +605,6 @@ export class PlaybackService {
             })))
             .map(
                 ({ realVideo, tmdbDetails, subtitles: { subs, link } }): PlaybackData => ({
-                    source: link,
                     mediaId: realVideo.mediaId,
                     name: tmdbDetails.name,
                     episodeName: tmdbDetails.episodeName,
@@ -642,33 +646,6 @@ export class PlaybackService {
                 }),
                 'Error saving playback session',
             );
-    }
-
-    private createStreamLink (session: PlaybackSession, video: Video, authorised: boolean) {
-        const cannotAccessStream = TaskEither
-            .of({
-                ...session,
-                source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-            });
-
-        const canAccessStream = this.streamService.buildStreamUrl(session.playbackId, video)
-            .map((source): PlaybackSession => ({
-                ...session,
-                source,
-            }));
-
-        return TaskEither
-            .of(authorised)
-            .matchTask([
-                {
-                    predicate: (value) => value,
-                    run: () => canAccessStream,
-                },
-                {
-                    predicate: (value) => !value,
-                    run: () => cannotAccessStream,
-                },
-            ]);
     }
 
     private sendToStreamQueue (video: Video) {

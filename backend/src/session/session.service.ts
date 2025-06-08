@@ -1,16 +1,11 @@
+import { AuthorizationContext } from '@eleven-am/authorizer';
 import { TaskEither, Either, createUnauthorizedError } from '@eleven-am/fp';
-import { AuthorizationContext } from "@eleven-am/authorizer";
-import { Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role, Session, User } from '@prisma/client';
 import { Response } from 'express';
 import { Details } from 'express-useragent';
 import { v4 as uuid } from 'uuid';
-import { AUTHORIZATION_COOKIE, COOKIE_VALIDITY, GUEST_VALIDITY } from '../authorisation/auth.constants';
-import { CacheService } from '../cache/cache.service';
-import { HttpService } from '../http/http.service';
-import { LanguageService } from '../language/language.service';
-import { PrismaService } from '../prisma/prisma.service';
 
 import { SESSION_CACHE_PREFIX, SESSION_COOKIE_NAME, SESSION_CONTEXT_KEY } from './session.constants';
 import {
@@ -22,6 +17,11 @@ import {
     LocationSchema,
     TempSession,
 } from './session.contracts';
+import { AUTHORIZATION_COOKIE, COOKIE_VALIDITY, GUEST_VALIDITY } from '../authorisation/auth.constants';
+import { CacheService } from '../cache/cache.service';
+import { HttpService } from '../http/http.service';
+import { LanguageService } from '../language/language.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 
 @Injectable()
@@ -164,7 +164,7 @@ export class SessionService {
                 (session) => session.user.role === Role.GUEST,
                 () => createUnauthorizedError('Session not found'),
             )
-            .chain(() => this.removeSession(session.userId, session.id, res))
+            .chain(() => this.removeSession(session.userId, session.id, res));
 
         return TaskEither
             .of(session)
@@ -192,7 +192,7 @@ export class SessionService {
             context.getRequest().cookies[AUTHORIZATION_COOKIE] ??
             context.getRequest().query.token ??
             context.getRequest().headers.authorization ?? null :
-            context.getSocketContext().connection?.cookies[AUTHORIZATION_COOKIE] ??
+            context.getSocketContext().connectionContext?.cookies[AUTHORIZATION_COOKIE] ??
             context.getSocketContext().user?.assigns.token ?? null;
 
         const sessionToken = token?.replace('Bearer', '').trim() || null;
@@ -202,6 +202,22 @@ export class SessionService {
             .ioSync((token) => context.addData(SESSION_COOKIE_NAME, token))
             .chain((token) => this.retrieveSession(token))
             .ioSync((session) => context.addData(SESSION_CONTEXT_KEY, session))
+            .map((session) => session.user);
+    }
+
+    /**
+     * @desc Retrieve the user from the execution context
+     * @param context - The execution context
+     */
+    retrieveUserFromExecutionContext (context: ExecutionContext) {
+        const request = context.switchToHttp().getRequest();
+        const sessionToken: string | null = request.cookies[AUTHORIZATION_COOKIE] ??
+			request.query.token ??
+			request.headers.authorization ?? null;
+
+        return TaskEither
+            .fromNullable(sessionToken)
+            .chain((token) => this.retrieveSession(token))
             .map((session) => session.user);
     }
 
