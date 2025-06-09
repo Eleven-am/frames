@@ -1,8 +1,8 @@
 import { Endpoint, OnConnectionRequest } from '@eleven-am/pondsocket-nest';
-import { CurrentSession, CurrentToken } from '../authorisation/auth.decorators';
-import { CachedSession } from '../session/session.contracts';
 
 import { Assigns } from './socket.schema';
+import { CurrentSession, CurrentToken } from '../authorisation/auth.decorators';
+import { CachedSession } from '../session/session.contracts';
 
 
 @Endpoint('/api/realtime')

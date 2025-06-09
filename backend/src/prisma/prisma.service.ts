@@ -1,7 +1,8 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DATABASE_URL } from '../config/constants';
+
 import { extendPrisma, ExtendedPrisma } from './prisma.extension';
+import { DATABASE_URL } from '../config/constants';
 
 const ExtendedPrismaClient = class {
     constructor (datasourceUrl: string) {
@@ -16,11 +17,11 @@ export class PrismaService extends ExtendedPrismaClient implements OnModuleInit,
         super(configService.getOrThrow<string>(DATABASE_URL));
     }
 
-    async onModuleInit() {
+    async onModuleInit () {
         await this.$connect();
     }
 
-    async onModuleDestroy() {
+    async onModuleDestroy () {
         await this.$disconnect();
     }
 }

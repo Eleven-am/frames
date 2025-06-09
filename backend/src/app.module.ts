@@ -2,7 +2,7 @@ import {
     AuthorizationModule,
     AuthorizationHttpGuard,
     RedirectFilter,
-    AuthenticationInterceptor,
+    AuthorizationInterceptor,
 } from '@eleven-am/authorizer';
 import { PondSocketModule } from '@eleven-am/pondsocket-nest';
 import { BullModule } from '@nestjs/bullmq';
@@ -86,16 +86,16 @@ import { AppApiRoutes } from './utils/app.apiRoutes';
     ],
     providers: [
         {
+            provide: APP_INTERCEPTOR,
+            useClass: AuthorizationInterceptor,
+        },
+        {
             provide: APP_GUARD,
             useClass: AuthorizationHttpGuard,
         },
         {
             provide: APP_GUARD,
             useClass: SetupGuard,
-        },
-        {
-            provide: APP_INTERCEPTOR,
-            useClass: AuthenticationInterceptor,
         },
         {
             provide: APP_FILTER,

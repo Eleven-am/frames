@@ -1,5 +1,6 @@
 import type { PondAssigns, PondPresence } from '@eleven-am/pondsocket/types';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export enum PresenceAction {
     BROWSING = 'BROWSING',
@@ -37,6 +38,7 @@ export class MetadataSchema {
         type: String,
         description: 'The name of the media',
     })
+    @IsString()
     name: string;
 
     @ApiProperty({
@@ -44,6 +46,8 @@ export class MetadataSchema {
         description: 'The backdrop of the media',
         format: 'uri',
     })
+    @IsString()
+    @IsUrl()
     backdrop: string;
 
     @ApiProperty({
@@ -51,6 +55,8 @@ export class MetadataSchema {
         description: 'The poster of the media',
         format: 'uri',
     })
+    @IsString()
+    @IsUrl()
     poster: string;
 
     @ApiProperty({
@@ -58,6 +64,8 @@ export class MetadataSchema {
         description: 'The overview of the media',
         nullable: true,
     })
+    @IsString()
+    @IsOptional()
     overview: string | null;
 
     @ApiProperty({
@@ -66,12 +74,32 @@ export class MetadataSchema {
         nullable: true,
         format: 'uri',
     })
+    @IsString()
+    @IsOptional()
+    @IsUrl()
     logo: string | null;
+
+    @ApiProperty({
+        type: String,
+        description: 'The media id of the media',
+    })
+    @IsString()
+    mediaId: string;
+
+    @ApiProperty({
+        type: String,
+        description: 'The playback id the user is currently watching',
+        nullable: true,
+    })
+    @IsString()
+    @IsOptional()
+    playbackId: string | null;
 
     @ApiProperty({
         type: String,
         description: 'The backdrop blur of the media',
     })
+    @IsString()
     backdropBlur: string;
 
     @ApiProperty({
@@ -80,18 +108,6 @@ export class MetadataSchema {
         'enum': Object.values(PresenceAction),
         enumName: 'PresenceAction',
     })
+    @IsEnum(PresenceAction)
     action: PresenceAction;
-
-    @ApiProperty({
-        type: String,
-        description: 'The playback id the user is currently watching',
-        nullable: true,
-    })
-    playbackId: string | null;
-
-    @ApiProperty({
-        type: String,
-        description: 'The media id of the media',
-    })
-    mediaId: string;
 }
