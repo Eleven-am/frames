@@ -1,23 +1,27 @@
+import path from 'node:path';
+
 import { TaskEither, Either, createBadRequestError } from '@eleven-am/fp';
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { MediaType, CloudStorage, Media, CloudDrive } from '@prisma/client';
 import { Queue } from 'bullmq';
-import path from 'node:path';
+
+import { FileWatcher } from './file.watcher';
+import { FolderType } from './storage.schema';
+import { StorageService } from './storage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { STORAGE_ADDED_EVENT, ScanQueue } from '../scanner/scanner.constants';
 import { NewEpisodesEvent, NewMediaEvent, ScanLibraryEvent } from '../scanner/scanner.contracts';
 import { DedupeCache } from '../utils/dedupeCache';
-import { FileWatcher } from './file.watcher';
-
-import { FolderType } from './storage.schema';
-import { StorageService } from './storage.service';
 
 @Injectable()
 export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
     private readonly folders: FolderType[] = [];
+
     private watcher: FileWatcher | undefined;
+
     private readonly showCache: DedupeCache<Media>;
+
     private readonly logger = new Logger(StorageWatcher.name);
 
     constructor (
@@ -60,7 +64,7 @@ export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
     }
 
     onModuleDestroy () {
-        this.watcher?.stop()
+        this.watcher?.stop();
     }
 
     private handleFileAdded (path: string) {
@@ -132,7 +136,6 @@ export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
     }
 
     private addFolder (folder: string, storageId: string, type: MediaType) {
-        console.log(`Adding folder: ${folder} in storage: ${storageId}`);
         return Either
             .of(this.folders)
             .mapItems((folder) => folder.path)
@@ -154,6 +157,7 @@ export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
         try {
             this.logger.log(`Setting watcher to monitor ${folders.length} folders`);
             const paths = folders.map((folder) => folder.path);
+
             this.watcher?.stop();
 
             this.watcher = new FileWatcher({
@@ -187,31 +191,25 @@ export class StorageWatcher implements OnModuleInit, OnModuleDestroy {
     private movieFileRemoved (path: string, storageId: string) {
         return this.isMediaFile(path)
             .toTaskEither()
-            .chain((path) => TaskEither
-                .tryCatch(
-                    () => this.prismaService
-                        .media
-                        .findFirst({
-                            where: {
-                                type: MediaType.MOVIE,
-                                videos: {
-                                    some: {
-                                        location: path,
-                                        cloudStorageId: storageId,
-                                    },
-                                },
+            .fromPromise((path) => this.prismaService
+                .media
+                .findFirst({
+                    where: {
+                        type: MediaType.MOVIE,
+                        videos: {
+                            some: {
+                                location: path,
+                                cloudStorageId: storageId,
                             },
-                        }),
-                ))
-            .nonNullable('Media not found')
-            .chain((media) => TaskEither
-                .tryCatch(
-                    () => this.prismaService.media.delete({
-                        where: {
-                            id: media.id,
                         },
-                    }),
-                ))
+                    },
+                }))
+            .nonNullable('Media not found')
+            .fromPromise((media) => this.prismaService.media.delete({
+                where: {
+                    id: media.id,
+                },
+            }))
             .map(() => undefined);
     }
 

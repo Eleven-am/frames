@@ -1,18 +1,19 @@
+import React from 'react';
+
 import { createInternalError, Either, TaskEither } from '@eleven-am/fp';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Role, Session, User } from '@prisma/client';
 import { render } from '@react-email/render';
-import React from 'react';
-import { EmailResponseSchema } from '../authentication/auth.contracts';
-import { PrismaService } from '../prisma/prisma.service';
-import { CachedSession } from '../session/session.contracts';
-import { MetaData } from '../socket/socket.schema';
 
 import { LogChannel } from './log.channel';
 import { MailerService } from './mailer.service';
 import { NotificationChannel } from './notification.channel';
 import { NOTIFICATION_CHANNEL } from './notification.constants';
 import { NotificationData, SocketActionNotification, SocketNotification } from './notification.schema';
+import { EmailResponseSchema } from '../authentication/auth.contracts';
+import { PrismaService } from '../prisma/prisma.service';
+import { CachedSession } from '../session/session.contracts';
+import { MetaData } from '../socket/socket.schema';
 import { ResetEmail } from './templates/reset-password';
 import { VerifyEmail } from './templates/verify-email';
 
@@ -128,9 +129,9 @@ export class NotificationService {
     }
 
     sendNotification (notification: NotificationData) {
-        let broadcast = false;
+        const broadcast = false;
 
-        const sendSocketOrFail = (session: Session) =>  this.retrieveChannelAndSocketId(session.browserId)
+        const sendSocketOrFail = (session: Session) => this.retrieveChannelAndSocketId(session.browserId)
             .map(({ channel, socketIds }) => channel.broadcastTo(socketIds, 'notification', {
                 notification: {
                     title: notification.title,
@@ -239,8 +240,11 @@ export class NotificationService {
                     .filter(([_, user]) => user.browserId === browserId && (!checkIncognito || !user.incognito))
                     .map(([key]) => key);
 
-                return Either.fromNullable(socketIds.length === 0 ? null : { channel, socketIds });
-            })
+                return Either.fromNullable(socketIds.length === 0
+                    ? null
+                    : { channel,
+                        socketIds });
+            });
     }
 
     private sendEmail (email: string, subject: string, react: React.JSX.Element) {
