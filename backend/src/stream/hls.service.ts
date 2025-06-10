@@ -5,7 +5,7 @@ import {
     createNotFoundError,
     TaskEither,
 } from '@eleven-am/fp';
-import { HLSController, StreamType } from '@eleven-am/transcoder';
+import { createRedisBackend, HLSController, StreamType } from '@eleven-am/transcoder';
 import {
     DatabaseConnector,
     type MediaMetadata, SegmentStream,
@@ -25,6 +25,7 @@ import {
     VideoOptionWithSegment,
 } from './stream.contracts';
 import { CacheService } from '../cache/cache.service';
+import { REDIS_DB, REDIS_HOST, REDIS_PORT } from '../config/constants';
 import { LanguageService } from '../language/language.service';
 import { Playback } from '../playback/playback.schema';
 import { PrismaService } from '../prisma/prisma.service';
@@ -44,6 +45,13 @@ export class HLSService extends HLSController implements OnModuleInit {
             hwAccel: true,
             database: HLSService.buildDatabaseConnector(cacheStore),
             cacheDirectory: configService.getOrThrow<string>(HLS_CACHE_DIRECTORY),
+            distributed: createRedisBackend({
+                config: {
+                    host: configService.getOrThrow<string>(REDIS_HOST),
+                    port: parseInt(configService.getOrThrow<string>(REDIS_PORT), 10),
+                    database: parseInt(configService.getOrThrow<string>(REDIS_DB), 10),
+                },
+            }),
         });
     }
 

@@ -10,12 +10,6 @@ import {
 } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Details } from 'express-useragent';
-import { CurrentToken, CurrentSession } from '../authorisation/auth.decorators';
-import { RetrieveService } from '../misc/retrieve.service';
-import { OauthParams, PassKeyData } from '../oauth/oauth.schema';
-import { OauthService } from '../oauth/oauth.service';
-import { CachedSession, SessionSchema } from '../session/session.contracts';
-import { ApiNotFoundException, ApiOkFramesResponse, ApiUnauthorizedException } from '../utils/utils.decorators';
 
 import {
     EmailParams,
@@ -35,8 +29,14 @@ import {
     PublicKeyCredentialRequestOptionsJSONSchema,
     EmailResponseSchema,
 } from './auth.contracts';
-import {ApiEmailResponse, ServerAddress, UserAgent, HostAddress, PassKeySession, IsSecure} from './auth.decorator';
+import { ApiEmailResponse, ServerAddress, UserAgent, HostAddress, PassKeySession, IsSecure } from './auth.decorator';
 import { AuthService } from './auth.service';
+import { CurrentToken, CurrentSession } from '../authorisation/auth.decorators';
+import { RetrieveService } from '../misc/retrieve.service';
+import { OauthParams, PassKeyData } from '../oauth/oauth.schema';
+import { OauthService } from '../oauth/oauth.service';
+import { CachedSession, SessionSchema } from '../session/session.contracts';
+import { ApiNotFoundException, ApiOkFramesResponse, ApiUnauthorizedException } from '../utils/utils.decorators';
 
 
 @Controller('auth')
@@ -486,7 +486,7 @@ export class AuthController {
         @Res({ passthrough: true }) response: Response,
     ) {
         return this.oauthService.getOauthData(params.provider, query.code, query.state, endpoint)
-            .chain((profile) => this.authService.oauthAuthentication(profile, response, isSecure))
+            .chain((profile) => this.authService.oauthAuthentication(profile, response, isSecure));
     }
 
     @Post('validate-oauth-account')
@@ -506,6 +506,6 @@ export class AuthController {
         @Body() body: OauthAuthKeyBody,
         @Res({ passthrough: true }) response: Response,
     ) {
-        return this.authService.validateOauthAccount(ip, agent, body, response, isSecure)
+        return this.authService.validateOauthAccount(ip, agent, body, response, isSecure);
     }
 }
