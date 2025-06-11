@@ -20,14 +20,6 @@ import { Injectable } from '@nestjs/common';
 import { Company, Episode, Media, MediaType } from '@prisma/client';
 import { intervalToDuration } from 'date-fns';
 import FuseJS from 'fuse.js';
-import { LanguageService } from '../language/language.service';
-import { LanguageReturn } from '../language/language.types';
-import { TmdbService } from '../misc/tmdb.service';
-import { PlaybackService } from '../playback/playback.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { CachedSession } from '../session/session.contracts';
-import { mapPageResponse } from '../utils/helper.fp';
-import { PageResponse } from '../utils/utils.contracts';
 
 import {
     FilterGenreArgs,
@@ -54,6 +46,14 @@ import {
     VideoType,
 } from './media.contracts';
 import { RecommendationsService } from './recommendations.service';
+import { LanguageService } from '../language/language.service';
+import { LanguageReturn } from '../language/language.types';
+import { TmdbService } from '../misc/tmdb.service';
+import { PlaybackService } from '../playback/playback.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { CachedSession } from '../session/session.contracts';
+import { mapPageResponse } from '../utils/helper.fp';
+import { PageResponse } from '../utils/utils.contracts';
 
 
 @Injectable()
@@ -237,9 +237,9 @@ export class MediaService {
         },
         ability);
 
-        const firstSuccess = ({ response }: { response: PageResponse<SlimMedia> }) => response.results.length === 0;
+        const noResult = ({ response }: { response: PageResponse<SlimMedia> }) => response.results.length === 0;
 
-        const performAction = ({ count }: { count: number }) => TaskEither
+        const runNextQuery = ({ count }: { count: number }) => TaskEither
             .of(count)
             .matchTask([
                 {
@@ -265,7 +265,7 @@ export class MediaService {
                 count: TaskEither.of(0),
                 response: underTwoTask,
             })
-            .while(firstSuccess, performAction)
+            .while(noResult, runNextQuery)
             .map(({ response }) => response);
 
         return TaskEither
@@ -888,7 +888,7 @@ export class MediaService {
                     video: episode.video,
                     cachedSession: session,
                     percentage: reset ? 0 : episode.video.watched[0]?.percentage ?? 0,
-                }
+                },
             ));
     }
 
