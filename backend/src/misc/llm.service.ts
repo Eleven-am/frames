@@ -5,7 +5,7 @@ import { PrismaVectorStore } from '@langchain/community/vectorstores/prisma';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import {Media, MediaEmbeds, Prisma} from '@prisma/client';
+import { Media, MediaEmbeds, Prisma } from '@prisma/client';
 import { Document } from 'langchain/document';
 
 import { OPEN_AI_KEY_UPDATED_EVENT } from './misc.constants';
@@ -121,76 +121,64 @@ export class LLMService {
                 }),
                 'Error getting media from similar media ids',
             ))
-            .orElse(() => TaskEither.of([]))
+            .orElse(() => TaskEither.of([]));
     }
 
     generateMediaRecommendations (mediaId: string, ability: AppAbilityType, amount = 20) {
-       return this.getEmbeddings(mediaId).chain(({ vector }) =>
-          TaskEither.of(vector).matchTask<Media[]>([
+        return this.getEmbeddings(mediaId).chain(({ vector }) => TaskEither.of(vector).matchTask<Media[]>([
             {
-              predicate: (vector) => vector.length > 0,
-              run: (vector) =>
-                TaskEither.tryCatch(
-                  () =>
-                    this.prisma.similaritySearchVectorWithScore(
-                      vector,
-                      amount + 1,
+                predicate: (vector) => vector.length > 0,
+                run: (vector) => TaskEither.tryCatch(
+                    () => this.prisma.similaritySearchVectorWithScore(
+                        vector,
+                        amount + 1,
                     ),
-                  'Error getting closest embeddings',
+                    'Error getting closest embeddings',
                 )
-                  .map((data) =>
-                    data.map(([vector, score]) => ({
-                      score,
-                      mediaId: vector.metadata.mediaId,
-                    })),
-                  )
-                  .chain((mappedData) =>
-                    TaskEither.tryCatch(
-                      () =>
-                        this.db.media.findMany({
-                          where: {
-                            AND: [
-                              {
-                                id: {
-                                  in: mappedData
-                                    .filter((data) => data.mediaId !== mediaId)
-                                    .map((data) => data.mediaId),
-                                },
-                              },
-                              accessibleBy(ability, Action.Read).Media,
-                            ],
-                          },
+                    .map((data) => data.map(([vector, score]) => ({
+                        score,
+                        mediaId: vector.metadata.mediaId,
+                    })))
+                    .chain((mappedData) => TaskEither.tryCatch(
+                        () => this.db.media.findMany({
+                            where: {
+                                AND: [
+                                    {
+                                        id: {
+                                            'in': mappedData
+                                                .filter((data) => data.mediaId !== mediaId)
+                                                .map((data) => data.mediaId),
+                                        },
+                                    },
+                                    accessibleBy(ability, Action.Read).Media,
+                                ],
+                            },
                         }),
-                      'Error getting media recommendations',
-                    ).intersect(mappedData, 'id', 'mediaId', ['score']),
-                  )
-                  .sortBy('score', 'asc'),
+                        'Error getting media recommendations',
+                    ).intersect(mappedData, 'id', 'mediaId', ['score']))
+                    .sortBy('score', 'asc'),
             },
             {
-              predicate: () => true,
-              run: () =>
-                TaskEither.tryCatch(() =>
-                  this.db.media.random({
+                predicate: () => true,
+                run: () => TaskEither.tryCatch(() => this.db.media.random({
                     length: amount,
                     where: {
-                      AND: [
-                        {
-                          id: {
-                            not: mediaId,
-                          },
-                        },
-                        accessibleBy(ability, Action.Read).Media,
-                      ],
+                        AND: [
+                            {
+                                id: {
+                                    not: mediaId,
+                                },
+                            },
+                            accessibleBy(ability, Action.Read).Media,
+                        ],
                     },
-                  }),
-                ),
+                })),
             },
-          ])
-           .map((media) => ({
-               recommended: vector.length > 0,
-               media,
-           }))
-        );
+        ])
+            .map((media) => ({
+                recommended: vector.length > 0,
+                media,
+            })));
     }
 
     @OnEvent(OPEN_AI_KEY_UPDATED_EVENT)
@@ -220,7 +208,7 @@ export class LLMService {
             .chain((embed) => TaskEither
                 .tryCatch(
                     () => this.db.media.findUnique({ where: { id: embed.mediaId } }),
-                'Error getting media embeddings',
+                    'Error getting media embeddings',
                 )
                 .nonNullable('No media found for media id')
                 .map((media) => ({

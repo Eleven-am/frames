@@ -72,7 +72,7 @@ export class StreamController {
     @Get('thumbnail/:playbackId')
     @CanPerform({
         action: Action.Read,
-        resource: 'Stream',
+        resource: 'View',
     })
     @ApiOperation({
         summary: 'Get a list of thumbnails',
