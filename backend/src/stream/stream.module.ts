@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 
+import { HLSService } from './hls.service';
 import { StreamController } from './stream.controller';
+import { StreamProcessor } from './stream.processor';
 import { StreamService } from './stream.service';
-import { HLSService } from "./hls.service";
 
 
 @Module({
     controllers: [StreamController],
-    providers: [StreamService, HLSService],
+    providers: [StreamService, HLSService, StreamProcessor],
     exports: [StreamService, HLSService],
 })
 export class StreamModule {}
