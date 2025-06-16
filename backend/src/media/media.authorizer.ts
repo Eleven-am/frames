@@ -172,8 +172,10 @@ export class MediaAuthorizer implements WillAuthorize {
         };
     }
 
-    forUser (user: User, { can }: RuleBuilder) {
+    forUser (user: User, { can, cannot }: RuleBuilder) {
         if (user.revoked || !user.confirmedEmail) {
+            cannot(Action.Manage, 'Media').because('User is not authorised to access the Media resource');
+
             return;
         }
 
