@@ -1,4 +1,4 @@
-import { AudioQualityEnum, VideoQualityEnum } from '@eleven-am/transcoder/types';
+import { AudioQualityEnum, VideoQualityEnum } from '@eleven-am/transcoder';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNumber } from 'class-validator';

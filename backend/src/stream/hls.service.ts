@@ -5,11 +5,7 @@ import {
     createNotFoundError,
     TaskEither,
 } from '@eleven-am/fp';
-import { createRedisBackend, HLSController, StreamType } from '@eleven-am/transcoder';
-import {
-    DatabaseConnector,
-    type MediaMetadata, SegmentStream,
-} from '@eleven-am/transcoder/types';
+import { DatabaseConnector, HLSController, SegmentStream, StreamType, MediaMetadata } from '@eleven-am/transcoder';
 import { Injectable, OnModuleInit, StreamableFile } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CloudDrive, Video } from '@prisma/client';
@@ -41,17 +37,21 @@ export class HLSService extends HLSController implements OnModuleInit {
         private readonly prisma: PrismaService,
         private readonly languageService: LanguageService,
     ) {
+        const redisUrl = `redis://${configService.getOrThrow<string>(REDIS_HOST)}:${configService.getOrThrow<number>(REDIS_PORT)}/${configService.getOrThrow<number>(REDIS_DB)}`;
+
         super({
             hwAccel: true,
             database: HLSService.buildDatabaseConnector(cacheStore),
             cacheDirectory: configService.getOrThrow<string>(HLS_CACHE_DIRECTORY),
-            distributed: createRedisBackend({
-                config: {
-                    host: configService.getOrThrow<string>(REDIS_HOST),
-                    port: parseInt(configService.getOrThrow<string>(REDIS_PORT), 10),
-                    database: parseInt(configService.getOrThrow<string>(REDIS_DB), 10),
-                },
-            }),
+            distributed: {
+                workerId: process.env.HOSTNAME || `worker-${process.pid}`,
+                fallbackToLocal: true,
+                redisUrl,
+            },
+            config: {
+                segmentTimeout: 60_000,
+                maxRetries: 3,
+            },
         });
     }
 

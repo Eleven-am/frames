@@ -1,6 +1,6 @@
-import {applyDecorators} from "@nestjs/common";
-import {ApiParam} from "@nestjs/swagger";
-import {AudioQualityEnum, VideoQualityEnum} from "@eleven-am/transcoder/types";
+import { AudioQualityEnum, VideoQualityEnum } from '@eleven-am/transcoder';
+import { applyDecorators } from '@nestjs/common';
+import { ApiParam } from '@nestjs/swagger';
 
 export function ApiAudioStreamQuality () {
     return applyDecorators(
@@ -27,8 +27,8 @@ export function ApiVideoStreamQuality () {
     return applyDecorators(
         ApiParam({
             description: 'The quality of the video stream',
-			enumName: 'videoQuality',
-			name: 'quality',
+            enumName: 'videoQuality',
+            name: 'quality',
             'enum': [
                 VideoQualityEnum.P240,
                 VideoQualityEnum.P360,
