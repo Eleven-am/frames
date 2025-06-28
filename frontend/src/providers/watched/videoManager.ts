@@ -283,7 +283,7 @@ class VideoManager extends EventNotifier<VideoState, VideoEvent> {
 			this.#hls = null;
 		} else {
 			const hlsUrl = `/api/stream/${playbackId}/master.m3u8`;
-			
+
 			if (Hls.isSupported()) {
 				video.autoplay = autoPLay;
 				video.preload = autoPLay ? 'auto' : 'metadata';
@@ -294,7 +294,7 @@ class VideoManager extends EventNotifier<VideoState, VideoEvent> {
 					enableWorker: true,
 					
 					maxBufferLength: 20,
-					backBufferLength: 5,
+					backBufferLength: 120,
 					maxMaxBufferLength: 180,
 					maxBufferSize: 40 * 1000 * 1000,
 					
@@ -318,12 +318,17 @@ class VideoManager extends EventNotifier<VideoState, VideoEvent> {
 					
 					startFragPrefetch: true,
 					testBandwidth: true,
-					abrEwmaFastLive: 3,
-					abrEwmaSlowLive: 9,
+					abrEwmaFastVoD: 3,
+					abrEwmaSlowVoD: 9,
 				});
-				
+
 				this.#hls.loadSource(hlsUrl);
 				this.#hls.attachMedia(video);
+
+				const source = document.createElement('source');
+				source.src = hlsUrl;
+				source.type = 'application/vnd.apple.mpegurl';
+				video.appendChild(source);
 			} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
 				video.src = hlsUrl;
 			} else {
