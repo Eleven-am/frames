@@ -17,7 +17,7 @@ import {
 } from '@simplewebauthn/types';
 import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
-import { AgentDetails } from 'express-useragent';
+import { Details } from 'express-useragent';
 import { v4 as uuid } from 'uuid';
 import { AuthKeyService } from '../authkey/authkey.service';
 import { NotificationService } from '../notifications/notification.service';
@@ -61,7 +61,7 @@ export class AuthService {
      * @param response - The response
      * @param isSecure - The secure flag checking if the request is secure (https)
      */
-    login (ip: string, agent: AgentDetails, params: LoginParams, serverAddress: string, response: Response, isSecure: boolean) {
+    login (ip: string, agent: Details, params: LoginParams, serverAddress: string, response: Response, isSecure: boolean) {
         return this.userService.findByEmail(params.email, false)
             .chain((user) => TaskEither
                 .tryCatch(
@@ -82,7 +82,7 @@ export class AuthService {
      * @param params - The create account parameters
      * @param endpoint - The endpoint of the server
      */
-    register (ip: string, agent: AgentDetails, params: RegisterParams, endpoint: string) {
+    register (ip: string, agent: Details, params: RegisterParams, endpoint: string) {
         const deviceName = `${agent.browser} ${agent.version}, ${agent.platform} ${agent.os}`;
 
         return this.verifyRegisterParams(params)
@@ -222,7 +222,7 @@ export class AuthService {
      * @param response - The response
      * @param isSecure - The secure flag checking if the request is secure (https)
      */
-    validateOauthAccount (ip: string, agent: AgentDetails, params: OauthAuthKeyBody, response: Response, isSecure: boolean) {
+    validateOauthAccount (ip: string, agent: Details, params: OauthAuthKeyBody, response: Response, isSecure: boolean) {
         return this.authKeyService.findByAuthKey(params.authKey)
             .chain(() => this.userService.findByToken(params.token))
             .filter(
@@ -308,7 +308,7 @@ export class AuthService {
      * @param agent - The user agent
      * @param endpoint - The endpoint of the server
      */
-    resetPassword (params: ResetPasswordByEmailParams, ip: string, agent: AgentDetails, endpoint: string) {
+    resetPassword (params: ResetPasswordByEmailParams, ip: string, agent: Details, endpoint: string) {
         const deviceName = `${agent.browser} ${agent.version}, ${agent.platform} ${agent.os}`;
 
         return this.createToken(params)
@@ -322,7 +322,7 @@ export class AuthService {
      * @param ip - The ip address
      * @param endpoint - The endpoint of the server
      */
-    resendVerificationEmail (agent: AgentDetails, params: ResetPasswordByEmailParams, ip: string, endpoint: string) {
+    resendVerificationEmail (agent: Details, params: ResetPasswordByEmailParams, ip: string, endpoint: string) {
         const deviceName = `${agent.browser} ${agent.version}, ${agent.platform} ${agent.os}`;
 
         return this.createToken(params, false)
@@ -337,7 +337,7 @@ export class AuthService {
    * @param params - The reset password confirm parameters
    * @param isSecure - The secure flag checking if the request is secure (https)
    */
-    resetPasswordConfirm (ip: string, agent: AgentDetails, response: Response, params: ResetPasswordParams, isSecure: boolean) {
+    resetPasswordConfirm (ip: string, agent: Details, response: Response, params: ResetPasswordParams, isSecure: boolean) {
         return this.userService.findByToken(params.token)
             .chain((user) => TaskEither
                 .tryCatch(
@@ -369,7 +369,7 @@ export class AuthService {
    * @param ip - The ip address
    * @param isSecure - The secure flag checking if the request is secure (https)
    */
-    createGuestSession (agent: AgentDetails, response: Response, ip: string, isSecure: boolean) {
+    createGuestSession (agent: Details, response: Response, ip: string, isSecure: boolean) {
         const username = Date.now()
             .toString(36) + Math.random()
             .toString(36)
@@ -551,7 +551,7 @@ export class AuthService {
     loginWebAuthnConfirm (
         body: AuthenticationResponseJSON,
         passKeyData: PassKeyData, serverAddress: string,
-        hostname: string, ip: string, agent: AgentDetails,
+        hostname: string, ip: string, agent: Details,
         response: Response, isSecure: boolean,
     ) {
         return TaskEither
@@ -576,7 +576,7 @@ export class AuthService {
                 credential: {
                     counter: passKey.counter,
                     id: passKey.credentialId,
-                    publicKey: this.base64ToUint8Array(passKey.publicKey) as Uint8Array<ArrayBuffer>,
+                    publicKey: this.base64ToUint8Array(passKey.publicKey),
                     transports: passKey.transports as AuthenticatorTransportFuture[],
                 },
             }))
@@ -623,7 +623,7 @@ export class AuthService {
    */
     registerWebAuthnConfirm (
         params: PassKeyParams,
-        ip: string, agent: AgentDetails,
+        ip: string, agent: Details,
         passKeyData: PassKeyData,
         body: RegistrationResponseJSON,
         serverAddress: string, hostname: string,
@@ -673,7 +673,7 @@ export class AuthService {
     createFirstPassKey (
         body: RegistrationResponseJSON,
         passKeyData: PassKeyData, ip: string,
-        agent: AgentDetails, serverAddress: string,
+        agent: Details, serverAddress: string,
         hostname: string, response: Response, isSecure: boolean,
     ) {
         return this.userService.findByEmail(passKeyData.email)
@@ -700,7 +700,7 @@ export class AuthService {
             .map((user) => user.passKeys.length > 0);
     }
 
-    private createSessionOrSendEmail (user: User, ip: string, agent: AgentDetails, response: Response, endpoint: string, isSecure: boolean) {
+    private createSessionOrSendEmail (user: User, ip: string, agent: Details, response: Response, endpoint: string, isSecure: boolean) {
         const deviceName = `${agent.browser} ${agent.version}, ${agent.platform} ${agent.os}`;
 
         return TaskEither

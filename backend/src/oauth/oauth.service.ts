@@ -1,7 +1,7 @@
 import { TaskEither, createTemporaryRedirectError } from '@eleven-am/fp';
 import { Injectable } from '@nestjs/common';
 import { OauthClient } from '@prisma/client';
-import { AgentDetails } from 'express-useragent';
+import { Details } from 'express-useragent';
 import { AuthorizationCode } from 'simple-oauth2';
 import { v4 as uuid } from 'uuid';
 import { CacheService } from '../cache/cache.service';
@@ -87,7 +87,7 @@ export class OauthService {
             .nonNullable('Oauth client not found');
     }
 
-    generateURL (oauthId: string, ip: string, agent: AgentDetails, endpoint: string) {
+    generateURL (oauthId: string, ip: string, agent: Details, endpoint: string) {
         const state = uuid();
 
         return this.retrieveOauthClient(oauthId)

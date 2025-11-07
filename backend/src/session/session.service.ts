@@ -4,7 +4,7 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role, Session, User } from '@prisma/client';
 import { Response } from 'express';
-import { AgentDetails } from 'express-useragent';
+import { Details } from 'express-useragent';
 import { v4 as uuid } from 'uuid';
 
 import { SESSION_CACHE_PREFIX, SESSION_COOKIE_NAME, SESSION_CONTEXT_KEY } from './session.constants';
@@ -42,7 +42,7 @@ export class SessionService {
      * @param user - The user to create the session for
      * @param isSecure - Whether the session is secure or not
      */
-    createSession (agent: AgentDetails, ip: string, res: Response, user: User, isSecure: boolean) {
+    createSession (agent: Details, ip: string, res: Response, user: User, isSecure: boolean) {
         const validDate = user.role === Role.GUEST
             ? new Date(Date.now() + GUEST_VALIDITY)
             : new Date(Date.now() + COOKIE_VALIDITY);
@@ -263,7 +263,7 @@ export class SessionService {
         });
     }
 
-    private storeDeviceAndLocation (agent: AgentDetails, ip: string, session: Session & { user: User }) {
+    private storeDeviceAndLocation (agent: Details, ip: string, session: Session & { user: User }) {
         const language = this.httpService.getSafe(`http://ip-api.com/json/${ip}`, LocationSchema)
             .chain((location) => TaskEither
                 .tryCatch(
