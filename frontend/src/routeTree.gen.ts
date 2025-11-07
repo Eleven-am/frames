@@ -10,598 +10,793 @@
 
 import { createFileRoute } from '@tanstack/react-router'
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as WatchRouteImport } from './routes/watch'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
+import { Route as ProtectedShowsRouteImport } from './routes/_protected/shows'
+import { Route as ProtectedMoviesRouteImport } from './routes/_protected/movies'
+import { Route as ProtectedLobbyRouteImport } from './routes/_protected/lobby'
+import { Route as ProtectedListRouteImport } from './routes/_protected/list'
+import { Route as ProtectedShowMediaIdRouteImport } from './routes/_protected/show.$mediaId'
+import { Route as ProtectedSettingsSettingsRouteImport } from './routes/_protected/settings/_settings'
+import { Route as ProtectedRoomsRoomIdRouteImport } from './routes/_protected/rooms.$roomId'
+import { Route as ProtectedPlaylistPlaylistRouteImport } from './routes/_protected/playlist/_playlist'
+import { Route as ProtectedPersonPersonIdRouteImport } from './routes/_protected/person.$personId'
+import { Route as ProtectedMovieMediaIdRouteImport } from './routes/_protected/movie.$mediaId'
+import { Route as ProtectedCompanyCompanyIdRouteImport } from './routes/_protected/company.$companyId'
+import { Route as ProtectedCollectionCollectionIdRouteImport } from './routes/_protected/collection.$collectionId'
+import { Route as ProtectedSettingsSettingsIndexRouteImport } from './routes/_protected/settings/_settings/index'
+import { Route as ProtectedPlaylistPlaylistIndexRouteImport } from './routes/_protected/playlist/_playlist/index'
+import { Route as ProtectedSettingsSettingsTermsRouteImport } from './routes/_protected/settings/_settings/terms'
+import { Route as ProtectedSettingsSettingsProfileRouteImport } from './routes/_protected/settings/_settings/profile'
+import { Route as ProtectedSettingsSettingsPrivacyRouteImport } from './routes/_protected/settings/_settings/privacy'
+import { Route as ProtectedSettingsSettingsNotificationsRouteImport } from './routes/_protected/settings/_settings/notifications'
+import { Route as ProtectedSettingsSettingsFaqRouteImport } from './routes/_protected/settings/_settings/faq'
+import { Route as ProtectedSettingsSettingsDownloadsRouteImport } from './routes/_protected/settings/_settings/downloads'
+import { Route as ProtectedSettingsSettingsActivityRouteImport } from './routes/_protected/settings/_settings/activity'
+import { Route as ProtectedSettingsSettingsAdminRouteImport } from './routes/_protected/settings/_settings/_admin'
+import { Route as ProtectedPlaylistPlaylistCreateRouteImport } from './routes/_protected/playlist/_playlist/create'
+import { Route as ProtectedPlaylistPlaylistPlaylistIdRouteImport } from './routes/_protected/playlist/_playlist/$playlistId'
+import { Route as ProtectedSettingsSettingsAdminPicksRouteImport } from './routes/_protected/settings/_settings/_admin/picks'
+import { Route as ProtectedSettingsSettingsAdminPermissionsRouteImport } from './routes/_protected/settings/_settings/_admin/permissions'
+import { Route as ProtectedSettingsSettingsAdminFramesRouteImport } from './routes/_protected/settings/_settings/_admin/frames'
+import { Route as ProtectedSettingsSettingsAdminAccessRouteImport } from './routes/_protected/settings/_settings/_admin/access'
+import { Route as ProtectedSettingsSettingsAdminLibrariesRouteImport } from './routes/_protected/settings/_settings/_admin/_libraries'
+import { Route as ProtectedSettingsSettingsAdminLibrariesUnscannedRouteImport } from './routes/_protected/settings/_settings/_admin/_libraries/unscanned'
+import { Route as ProtectedSettingsSettingsAdminLibrariesLibrariesRouteImport } from './routes/_protected/settings/_settings/_admin/_libraries/libraries'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as WatchImport } from './routes/watch'
-import { Route as TermsImport } from './routes/terms'
-import { Route as SetupImport } from './routes/setup'
-import { Route as PrivacyImport } from './routes/privacy'
-import { Route as AuthImport } from './routes/auth'
-import { Route as ProtectedImport } from './routes/_protected'
-import { Route as ProtectedIndexImport } from './routes/_protected/index'
-import { Route as ProtectedShowsImport } from './routes/_protected/shows'
-import { Route as ProtectedMoviesImport } from './routes/_protected/movies'
-import { Route as ProtectedLobbyImport } from './routes/_protected/lobby'
-import { Route as ProtectedListImport } from './routes/_protected/list'
-import { Route as ProtectedShowMediaIdImport } from './routes/_protected/show.$mediaId'
-import { Route as ProtectedSettingsSettingsImport } from './routes/_protected/settings/_settings'
-import { Route as ProtectedRoomsRoomIdImport } from './routes/_protected/rooms.$roomId'
-import { Route as ProtectedPlaylistPlaylistImport } from './routes/_protected/playlist/_playlist'
-import { Route as ProtectedPersonPersonIdImport } from './routes/_protected/person.$personId'
-import { Route as ProtectedMovieMediaIdImport } from './routes/_protected/movie.$mediaId'
-import { Route as ProtectedCompanyCompanyIdImport } from './routes/_protected/company.$companyId'
-import { Route as ProtectedCollectionCollectionIdImport } from './routes/_protected/collection.$collectionId'
-import { Route as ProtectedSettingsSettingsIndexImport } from './routes/_protected/settings/_settings/index'
-import { Route as ProtectedPlaylistPlaylistIndexImport } from './routes/_protected/playlist/_playlist/index'
-import { Route as ProtectedSettingsSettingsTermsImport } from './routes/_protected/settings/_settings/terms'
-import { Route as ProtectedSettingsSettingsProfileImport } from './routes/_protected/settings/_settings/profile'
-import { Route as ProtectedSettingsSettingsPrivacyImport } from './routes/_protected/settings/_settings/privacy'
-import { Route as ProtectedSettingsSettingsNotificationsImport } from './routes/_protected/settings/_settings/notifications'
-import { Route as ProtectedSettingsSettingsFaqImport } from './routes/_protected/settings/_settings/faq'
-import { Route as ProtectedSettingsSettingsDownloadsImport } from './routes/_protected/settings/_settings/downloads'
-import { Route as ProtectedSettingsSettingsActivityImport } from './routes/_protected/settings/_settings/activity'
-import { Route as ProtectedSettingsSettingsAdminImport } from './routes/_protected/settings/_settings/_admin'
-import { Route as ProtectedPlaylistPlaylistCreateImport } from './routes/_protected/playlist/_playlist/create'
-import { Route as ProtectedPlaylistPlaylistPlaylistIdImport } from './routes/_protected/playlist/_playlist/$playlistId'
-import { Route as ProtectedSettingsSettingsAdminPicksImport } from './routes/_protected/settings/_settings/_admin/picks'
-import { Route as ProtectedSettingsSettingsAdminPermissionsImport } from './routes/_protected/settings/_settings/_admin/permissions'
-import { Route as ProtectedSettingsSettingsAdminFramesImport } from './routes/_protected/settings/_settings/_admin/frames'
-import { Route as ProtectedSettingsSettingsAdminAccessImport } from './routes/_protected/settings/_settings/_admin/access'
-import { Route as ProtectedSettingsSettingsAdminLibrariesImport } from './routes/_protected/settings/_settings/_admin/_libraries'
-import { Route as ProtectedSettingsSettingsAdminLibrariesUnscannedImport } from './routes/_protected/settings/_settings/_admin/_libraries/unscanned'
-import { Route as ProtectedSettingsSettingsAdminLibrariesLibrariesImport } from './routes/_protected/settings/_settings/_admin/_libraries/libraries'
+const ProtectedSettingsRouteImport = createFileRoute('/_protected/settings')()
+const ProtectedPlaylistRouteImport = createFileRoute('/_protected/playlist')()
 
-// Create Virtual Routes
-
-const ProtectedSettingsImport = createFileRoute('/_protected/settings')()
-const ProtectedPlaylistImport = createFileRoute('/_protected/playlist')()
-
-// Create/Update Routes
-
-const WatchRoute = WatchImport.update({
+const WatchRoute = WatchRouteImport.update({
   id: '/watch',
   path: '/watch',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const TermsRoute = TermsImport.update({
+const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SetupRoute = SetupImport.update({
+const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const PrivacyRoute = PrivacyImport.update({
+const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthRoute = AuthImport.update({
+const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProtectedRoute = ProtectedImport.update({
+const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProtectedSettingsRoute = ProtectedSettingsImport.update({
+const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedPlaylistRoute = ProtectedPlaylistImport.update({
+const ProtectedPlaylistRoute = ProtectedPlaylistRouteImport.update({
   id: '/playlist',
   path: '/playlist',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedIndexRoute = ProtectedIndexImport.update({
+const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedShowsRoute = ProtectedShowsImport.update({
+const ProtectedShowsRoute = ProtectedShowsRouteImport.update({
   id: '/shows',
   path: '/shows',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedMoviesRoute = ProtectedMoviesImport.update({
+const ProtectedMoviesRoute = ProtectedMoviesRouteImport.update({
   id: '/movies',
   path: '/movies',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedLobbyRoute = ProtectedLobbyImport.update({
+const ProtectedLobbyRoute = ProtectedLobbyRouteImport.update({
   id: '/lobby',
   path: '/lobby',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedListRoute = ProtectedListImport.update({
+const ProtectedListRoute = ProtectedListRouteImport.update({
   id: '/list',
   path: '/list',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedShowMediaIdRoute = ProtectedShowMediaIdImport.update({
+const ProtectedShowMediaIdRoute = ProtectedShowMediaIdRouteImport.update({
   id: '/show/$mediaId',
   path: '/show/$mediaId',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedSettingsSettingsRoute = ProtectedSettingsSettingsImport.update({
-  id: '/_settings',
-  getParentRoute: () => ProtectedSettingsRoute,
-} as any)
-
-const ProtectedRoomsRoomIdRoute = ProtectedRoomsRoomIdImport.update({
+const ProtectedSettingsSettingsRoute =
+  ProtectedSettingsSettingsRouteImport.update({
+    id: '/_settings',
+    getParentRoute: () => ProtectedSettingsRoute,
+  } as any)
+const ProtectedRoomsRoomIdRoute = ProtectedRoomsRoomIdRouteImport.update({
   id: '/rooms/$roomId',
   path: '/rooms/$roomId',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedPlaylistPlaylistRoute = ProtectedPlaylistPlaylistImport.update({
-  id: '/_playlist',
-  getParentRoute: () => ProtectedPlaylistRoute,
-} as any)
-
-const ProtectedPersonPersonIdRoute = ProtectedPersonPersonIdImport.update({
+const ProtectedPlaylistPlaylistRoute =
+  ProtectedPlaylistPlaylistRouteImport.update({
+    id: '/_playlist',
+    getParentRoute: () => ProtectedPlaylistRoute,
+  } as any)
+const ProtectedPersonPersonIdRoute = ProtectedPersonPersonIdRouteImport.update({
   id: '/person/$personId',
   path: '/person/$personId',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedMovieMediaIdRoute = ProtectedMovieMediaIdImport.update({
+const ProtectedMovieMediaIdRoute = ProtectedMovieMediaIdRouteImport.update({
   id: '/movie/$mediaId',
   path: '/movie/$mediaId',
   getParentRoute: () => ProtectedRoute,
 } as any)
-
-const ProtectedCompanyCompanyIdRoute = ProtectedCompanyCompanyIdImport.update({
-  id: '/company/$companyId',
-  path: '/company/$companyId',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-
+const ProtectedCompanyCompanyIdRoute =
+  ProtectedCompanyCompanyIdRouteImport.update({
+    id: '/company/$companyId',
+    path: '/company/$companyId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedCollectionCollectionIdRoute =
-  ProtectedCollectionCollectionIdImport.update({
+  ProtectedCollectionCollectionIdRouteImport.update({
     id: '/collection/$collectionId',
     path: '/collection/$collectionId',
     getParentRoute: () => ProtectedRoute,
   } as any)
-
 const ProtectedSettingsSettingsIndexRoute =
-  ProtectedSettingsSettingsIndexImport.update({
+  ProtectedSettingsSettingsIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedPlaylistPlaylistIndexRoute =
-  ProtectedPlaylistPlaylistIndexImport.update({
+  ProtectedPlaylistPlaylistIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => ProtectedPlaylistPlaylistRoute,
   } as any)
-
 const ProtectedSettingsSettingsTermsRoute =
-  ProtectedSettingsSettingsTermsImport.update({
+  ProtectedSettingsSettingsTermsRouteImport.update({
     id: '/terms',
     path: '/terms',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedSettingsSettingsProfileRoute =
-  ProtectedSettingsSettingsProfileImport.update({
+  ProtectedSettingsSettingsProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedSettingsSettingsPrivacyRoute =
-  ProtectedSettingsSettingsPrivacyImport.update({
+  ProtectedSettingsSettingsPrivacyRouteImport.update({
     id: '/privacy',
     path: '/privacy',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedSettingsSettingsNotificationsRoute =
-  ProtectedSettingsSettingsNotificationsImport.update({
+  ProtectedSettingsSettingsNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedSettingsSettingsFaqRoute =
-  ProtectedSettingsSettingsFaqImport.update({
+  ProtectedSettingsSettingsFaqRouteImport.update({
     id: '/faq',
     path: '/faq',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedSettingsSettingsDownloadsRoute =
-  ProtectedSettingsSettingsDownloadsImport.update({
+  ProtectedSettingsSettingsDownloadsRouteImport.update({
     id: '/downloads',
     path: '/downloads',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedSettingsSettingsActivityRoute =
-  ProtectedSettingsSettingsActivityImport.update({
+  ProtectedSettingsSettingsActivityRouteImport.update({
     id: '/activity',
     path: '/activity',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminRoute =
-  ProtectedSettingsSettingsAdminImport.update({
+  ProtectedSettingsSettingsAdminRouteImport.update({
     id: '/_admin',
     getParentRoute: () => ProtectedSettingsSettingsRoute,
   } as any)
-
 const ProtectedPlaylistPlaylistCreateRoute =
-  ProtectedPlaylistPlaylistCreateImport.update({
+  ProtectedPlaylistPlaylistCreateRouteImport.update({
     id: '/create',
     path: '/create',
     getParentRoute: () => ProtectedPlaylistPlaylistRoute,
   } as any)
-
 const ProtectedPlaylistPlaylistPlaylistIdRoute =
-  ProtectedPlaylistPlaylistPlaylistIdImport.update({
+  ProtectedPlaylistPlaylistPlaylistIdRouteImport.update({
     id: '/$playlistId',
     path: '/$playlistId',
     getParentRoute: () => ProtectedPlaylistPlaylistRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminPicksRoute =
-  ProtectedSettingsSettingsAdminPicksImport.update({
+  ProtectedSettingsSettingsAdminPicksRouteImport.update({
     id: '/picks',
     path: '/picks',
     getParentRoute: () => ProtectedSettingsSettingsAdminRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminPermissionsRoute =
-  ProtectedSettingsSettingsAdminPermissionsImport.update({
+  ProtectedSettingsSettingsAdminPermissionsRouteImport.update({
     id: '/permissions',
     path: '/permissions',
     getParentRoute: () => ProtectedSettingsSettingsAdminRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminFramesRoute =
-  ProtectedSettingsSettingsAdminFramesImport.update({
+  ProtectedSettingsSettingsAdminFramesRouteImport.update({
     id: '/frames',
     path: '/frames',
     getParentRoute: () => ProtectedSettingsSettingsAdminRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminAccessRoute =
-  ProtectedSettingsSettingsAdminAccessImport.update({
+  ProtectedSettingsSettingsAdminAccessRouteImport.update({
     id: '/access',
     path: '/access',
     getParentRoute: () => ProtectedSettingsSettingsAdminRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminLibrariesRoute =
-  ProtectedSettingsSettingsAdminLibrariesImport.update({
+  ProtectedSettingsSettingsAdminLibrariesRouteImport.update({
     id: '/_libraries',
     getParentRoute: () => ProtectedSettingsSettingsAdminRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminLibrariesUnscannedRoute =
-  ProtectedSettingsSettingsAdminLibrariesUnscannedImport.update({
+  ProtectedSettingsSettingsAdminLibrariesUnscannedRouteImport.update({
     id: '/unscanned',
     path: '/unscanned',
     getParentRoute: () => ProtectedSettingsSettingsAdminLibrariesRoute,
   } as any)
-
 const ProtectedSettingsSettingsAdminLibrariesLibrariesRoute =
-  ProtectedSettingsSettingsAdminLibrariesLibrariesImport.update({
+  ProtectedSettingsSettingsAdminLibrariesLibrariesRouteImport.update({
     id: '/libraries',
     path: '/libraries',
     getParentRoute: () => ProtectedSettingsSettingsAdminLibrariesRoute,
   } as any)
 
-// Populate the FileRoutesByPath interface
+export interface FileRoutesByFullPath {
+  '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/setup': typeof SetupRoute
+  '/terms': typeof TermsRoute
+  '/watch': typeof WatchRoute
+  '/list': typeof ProtectedListRoute
+  '/lobby': typeof ProtectedLobbyRoute
+  '/movies': typeof ProtectedMoviesRoute
+  '/shows': typeof ProtectedShowsRoute
+  '/': typeof ProtectedIndexRoute
+  '/collection/$collectionId': typeof ProtectedCollectionCollectionIdRoute
+  '/company/$companyId': typeof ProtectedCompanyCompanyIdRoute
+  '/movie/$mediaId': typeof ProtectedMovieMediaIdRoute
+  '/person/$personId': typeof ProtectedPersonPersonIdRoute
+  '/playlist': typeof ProtectedPlaylistPlaylistRouteWithChildren
+  '/rooms/$roomId': typeof ProtectedRoomsRoomIdRoute
+  '/settings': typeof ProtectedSettingsSettingsAdminLibrariesRouteWithChildren
+  '/show/$mediaId': typeof ProtectedShowMediaIdRoute
+  '/playlist/$playlistId': typeof ProtectedPlaylistPlaylistPlaylistIdRoute
+  '/playlist/create': typeof ProtectedPlaylistPlaylistCreateRoute
+  '/settings/activity': typeof ProtectedSettingsSettingsActivityRoute
+  '/settings/downloads': typeof ProtectedSettingsSettingsDownloadsRoute
+  '/settings/faq': typeof ProtectedSettingsSettingsFaqRoute
+  '/settings/notifications': typeof ProtectedSettingsSettingsNotificationsRoute
+  '/settings/privacy': typeof ProtectedSettingsSettingsPrivacyRoute
+  '/settings/profile': typeof ProtectedSettingsSettingsProfileRoute
+  '/settings/terms': typeof ProtectedSettingsSettingsTermsRoute
+  '/playlist/': typeof ProtectedPlaylistPlaylistIndexRoute
+  '/settings/': typeof ProtectedSettingsSettingsIndexRoute
+  '/settings/access': typeof ProtectedSettingsSettingsAdminAccessRoute
+  '/settings/frames': typeof ProtectedSettingsSettingsAdminFramesRoute
+  '/settings/permissions': typeof ProtectedSettingsSettingsAdminPermissionsRoute
+  '/settings/picks': typeof ProtectedSettingsSettingsAdminPicksRoute
+  '/settings/libraries': typeof ProtectedSettingsSettingsAdminLibrariesLibrariesRoute
+  '/settings/unscanned': typeof ProtectedSettingsSettingsAdminLibrariesUnscannedRoute
+}
+export interface FileRoutesByTo {
+  '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/setup': typeof SetupRoute
+  '/terms': typeof TermsRoute
+  '/watch': typeof WatchRoute
+  '/list': typeof ProtectedListRoute
+  '/lobby': typeof ProtectedLobbyRoute
+  '/movies': typeof ProtectedMoviesRoute
+  '/shows': typeof ProtectedShowsRoute
+  '/': typeof ProtectedIndexRoute
+  '/collection/$collectionId': typeof ProtectedCollectionCollectionIdRoute
+  '/company/$companyId': typeof ProtectedCompanyCompanyIdRoute
+  '/movie/$mediaId': typeof ProtectedMovieMediaIdRoute
+  '/person/$personId': typeof ProtectedPersonPersonIdRoute
+  '/playlist': typeof ProtectedPlaylistPlaylistIndexRoute
+  '/rooms/$roomId': typeof ProtectedRoomsRoomIdRoute
+  '/settings': typeof ProtectedSettingsSettingsAdminLibrariesRouteWithChildren
+  '/show/$mediaId': typeof ProtectedShowMediaIdRoute
+  '/playlist/$playlistId': typeof ProtectedPlaylistPlaylistPlaylistIdRoute
+  '/playlist/create': typeof ProtectedPlaylistPlaylistCreateRoute
+  '/settings/activity': typeof ProtectedSettingsSettingsActivityRoute
+  '/settings/downloads': typeof ProtectedSettingsSettingsDownloadsRoute
+  '/settings/faq': typeof ProtectedSettingsSettingsFaqRoute
+  '/settings/notifications': typeof ProtectedSettingsSettingsNotificationsRoute
+  '/settings/privacy': typeof ProtectedSettingsSettingsPrivacyRoute
+  '/settings/profile': typeof ProtectedSettingsSettingsProfileRoute
+  '/settings/terms': typeof ProtectedSettingsSettingsTermsRoute
+  '/settings/access': typeof ProtectedSettingsSettingsAdminAccessRoute
+  '/settings/frames': typeof ProtectedSettingsSettingsAdminFramesRoute
+  '/settings/permissions': typeof ProtectedSettingsSettingsAdminPermissionsRoute
+  '/settings/picks': typeof ProtectedSettingsSettingsAdminPicksRoute
+  '/settings/libraries': typeof ProtectedSettingsSettingsAdminLibrariesLibrariesRoute
+  '/settings/unscanned': typeof ProtectedSettingsSettingsAdminLibrariesUnscannedRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/_protected': typeof ProtectedRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
+  '/setup': typeof SetupRoute
+  '/terms': typeof TermsRoute
+  '/watch': typeof WatchRoute
+  '/_protected/list': typeof ProtectedListRoute
+  '/_protected/lobby': typeof ProtectedLobbyRoute
+  '/_protected/movies': typeof ProtectedMoviesRoute
+  '/_protected/shows': typeof ProtectedShowsRoute
+  '/_protected/': typeof ProtectedIndexRoute
+  '/_protected/collection/$collectionId': typeof ProtectedCollectionCollectionIdRoute
+  '/_protected/company/$companyId': typeof ProtectedCompanyCompanyIdRoute
+  '/_protected/movie/$mediaId': typeof ProtectedMovieMediaIdRoute
+  '/_protected/person/$personId': typeof ProtectedPersonPersonIdRoute
+  '/_protected/playlist': typeof ProtectedPlaylistRouteWithChildren
+  '/_protected/playlist/_playlist': typeof ProtectedPlaylistPlaylistRouteWithChildren
+  '/_protected/rooms/$roomId': typeof ProtectedRoomsRoomIdRoute
+  '/_protected/settings': typeof ProtectedSettingsRouteWithChildren
+  '/_protected/settings/_settings': typeof ProtectedSettingsSettingsRouteWithChildren
+  '/_protected/show/$mediaId': typeof ProtectedShowMediaIdRoute
+  '/_protected/playlist/_playlist/$playlistId': typeof ProtectedPlaylistPlaylistPlaylistIdRoute
+  '/_protected/playlist/_playlist/create': typeof ProtectedPlaylistPlaylistCreateRoute
+  '/_protected/settings/_settings/_admin': typeof ProtectedSettingsSettingsAdminRouteWithChildren
+  '/_protected/settings/_settings/activity': typeof ProtectedSettingsSettingsActivityRoute
+  '/_protected/settings/_settings/downloads': typeof ProtectedSettingsSettingsDownloadsRoute
+  '/_protected/settings/_settings/faq': typeof ProtectedSettingsSettingsFaqRoute
+  '/_protected/settings/_settings/notifications': typeof ProtectedSettingsSettingsNotificationsRoute
+  '/_protected/settings/_settings/privacy': typeof ProtectedSettingsSettingsPrivacyRoute
+  '/_protected/settings/_settings/profile': typeof ProtectedSettingsSettingsProfileRoute
+  '/_protected/settings/_settings/terms': typeof ProtectedSettingsSettingsTermsRoute
+  '/_protected/playlist/_playlist/': typeof ProtectedPlaylistPlaylistIndexRoute
+  '/_protected/settings/_settings/': typeof ProtectedSettingsSettingsIndexRoute
+  '/_protected/settings/_settings/_admin/_libraries': typeof ProtectedSettingsSettingsAdminLibrariesRouteWithChildren
+  '/_protected/settings/_settings/_admin/access': typeof ProtectedSettingsSettingsAdminAccessRoute
+  '/_protected/settings/_settings/_admin/frames': typeof ProtectedSettingsSettingsAdminFramesRoute
+  '/_protected/settings/_settings/_admin/permissions': typeof ProtectedSettingsSettingsAdminPermissionsRoute
+  '/_protected/settings/_settings/_admin/picks': typeof ProtectedSettingsSettingsAdminPicksRoute
+  '/_protected/settings/_settings/_admin/_libraries/libraries': typeof ProtectedSettingsSettingsAdminLibrariesLibrariesRoute
+  '/_protected/settings/_settings/_admin/_libraries/unscanned': typeof ProtectedSettingsSettingsAdminLibrariesUnscannedRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/auth'
+    | '/privacy'
+    | '/setup'
+    | '/terms'
+    | '/watch'
+    | '/list'
+    | '/lobby'
+    | '/movies'
+    | '/shows'
+    | '/'
+    | '/collection/$collectionId'
+    | '/company/$companyId'
+    | '/movie/$mediaId'
+    | '/person/$personId'
+    | '/playlist'
+    | '/rooms/$roomId'
+    | '/settings'
+    | '/show/$mediaId'
+    | '/playlist/$playlistId'
+    | '/playlist/create'
+    | '/settings/activity'
+    | '/settings/downloads'
+    | '/settings/faq'
+    | '/settings/notifications'
+    | '/settings/privacy'
+    | '/settings/profile'
+    | '/settings/terms'
+    | '/playlist/'
+    | '/settings/'
+    | '/settings/access'
+    | '/settings/frames'
+    | '/settings/permissions'
+    | '/settings/picks'
+    | '/settings/libraries'
+    | '/settings/unscanned'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/auth'
+    | '/privacy'
+    | '/setup'
+    | '/terms'
+    | '/watch'
+    | '/list'
+    | '/lobby'
+    | '/movies'
+    | '/shows'
+    | '/'
+    | '/collection/$collectionId'
+    | '/company/$companyId'
+    | '/movie/$mediaId'
+    | '/person/$personId'
+    | '/playlist'
+    | '/rooms/$roomId'
+    | '/settings'
+    | '/show/$mediaId'
+    | '/playlist/$playlistId'
+    | '/playlist/create'
+    | '/settings/activity'
+    | '/settings/downloads'
+    | '/settings/faq'
+    | '/settings/notifications'
+    | '/settings/privacy'
+    | '/settings/profile'
+    | '/settings/terms'
+    | '/settings/access'
+    | '/settings/frames'
+    | '/settings/permissions'
+    | '/settings/picks'
+    | '/settings/libraries'
+    | '/settings/unscanned'
+  id:
+    | '__root__'
+    | '/_protected'
+    | '/auth'
+    | '/privacy'
+    | '/setup'
+    | '/terms'
+    | '/watch'
+    | '/_protected/list'
+    | '/_protected/lobby'
+    | '/_protected/movies'
+    | '/_protected/shows'
+    | '/_protected/'
+    | '/_protected/collection/$collectionId'
+    | '/_protected/company/$companyId'
+    | '/_protected/movie/$mediaId'
+    | '/_protected/person/$personId'
+    | '/_protected/playlist'
+    | '/_protected/playlist/_playlist'
+    | '/_protected/rooms/$roomId'
+    | '/_protected/settings'
+    | '/_protected/settings/_settings'
+    | '/_protected/show/$mediaId'
+    | '/_protected/playlist/_playlist/$playlistId'
+    | '/_protected/playlist/_playlist/create'
+    | '/_protected/settings/_settings/_admin'
+    | '/_protected/settings/_settings/activity'
+    | '/_protected/settings/_settings/downloads'
+    | '/_protected/settings/_settings/faq'
+    | '/_protected/settings/_settings/notifications'
+    | '/_protected/settings/_settings/privacy'
+    | '/_protected/settings/_settings/profile'
+    | '/_protected/settings/_settings/terms'
+    | '/_protected/playlist/_playlist/'
+    | '/_protected/settings/_settings/'
+    | '/_protected/settings/_settings/_admin/_libraries'
+    | '/_protected/settings/_settings/_admin/access'
+    | '/_protected/settings/_settings/_admin/frames'
+    | '/_protected/settings/_settings/_admin/permissions'
+    | '/_protected/settings/_settings/_admin/picks'
+    | '/_protected/settings/_settings/_admin/_libraries/libraries'
+    | '/_protected/settings/_settings/_admin/_libraries/unscanned'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  ProtectedRoute: typeof ProtectedRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  PrivacyRoute: typeof PrivacyRoute
+  SetupRoute: typeof SetupRoute
+  TermsRoute: typeof TermsRoute
+  WatchRoute: typeof WatchRoute
+}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_protected': {
-      id: '/_protected'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof ProtectedImport
-      parentRoute: typeof rootRoute
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthImport
-      parentRoute: typeof rootRoute
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyImport
-      parentRoute: typeof rootRoute
-    }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupImport
-      parentRoute: typeof rootRoute
+    '/watch': {
+      id: '/watch'
+      path: '/watch'
+      fullPath: '/watch'
+      preLoaderRoute: typeof WatchRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/terms': {
       id: '/terms'
       path: '/terms'
       fullPath: '/terms'
-      preLoaderRoute: typeof TermsImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/watch': {
-      id: '/watch'
-      path: '/watch'
-      fullPath: '/watch'
-      preLoaderRoute: typeof WatchImport
-      parentRoute: typeof rootRoute
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_protected/list': {
-      id: '/_protected/list'
-      path: '/list'
-      fullPath: '/list'
-      preLoaderRoute: typeof ProtectedListImport
-      parentRoute: typeof ProtectedImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_protected/lobby': {
-      id: '/_protected/lobby'
-      path: '/lobby'
-      fullPath: '/lobby'
-      preLoaderRoute: typeof ProtectedLobbyImport
-      parentRoute: typeof ProtectedImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_protected/movies': {
-      id: '/_protected/movies'
-      path: '/movies'
-      fullPath: '/movies'
-      preLoaderRoute: typeof ProtectedMoviesImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/shows': {
-      id: '/_protected/shows'
-      path: '/shows'
-      fullPath: '/shows'
-      preLoaderRoute: typeof ProtectedShowsImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/': {
-      id: '/_protected/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof ProtectedIndexImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/collection/$collectionId': {
-      id: '/_protected/collection/$collectionId'
-      path: '/collection/$collectionId'
-      fullPath: '/collection/$collectionId'
-      preLoaderRoute: typeof ProtectedCollectionCollectionIdImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/company/$companyId': {
-      id: '/_protected/company/$companyId'
-      path: '/company/$companyId'
-      fullPath: '/company/$companyId'
-      preLoaderRoute: typeof ProtectedCompanyCompanyIdImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/movie/$mediaId': {
-      id: '/_protected/movie/$mediaId'
-      path: '/movie/$mediaId'
-      fullPath: '/movie/$mediaId'
-      preLoaderRoute: typeof ProtectedMovieMediaIdImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/person/$personId': {
-      id: '/_protected/person/$personId'
-      path: '/person/$personId'
-      fullPath: '/person/$personId'
-      preLoaderRoute: typeof ProtectedPersonPersonIdImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/playlist': {
-      id: '/_protected/playlist'
-      path: '/playlist'
-      fullPath: '/playlist'
-      preLoaderRoute: typeof ProtectedPlaylistImport
-      parentRoute: typeof ProtectedImport
-    }
-    '/_protected/playlist/_playlist': {
-      id: '/_protected/playlist/_playlist'
-      path: '/playlist'
-      fullPath: '/playlist'
-      preLoaderRoute: typeof ProtectedPlaylistPlaylistImport
-      parentRoute: typeof ProtectedPlaylistRoute
-    }
-    '/_protected/rooms/$roomId': {
-      id: '/_protected/rooms/$roomId'
-      path: '/rooms/$roomId'
-      fullPath: '/rooms/$roomId'
-      preLoaderRoute: typeof ProtectedRoomsRoomIdImport
-      parentRoute: typeof ProtectedImport
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ProtectedRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_protected/settings': {
       id: '/_protected/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof ProtectedSettingsImport
-      parentRoute: typeof ProtectedImport
+      preLoaderRoute: typeof ProtectedSettingsRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/_settings': {
-      id: '/_protected/settings/_settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof ProtectedSettingsSettingsImport
-      parentRoute: typeof ProtectedSettingsRoute
+    '/_protected/playlist': {
+      id: '/_protected/playlist'
+      path: '/playlist'
+      fullPath: '/playlist'
+      preLoaderRoute: typeof ProtectedPlaylistRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/': {
+      id: '/_protected/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof ProtectedIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/shows': {
+      id: '/_protected/shows'
+      path: '/shows'
+      fullPath: '/shows'
+      preLoaderRoute: typeof ProtectedShowsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/movies': {
+      id: '/_protected/movies'
+      path: '/movies'
+      fullPath: '/movies'
+      preLoaderRoute: typeof ProtectedMoviesRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/lobby': {
+      id: '/_protected/lobby'
+      path: '/lobby'
+      fullPath: '/lobby'
+      preLoaderRoute: typeof ProtectedLobbyRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/list': {
+      id: '/_protected/list'
+      path: '/list'
+      fullPath: '/list'
+      preLoaderRoute: typeof ProtectedListRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/show/$mediaId': {
       id: '/_protected/show/$mediaId'
       path: '/show/$mediaId'
       fullPath: '/show/$mediaId'
-      preLoaderRoute: typeof ProtectedShowMediaIdImport
-      parentRoute: typeof ProtectedImport
+      preLoaderRoute: typeof ProtectedShowMediaIdRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/playlist/_playlist/$playlistId': {
-      id: '/_protected/playlist/_playlist/$playlistId'
-      path: '/$playlistId'
-      fullPath: '/playlist/$playlistId'
-      preLoaderRoute: typeof ProtectedPlaylistPlaylistPlaylistIdImport
-      parentRoute: typeof ProtectedPlaylistPlaylistImport
-    }
-    '/_protected/playlist/_playlist/create': {
-      id: '/_protected/playlist/_playlist/create'
-      path: '/create'
-      fullPath: '/playlist/create'
-      preLoaderRoute: typeof ProtectedPlaylistPlaylistCreateImport
-      parentRoute: typeof ProtectedPlaylistPlaylistImport
-    }
-    '/_protected/settings/_settings/_admin': {
-      id: '/_protected/settings/_settings/_admin'
-      path: ''
+    '/_protected/settings/_settings': {
+      id: '/_protected/settings/_settings'
+      path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
+      preLoaderRoute: typeof ProtectedSettingsSettingsRouteImport
+      parentRoute: typeof ProtectedSettingsRoute
     }
-    '/_protected/settings/_settings/activity': {
-      id: '/_protected/settings/_settings/activity'
-      path: '/activity'
-      fullPath: '/settings/activity'
-      preLoaderRoute: typeof ProtectedSettingsSettingsActivityImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
+    '/_protected/rooms/$roomId': {
+      id: '/_protected/rooms/$roomId'
+      path: '/rooms/$roomId'
+      fullPath: '/rooms/$roomId'
+      preLoaderRoute: typeof ProtectedRoomsRoomIdRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/_settings/downloads': {
-      id: '/_protected/settings/_settings/downloads'
-      path: '/downloads'
-      fullPath: '/settings/downloads'
-      preLoaderRoute: typeof ProtectedSettingsSettingsDownloadsImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
+    '/_protected/playlist/_playlist': {
+      id: '/_protected/playlist/_playlist'
+      path: '/playlist'
+      fullPath: '/playlist'
+      preLoaderRoute: typeof ProtectedPlaylistPlaylistRouteImport
+      parentRoute: typeof ProtectedPlaylistRoute
     }
-    '/_protected/settings/_settings/faq': {
-      id: '/_protected/settings/_settings/faq'
-      path: '/faq'
-      fullPath: '/settings/faq'
-      preLoaderRoute: typeof ProtectedSettingsSettingsFaqImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
+    '/_protected/person/$personId': {
+      id: '/_protected/person/$personId'
+      path: '/person/$personId'
+      fullPath: '/person/$personId'
+      preLoaderRoute: typeof ProtectedPersonPersonIdRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/_settings/notifications': {
-      id: '/_protected/settings/_settings/notifications'
-      path: '/notifications'
-      fullPath: '/settings/notifications'
-      preLoaderRoute: typeof ProtectedSettingsSettingsNotificationsImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
+    '/_protected/movie/$mediaId': {
+      id: '/_protected/movie/$mediaId'
+      path: '/movie/$mediaId'
+      fullPath: '/movie/$mediaId'
+      preLoaderRoute: typeof ProtectedMovieMediaIdRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/_settings/privacy': {
-      id: '/_protected/settings/_settings/privacy'
-      path: '/privacy'
-      fullPath: '/settings/privacy'
-      preLoaderRoute: typeof ProtectedSettingsSettingsPrivacyImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
+    '/_protected/company/$companyId': {
+      id: '/_protected/company/$companyId'
+      path: '/company/$companyId'
+      fullPath: '/company/$companyId'
+      preLoaderRoute: typeof ProtectedCompanyCompanyIdRouteImport
+      parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/_settings/profile': {
-      id: '/_protected/settings/_settings/profile'
-      path: '/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof ProtectedSettingsSettingsProfileImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
-    }
-    '/_protected/settings/_settings/terms': {
-      id: '/_protected/settings/_settings/terms'
-      path: '/terms'
-      fullPath: '/settings/terms'
-      preLoaderRoute: typeof ProtectedSettingsSettingsTermsImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
-    }
-    '/_protected/playlist/_playlist/': {
-      id: '/_protected/playlist/_playlist/'
-      path: '/'
-      fullPath: '/playlist/'
-      preLoaderRoute: typeof ProtectedPlaylistPlaylistIndexImport
-      parentRoute: typeof ProtectedPlaylistPlaylistImport
+    '/_protected/collection/$collectionId': {
+      id: '/_protected/collection/$collectionId'
+      path: '/collection/$collectionId'
+      fullPath: '/collection/$collectionId'
+      preLoaderRoute: typeof ProtectedCollectionCollectionIdRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/settings/_settings/': {
       id: '/_protected/settings/_settings/'
       path: '/'
       fullPath: '/settings/'
-      preLoaderRoute: typeof ProtectedSettingsSettingsIndexImport
-      parentRoute: typeof ProtectedSettingsSettingsImport
+      preLoaderRoute: typeof ProtectedSettingsSettingsIndexRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
     }
-    '/_protected/settings/_settings/_admin/_libraries': {
-      id: '/_protected/settings/_settings/_admin/_libraries'
+    '/_protected/playlist/_playlist/': {
+      id: '/_protected/playlist/_playlist/'
+      path: '/'
+      fullPath: '/playlist/'
+      preLoaderRoute: typeof ProtectedPlaylistPlaylistIndexRouteImport
+      parentRoute: typeof ProtectedPlaylistPlaylistRoute
+    }
+    '/_protected/settings/_settings/terms': {
+      id: '/_protected/settings/_settings/terms'
+      path: '/terms'
+      fullPath: '/settings/terms'
+      preLoaderRoute: typeof ProtectedSettingsSettingsTermsRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
+    }
+    '/_protected/settings/_settings/profile': {
+      id: '/_protected/settings/_settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof ProtectedSettingsSettingsProfileRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
+    }
+    '/_protected/settings/_settings/privacy': {
+      id: '/_protected/settings/_settings/privacy'
+      path: '/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof ProtectedSettingsSettingsPrivacyRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
+    }
+    '/_protected/settings/_settings/notifications': {
+      id: '/_protected/settings/_settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof ProtectedSettingsSettingsNotificationsRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
+    }
+    '/_protected/settings/_settings/faq': {
+      id: '/_protected/settings/_settings/faq'
+      path: '/faq'
+      fullPath: '/settings/faq'
+      preLoaderRoute: typeof ProtectedSettingsSettingsFaqRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
+    }
+    '/_protected/settings/_settings/downloads': {
+      id: '/_protected/settings/_settings/downloads'
+      path: '/downloads'
+      fullPath: '/settings/downloads'
+      preLoaderRoute: typeof ProtectedSettingsSettingsDownloadsRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
+    }
+    '/_protected/settings/_settings/activity': {
+      id: '/_protected/settings/_settings/activity'
+      path: '/activity'
+      fullPath: '/settings/activity'
+      preLoaderRoute: typeof ProtectedSettingsSettingsActivityRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
+    }
+    '/_protected/settings/_settings/_admin': {
+      id: '/_protected/settings/_settings/_admin'
       path: ''
       fullPath: '/settings'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminLibrariesImport
-      parentRoute: typeof ProtectedSettingsSettingsAdminImport
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsRoute
     }
-    '/_protected/settings/_settings/_admin/access': {
-      id: '/_protected/settings/_settings/_admin/access'
-      path: '/access'
-      fullPath: '/settings/access'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminAccessImport
-      parentRoute: typeof ProtectedSettingsSettingsAdminImport
+    '/_protected/playlist/_playlist/create': {
+      id: '/_protected/playlist/_playlist/create'
+      path: '/create'
+      fullPath: '/playlist/create'
+      preLoaderRoute: typeof ProtectedPlaylistPlaylistCreateRouteImport
+      parentRoute: typeof ProtectedPlaylistPlaylistRoute
     }
-    '/_protected/settings/_settings/_admin/frames': {
-      id: '/_protected/settings/_settings/_admin/frames'
-      path: '/frames'
-      fullPath: '/settings/frames'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminFramesImport
-      parentRoute: typeof ProtectedSettingsSettingsAdminImport
-    }
-    '/_protected/settings/_settings/_admin/permissions': {
-      id: '/_protected/settings/_settings/_admin/permissions'
-      path: '/permissions'
-      fullPath: '/settings/permissions'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminPermissionsImport
-      parentRoute: typeof ProtectedSettingsSettingsAdminImport
+    '/_protected/playlist/_playlist/$playlistId': {
+      id: '/_protected/playlist/_playlist/$playlistId'
+      path: '/$playlistId'
+      fullPath: '/playlist/$playlistId'
+      preLoaderRoute: typeof ProtectedPlaylistPlaylistPlaylistIdRouteImport
+      parentRoute: typeof ProtectedPlaylistPlaylistRoute
     }
     '/_protected/settings/_settings/_admin/picks': {
       id: '/_protected/settings/_settings/_admin/picks'
       path: '/picks'
       fullPath: '/settings/picks'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminPicksImport
-      parentRoute: typeof ProtectedSettingsSettingsAdminImport
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminPicksRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsAdminRoute
     }
-    '/_protected/settings/_settings/_admin/_libraries/libraries': {
-      id: '/_protected/settings/_settings/_admin/_libraries/libraries'
-      path: '/libraries'
-      fullPath: '/settings/libraries'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminLibrariesLibrariesImport
-      parentRoute: typeof ProtectedSettingsSettingsAdminLibrariesImport
+    '/_protected/settings/_settings/_admin/permissions': {
+      id: '/_protected/settings/_settings/_admin/permissions'
+      path: '/permissions'
+      fullPath: '/settings/permissions'
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminPermissionsRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsAdminRoute
+    }
+    '/_protected/settings/_settings/_admin/frames': {
+      id: '/_protected/settings/_settings/_admin/frames'
+      path: '/frames'
+      fullPath: '/settings/frames'
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminFramesRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsAdminRoute
+    }
+    '/_protected/settings/_settings/_admin/access': {
+      id: '/_protected/settings/_settings/_admin/access'
+      path: '/access'
+      fullPath: '/settings/access'
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminAccessRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsAdminRoute
+    }
+    '/_protected/settings/_settings/_admin/_libraries': {
+      id: '/_protected/settings/_settings/_admin/_libraries'
+      path: ''
+      fullPath: '/settings'
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminLibrariesRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsAdminRoute
     }
     '/_protected/settings/_settings/_admin/_libraries/unscanned': {
       id: '/_protected/settings/_settings/_admin/_libraries/unscanned'
       path: '/unscanned'
       fullPath: '/settings/unscanned'
-      preLoaderRoute: typeof ProtectedSettingsSettingsAdminLibrariesUnscannedImport
-      parentRoute: typeof ProtectedSettingsSettingsAdminLibrariesImport
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminLibrariesUnscannedRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsAdminLibrariesRoute
+    }
+    '/_protected/settings/_settings/_admin/_libraries/libraries': {
+      id: '/_protected/settings/_settings/_admin/_libraries/libraries'
+      path: '/libraries'
+      fullPath: '/settings/libraries'
+      preLoaderRoute: typeof ProtectedSettingsSettingsAdminLibrariesLibrariesRouteImport
+      parentRoute: typeof ProtectedSettingsSettingsAdminLibrariesRoute
     }
   }
 }
-
-// Create and export the route tree
 
 interface ProtectedPlaylistPlaylistRouteChildren {
   ProtectedPlaylistPlaylistPlaylistIdRoute: typeof ProtectedPlaylistPlaylistPlaylistIdRoute
@@ -761,253 +956,6 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
   ProtectedRouteChildren,
 )
 
-export interface FileRoutesByFullPath {
-  '': typeof ProtectedRouteWithChildren
-  '/auth': typeof AuthRoute
-  '/privacy': typeof PrivacyRoute
-  '/setup': typeof SetupRoute
-  '/terms': typeof TermsRoute
-  '/watch': typeof WatchRoute
-  '/list': typeof ProtectedListRoute
-  '/lobby': typeof ProtectedLobbyRoute
-  '/movies': typeof ProtectedMoviesRoute
-  '/shows': typeof ProtectedShowsRoute
-  '/': typeof ProtectedIndexRoute
-  '/collection/$collectionId': typeof ProtectedCollectionCollectionIdRoute
-  '/company/$companyId': typeof ProtectedCompanyCompanyIdRoute
-  '/movie/$mediaId': typeof ProtectedMovieMediaIdRoute
-  '/person/$personId': typeof ProtectedPersonPersonIdRoute
-  '/playlist': typeof ProtectedPlaylistPlaylistRouteWithChildren
-  '/rooms/$roomId': typeof ProtectedRoomsRoomIdRoute
-  '/settings': typeof ProtectedSettingsSettingsAdminLibrariesRouteWithChildren
-  '/show/$mediaId': typeof ProtectedShowMediaIdRoute
-  '/playlist/$playlistId': typeof ProtectedPlaylistPlaylistPlaylistIdRoute
-  '/playlist/create': typeof ProtectedPlaylistPlaylistCreateRoute
-  '/settings/activity': typeof ProtectedSettingsSettingsActivityRoute
-  '/settings/downloads': typeof ProtectedSettingsSettingsDownloadsRoute
-  '/settings/faq': typeof ProtectedSettingsSettingsFaqRoute
-  '/settings/notifications': typeof ProtectedSettingsSettingsNotificationsRoute
-  '/settings/privacy': typeof ProtectedSettingsSettingsPrivacyRoute
-  '/settings/profile': typeof ProtectedSettingsSettingsProfileRoute
-  '/settings/terms': typeof ProtectedSettingsSettingsTermsRoute
-  '/playlist/': typeof ProtectedPlaylistPlaylistIndexRoute
-  '/settings/': typeof ProtectedSettingsSettingsIndexRoute
-  '/settings/access': typeof ProtectedSettingsSettingsAdminAccessRoute
-  '/settings/frames': typeof ProtectedSettingsSettingsAdminFramesRoute
-  '/settings/permissions': typeof ProtectedSettingsSettingsAdminPermissionsRoute
-  '/settings/picks': typeof ProtectedSettingsSettingsAdminPicksRoute
-  '/settings/libraries': typeof ProtectedSettingsSettingsAdminLibrariesLibrariesRoute
-  '/settings/unscanned': typeof ProtectedSettingsSettingsAdminLibrariesUnscannedRoute
-}
-
-export interface FileRoutesByTo {
-  '/auth': typeof AuthRoute
-  '/privacy': typeof PrivacyRoute
-  '/setup': typeof SetupRoute
-  '/terms': typeof TermsRoute
-  '/watch': typeof WatchRoute
-  '/list': typeof ProtectedListRoute
-  '/lobby': typeof ProtectedLobbyRoute
-  '/movies': typeof ProtectedMoviesRoute
-  '/shows': typeof ProtectedShowsRoute
-  '/': typeof ProtectedIndexRoute
-  '/collection/$collectionId': typeof ProtectedCollectionCollectionIdRoute
-  '/company/$companyId': typeof ProtectedCompanyCompanyIdRoute
-  '/movie/$mediaId': typeof ProtectedMovieMediaIdRoute
-  '/person/$personId': typeof ProtectedPersonPersonIdRoute
-  '/playlist': typeof ProtectedPlaylistPlaylistIndexRoute
-  '/rooms/$roomId': typeof ProtectedRoomsRoomIdRoute
-  '/settings': typeof ProtectedSettingsSettingsAdminLibrariesRouteWithChildren
-  '/show/$mediaId': typeof ProtectedShowMediaIdRoute
-  '/playlist/$playlistId': typeof ProtectedPlaylistPlaylistPlaylistIdRoute
-  '/playlist/create': typeof ProtectedPlaylistPlaylistCreateRoute
-  '/settings/activity': typeof ProtectedSettingsSettingsActivityRoute
-  '/settings/downloads': typeof ProtectedSettingsSettingsDownloadsRoute
-  '/settings/faq': typeof ProtectedSettingsSettingsFaqRoute
-  '/settings/notifications': typeof ProtectedSettingsSettingsNotificationsRoute
-  '/settings/privacy': typeof ProtectedSettingsSettingsPrivacyRoute
-  '/settings/profile': typeof ProtectedSettingsSettingsProfileRoute
-  '/settings/terms': typeof ProtectedSettingsSettingsTermsRoute
-  '/settings/access': typeof ProtectedSettingsSettingsAdminAccessRoute
-  '/settings/frames': typeof ProtectedSettingsSettingsAdminFramesRoute
-  '/settings/permissions': typeof ProtectedSettingsSettingsAdminPermissionsRoute
-  '/settings/picks': typeof ProtectedSettingsSettingsAdminPicksRoute
-  '/settings/libraries': typeof ProtectedSettingsSettingsAdminLibrariesLibrariesRoute
-  '/settings/unscanned': typeof ProtectedSettingsSettingsAdminLibrariesUnscannedRoute
-}
-
-export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/_protected': typeof ProtectedRouteWithChildren
-  '/auth': typeof AuthRoute
-  '/privacy': typeof PrivacyRoute
-  '/setup': typeof SetupRoute
-  '/terms': typeof TermsRoute
-  '/watch': typeof WatchRoute
-  '/_protected/list': typeof ProtectedListRoute
-  '/_protected/lobby': typeof ProtectedLobbyRoute
-  '/_protected/movies': typeof ProtectedMoviesRoute
-  '/_protected/shows': typeof ProtectedShowsRoute
-  '/_protected/': typeof ProtectedIndexRoute
-  '/_protected/collection/$collectionId': typeof ProtectedCollectionCollectionIdRoute
-  '/_protected/company/$companyId': typeof ProtectedCompanyCompanyIdRoute
-  '/_protected/movie/$mediaId': typeof ProtectedMovieMediaIdRoute
-  '/_protected/person/$personId': typeof ProtectedPersonPersonIdRoute
-  '/_protected/playlist': typeof ProtectedPlaylistRouteWithChildren
-  '/_protected/playlist/_playlist': typeof ProtectedPlaylistPlaylistRouteWithChildren
-  '/_protected/rooms/$roomId': typeof ProtectedRoomsRoomIdRoute
-  '/_protected/settings': typeof ProtectedSettingsRouteWithChildren
-  '/_protected/settings/_settings': typeof ProtectedSettingsSettingsRouteWithChildren
-  '/_protected/show/$mediaId': typeof ProtectedShowMediaIdRoute
-  '/_protected/playlist/_playlist/$playlistId': typeof ProtectedPlaylistPlaylistPlaylistIdRoute
-  '/_protected/playlist/_playlist/create': typeof ProtectedPlaylistPlaylistCreateRoute
-  '/_protected/settings/_settings/_admin': typeof ProtectedSettingsSettingsAdminRouteWithChildren
-  '/_protected/settings/_settings/activity': typeof ProtectedSettingsSettingsActivityRoute
-  '/_protected/settings/_settings/downloads': typeof ProtectedSettingsSettingsDownloadsRoute
-  '/_protected/settings/_settings/faq': typeof ProtectedSettingsSettingsFaqRoute
-  '/_protected/settings/_settings/notifications': typeof ProtectedSettingsSettingsNotificationsRoute
-  '/_protected/settings/_settings/privacy': typeof ProtectedSettingsSettingsPrivacyRoute
-  '/_protected/settings/_settings/profile': typeof ProtectedSettingsSettingsProfileRoute
-  '/_protected/settings/_settings/terms': typeof ProtectedSettingsSettingsTermsRoute
-  '/_protected/playlist/_playlist/': typeof ProtectedPlaylistPlaylistIndexRoute
-  '/_protected/settings/_settings/': typeof ProtectedSettingsSettingsIndexRoute
-  '/_protected/settings/_settings/_admin/_libraries': typeof ProtectedSettingsSettingsAdminLibrariesRouteWithChildren
-  '/_protected/settings/_settings/_admin/access': typeof ProtectedSettingsSettingsAdminAccessRoute
-  '/_protected/settings/_settings/_admin/frames': typeof ProtectedSettingsSettingsAdminFramesRoute
-  '/_protected/settings/_settings/_admin/permissions': typeof ProtectedSettingsSettingsAdminPermissionsRoute
-  '/_protected/settings/_settings/_admin/picks': typeof ProtectedSettingsSettingsAdminPicksRoute
-  '/_protected/settings/_settings/_admin/_libraries/libraries': typeof ProtectedSettingsSettingsAdminLibrariesLibrariesRoute
-  '/_protected/settings/_settings/_admin/_libraries/unscanned': typeof ProtectedSettingsSettingsAdminLibrariesUnscannedRoute
-}
-
-export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | ''
-    | '/auth'
-    | '/privacy'
-    | '/setup'
-    | '/terms'
-    | '/watch'
-    | '/list'
-    | '/lobby'
-    | '/movies'
-    | '/shows'
-    | '/'
-    | '/collection/$collectionId'
-    | '/company/$companyId'
-    | '/movie/$mediaId'
-    | '/person/$personId'
-    | '/playlist'
-    | '/rooms/$roomId'
-    | '/settings'
-    | '/show/$mediaId'
-    | '/playlist/$playlistId'
-    | '/playlist/create'
-    | '/settings/activity'
-    | '/settings/downloads'
-    | '/settings/faq'
-    | '/settings/notifications'
-    | '/settings/privacy'
-    | '/settings/profile'
-    | '/settings/terms'
-    | '/playlist/'
-    | '/settings/'
-    | '/settings/access'
-    | '/settings/frames'
-    | '/settings/permissions'
-    | '/settings/picks'
-    | '/settings/libraries'
-    | '/settings/unscanned'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/auth'
-    | '/privacy'
-    | '/setup'
-    | '/terms'
-    | '/watch'
-    | '/list'
-    | '/lobby'
-    | '/movies'
-    | '/shows'
-    | '/'
-    | '/collection/$collectionId'
-    | '/company/$companyId'
-    | '/movie/$mediaId'
-    | '/person/$personId'
-    | '/playlist'
-    | '/rooms/$roomId'
-    | '/settings'
-    | '/show/$mediaId'
-    | '/playlist/$playlistId'
-    | '/playlist/create'
-    | '/settings/activity'
-    | '/settings/downloads'
-    | '/settings/faq'
-    | '/settings/notifications'
-    | '/settings/privacy'
-    | '/settings/profile'
-    | '/settings/terms'
-    | '/settings/access'
-    | '/settings/frames'
-    | '/settings/permissions'
-    | '/settings/picks'
-    | '/settings/libraries'
-    | '/settings/unscanned'
-  id:
-    | '__root__'
-    | '/_protected'
-    | '/auth'
-    | '/privacy'
-    | '/setup'
-    | '/terms'
-    | '/watch'
-    | '/_protected/list'
-    | '/_protected/lobby'
-    | '/_protected/movies'
-    | '/_protected/shows'
-    | '/_protected/'
-    | '/_protected/collection/$collectionId'
-    | '/_protected/company/$companyId'
-    | '/_protected/movie/$mediaId'
-    | '/_protected/person/$personId'
-    | '/_protected/playlist'
-    | '/_protected/playlist/_playlist'
-    | '/_protected/rooms/$roomId'
-    | '/_protected/settings'
-    | '/_protected/settings/_settings'
-    | '/_protected/show/$mediaId'
-    | '/_protected/playlist/_playlist/$playlistId'
-    | '/_protected/playlist/_playlist/create'
-    | '/_protected/settings/_settings/_admin'
-    | '/_protected/settings/_settings/activity'
-    | '/_protected/settings/_settings/downloads'
-    | '/_protected/settings/_settings/faq'
-    | '/_protected/settings/_settings/notifications'
-    | '/_protected/settings/_settings/privacy'
-    | '/_protected/settings/_settings/profile'
-    | '/_protected/settings/_settings/terms'
-    | '/_protected/playlist/_playlist/'
-    | '/_protected/settings/_settings/'
-    | '/_protected/settings/_settings/_admin/_libraries'
-    | '/_protected/settings/_settings/_admin/access'
-    | '/_protected/settings/_settings/_admin/frames'
-    | '/_protected/settings/_settings/_admin/permissions'
-    | '/_protected/settings/_settings/_admin/picks'
-    | '/_protected/settings/_settings/_admin/_libraries/libraries'
-    | '/_protected/settings/_settings/_admin/_libraries/unscanned'
-  fileRoutesById: FileRoutesById
-}
-
-export interface RootRouteChildren {
-  ProtectedRoute: typeof ProtectedRouteWithChildren
-  AuthRoute: typeof AuthRoute
-  PrivacyRoute: typeof PrivacyRoute
-  SetupRoute: typeof SetupRoute
-  TermsRoute: typeof TermsRoute
-  WatchRoute: typeof WatchRoute
-}
-
 const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
   AuthRoute: AuthRoute,
@@ -1016,227 +964,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   WatchRoute: WatchRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/_protected",
-        "/auth",
-        "/privacy",
-        "/setup",
-        "/terms",
-        "/watch"
-      ]
-    },
-    "/_protected": {
-      "filePath": "_protected.tsx",
-      "children": [
-        "/_protected/list",
-        "/_protected/lobby",
-        "/_protected/movies",
-        "/_protected/shows",
-        "/_protected/",
-        "/_protected/collection/$collectionId",
-        "/_protected/company/$companyId",
-        "/_protected/movie/$mediaId",
-        "/_protected/person/$personId",
-        "/_protected/playlist",
-        "/_protected/rooms/$roomId",
-        "/_protected/settings",
-        "/_protected/show/$mediaId"
-      ]
-    },
-    "/auth": {
-      "filePath": "auth.tsx"
-    },
-    "/privacy": {
-      "filePath": "privacy.tsx"
-    },
-    "/setup": {
-      "filePath": "setup.tsx"
-    },
-    "/terms": {
-      "filePath": "terms.tsx"
-    },
-    "/watch": {
-      "filePath": "watch.tsx"
-    },
-    "/_protected/list": {
-      "filePath": "_protected/list.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/lobby": {
-      "filePath": "_protected/lobby.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/movies": {
-      "filePath": "_protected/movies.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/shows": {
-      "filePath": "_protected/shows.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/": {
-      "filePath": "_protected/index.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/collection/$collectionId": {
-      "filePath": "_protected/collection.$collectionId.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/company/$companyId": {
-      "filePath": "_protected/company.$companyId.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/movie/$mediaId": {
-      "filePath": "_protected/movie.$mediaId.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/person/$personId": {
-      "filePath": "_protected/person.$personId.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/playlist": {
-      "filePath": "_protected/playlist",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/playlist/_playlist"
-      ]
-    },
-    "/_protected/playlist/_playlist": {
-      "filePath": "_protected/playlist/_playlist.tsx",
-      "parent": "/_protected/playlist",
-      "children": [
-        "/_protected/playlist/_playlist/$playlistId",
-        "/_protected/playlist/_playlist/create",
-        "/_protected/playlist/_playlist/"
-      ]
-    },
-    "/_protected/rooms/$roomId": {
-      "filePath": "_protected/rooms.$roomId.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/settings": {
-      "filePath": "_protected/settings",
-      "parent": "/_protected",
-      "children": [
-        "/_protected/settings/_settings"
-      ]
-    },
-    "/_protected/settings/_settings": {
-      "filePath": "_protected/settings/_settings.tsx",
-      "parent": "/_protected/settings",
-      "children": [
-        "/_protected/settings/_settings/_admin",
-        "/_protected/settings/_settings/activity",
-        "/_protected/settings/_settings/downloads",
-        "/_protected/settings/_settings/faq",
-        "/_protected/settings/_settings/notifications",
-        "/_protected/settings/_settings/privacy",
-        "/_protected/settings/_settings/profile",
-        "/_protected/settings/_settings/terms",
-        "/_protected/settings/_settings/"
-      ]
-    },
-    "/_protected/show/$mediaId": {
-      "filePath": "_protected/show.$mediaId.tsx",
-      "parent": "/_protected"
-    },
-    "/_protected/playlist/_playlist/$playlistId": {
-      "filePath": "_protected/playlist/_playlist/$playlistId.tsx",
-      "parent": "/_protected/playlist/_playlist"
-    },
-    "/_protected/playlist/_playlist/create": {
-      "filePath": "_protected/playlist/_playlist/create.tsx",
-      "parent": "/_protected/playlist/_playlist"
-    },
-    "/_protected/settings/_settings/_admin": {
-      "filePath": "_protected/settings/_settings/_admin.tsx",
-      "parent": "/_protected/settings/_settings",
-      "children": [
-        "/_protected/settings/_settings/_admin/_libraries",
-        "/_protected/settings/_settings/_admin/access",
-        "/_protected/settings/_settings/_admin/frames",
-        "/_protected/settings/_settings/_admin/permissions",
-        "/_protected/settings/_settings/_admin/picks"
-      ]
-    },
-    "/_protected/settings/_settings/activity": {
-      "filePath": "_protected/settings/_settings/activity.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/settings/_settings/downloads": {
-      "filePath": "_protected/settings/_settings/downloads.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/settings/_settings/faq": {
-      "filePath": "_protected/settings/_settings/faq.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/settings/_settings/notifications": {
-      "filePath": "_protected/settings/_settings/notifications.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/settings/_settings/privacy": {
-      "filePath": "_protected/settings/_settings/privacy.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/settings/_settings/profile": {
-      "filePath": "_protected/settings/_settings/profile.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/settings/_settings/terms": {
-      "filePath": "_protected/settings/_settings/terms.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/playlist/_playlist/": {
-      "filePath": "_protected/playlist/_playlist/index.tsx",
-      "parent": "/_protected/playlist/_playlist"
-    },
-    "/_protected/settings/_settings/": {
-      "filePath": "_protected/settings/_settings/index.tsx",
-      "parent": "/_protected/settings/_settings"
-    },
-    "/_protected/settings/_settings/_admin/_libraries": {
-      "filePath": "_protected/settings/_settings/_admin/_libraries.tsx",
-      "parent": "/_protected/settings/_settings/_admin",
-      "children": [
-        "/_protected/settings/_settings/_admin/_libraries/libraries",
-        "/_protected/settings/_settings/_admin/_libraries/unscanned"
-      ]
-    },
-    "/_protected/settings/_settings/_admin/access": {
-      "filePath": "_protected/settings/_settings/_admin/access.tsx",
-      "parent": "/_protected/settings/_settings/_admin"
-    },
-    "/_protected/settings/_settings/_admin/frames": {
-      "filePath": "_protected/settings/_settings/_admin/frames.tsx",
-      "parent": "/_protected/settings/_settings/_admin"
-    },
-    "/_protected/settings/_settings/_admin/permissions": {
-      "filePath": "_protected/settings/_settings/_admin/permissions.tsx",
-      "parent": "/_protected/settings/_settings/_admin"
-    },
-    "/_protected/settings/_settings/_admin/picks": {
-      "filePath": "_protected/settings/_settings/_admin/picks.tsx",
-      "parent": "/_protected/settings/_settings/_admin"
-    },
-    "/_protected/settings/_settings/_admin/_libraries/libraries": {
-      "filePath": "_protected/settings/_settings/_admin/_libraries/libraries.tsx",
-      "parent": "/_protected/settings/_settings/_admin/_libraries"
-    },
-    "/_protected/settings/_settings/_admin/_libraries/unscanned": {
-      "filePath": "_protected/settings/_settings/_admin/_libraries/unscanned.tsx",
-      "parent": "/_protected/settings/_settings/_admin/_libraries"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

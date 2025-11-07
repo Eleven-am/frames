@@ -9,7 +9,7 @@ import {
     getSchemaPath,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { Details } from 'express-useragent';
+import { AgentDetails } from 'express-useragent';
 
 import {
     EmailParams,
@@ -66,7 +66,7 @@ export class AuthController {
     })
     login (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @IsSecure() isSecure: boolean,
         @Body() loginParams: LoginParams,
         @ServerAddress() endpoint: string,
@@ -88,7 +88,7 @@ export class AuthController {
     })
     register (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @ServerAddress() endpoint: string,
         @Body() registerParams: RegisterParams,
     ) {
@@ -183,7 +183,7 @@ export class AuthController {
     })
     resetPassword (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @ServerAddress() endpoint: string,
         @Body() emailParams: ResetPasswordByEmailParams,
     ) {
@@ -199,7 +199,7 @@ export class AuthController {
     })
     resendVerificationEmail (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @ServerAddress() endpoint: string,
         @Body() emailParams: ResetPasswordByEmailParams,
     ) {
@@ -219,7 +219,7 @@ export class AuthController {
     @ApiNotFoundException('User not found')
     resetPasswordConfirm (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @IsSecure() isSecure: boolean,
         @Res({ passthrough: true }) response: Response,
         @Body() resetPasswordParams: ResetPasswordParams,
@@ -238,7 +238,7 @@ export class AuthController {
     })
     createGuestSession (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @IsSecure() isSecure: boolean,
         @Res({ passthrough: true }) response: Response,
     ) {
@@ -309,7 +309,7 @@ export class AuthController {
     registerWebAuthnConfirm (
         @Ip() ip: string,
         @HostAddress() host: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @ServerAddress() endpoint: string,
         @Query() passKeyParams: PassKeyParams,
         @PassKeySession() passkey: PassKeyData,
@@ -343,7 +343,7 @@ export class AuthController {
     })
     createFirstPassKey (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @HostAddress() host: string,
         @IsSecure() isSecure: boolean,
         @ServerAddress() endpoint: string,
@@ -399,7 +399,7 @@ export class AuthController {
     })
     loginWebAuthnConfirm (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @HostAddress() host: string,
         @IsSecure() isSecure: boolean,
         @ServerAddress() endpoint: string,
@@ -461,7 +461,7 @@ export class AuthController {
     })
     getOauthUrl (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @Param() params: OauthParams,
         @ServerAddress() endpoint: string,
     ) {
@@ -501,7 +501,7 @@ export class AuthController {
     @ApiUnauthorizedException('Unauthorized')
     validateOauthAccount (
         @Ip() ip: string,
-        @UserAgent() agent: Details,
+        @UserAgent() agent: AgentDetails,
         @IsSecure() isSecure: boolean,
         @Body() body: OauthAuthKeyBody,
         @Res({ passthrough: true }) response: Response,

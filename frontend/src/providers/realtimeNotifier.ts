@@ -5,7 +5,7 @@ import { dedupeBy } from '@/utils/arrayFunctions';
 import { sortBy } from '@eleven-am/fp';
 import { EventNotifier, getSnapshot } from '@eleven-am/notifier';
 import type { Observer, Unsubscribe } from '@eleven-am/notifier/types';
-import PondClient, { ChannelState } from '@eleven-am/pondsocket-client';
+import { PondClient, ChannelState } from '@eleven-am/pondsocket-client';
 import type { Channel } from '@eleven-am/pondsocket-client/dist';
 import { JoinParams, PondEventMap } from '@eleven-am/pondsocket-common';
 

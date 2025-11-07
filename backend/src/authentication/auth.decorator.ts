@@ -1,7 +1,7 @@
 import { applyDecorators, createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { Request } from 'express';
-import * as useragent from 'express-useragent';
+import { useragent } from 'express-useragent';
 
 import { WEB_AUTHN_CACHE_KEY } from './auth.constants';
 import { EmailResponseSchema } from './auth.contracts';

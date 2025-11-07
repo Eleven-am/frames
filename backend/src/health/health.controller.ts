@@ -56,7 +56,7 @@ export class HealthController {
             ),
             () => this.http.responseCheck(
                 'FanArt API',
-                'https://webservice.fanart.tv/v3',
+                'https://webservice.fanart.tv',
                 (response) => response.status === 401,
                 { timeout: 300 },
             ),

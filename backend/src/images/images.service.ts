@@ -27,7 +27,7 @@ import {
 
 @Injectable()
 export class ImagesService {
-    private readonly fanArtBaseUrl = 'https://webservice.fanart.tv/v3';
+    private readonly fanArtBaseUrl = 'https://webservice.fanart.tv';
 
     constructor (
         private readonly httpService: HttpService,

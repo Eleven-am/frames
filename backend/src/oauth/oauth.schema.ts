@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsArray, IsDate } from 'class-validator';
-import { Details } from 'express-useragent';
+import { AgentDetails } from 'express-useragent';
 import { z } from 'zod';
 
 import { createPageResponse } from '../utils/utils.contracts';
@@ -114,7 +114,7 @@ export const profileSchema = z.union([emailSchema, mailSchema]);
 
 export interface OauthStateData {
     ip: string;
-    details: Details;
+    details: AgentDetails;
 }
 
 export interface OauthResponseData extends OauthStateData {
