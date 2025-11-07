@@ -54,12 +54,12 @@ export class HealthController {
                 'https://api.themoviedb.org/3',
                 { timeout: 300 }
             ),
-            () => this.http.responseCheck(
+            /*() => this.http.responseCheck(
                 'FanArt API',
                 'https://webservice.fanart.tv',
                 (response) => response.status === 200,
                 { timeout: 300 },
-            ),
+            ),*/
             () => this.http.responseCheck(
                 'OpenAI',
                 'https://api.openai.com',
